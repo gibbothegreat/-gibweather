@@ -537,6 +537,10 @@ function scheduleAutoRefresh() {
 }
 
 function renderAppStatus() {
+  if ($('topVersion')) {
+    $('topVersion').textContent = `v${APP_VERSION}`;
+    $('topVersion').setAttribute('aria-label', `App version ${APP_VERSION}`);
+  }
   if ($('versionText')) $('versionText').textContent = `v${APP_VERSION}`;
   if ($('lastRefreshText')) $('lastRefreshText').textContent = savedAt ? new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: GIBRALTAR.timezone }).format(new Date(savedAt)) : '—';
   if ($('dataAgeText')) $('dataAgeText').textContent = dataAgeLabel();
