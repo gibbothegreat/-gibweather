@@ -64,6 +64,10 @@ def parse_metar(raw: str, now: datetime | None = None) -> dict:
     now = now or datetime.now(timezone.utc)
     raw = " ".join(raw.strip().split())
     tokens = raw.split()
+    # The Aviation Weather API may prefix reports with METAR or SPECI.
+    # Accept both forms while retaining the original report text for display.
+    if tokens and tokens[0] in {"METAR", "SPECI"}:
+        tokens = tokens[1:]
     if len(tokens) < 3 or tokens[0] != STATION:
         raise ValueError(f"Not an {STATION} METAR: {raw[:80]}")
 
@@ -161,7 +165,8 @@ def newest_metar(text: str, now: datetime) -> dict:
     parsed = []
     for line in text.splitlines():
         line = line.strip()
-        if not line.startswith(STATION + " "):
+        accepted_prefixes = (STATION + " ", "METAR " + STATION + " ", "SPECI " + STATION + " ")
+        if not line.startswith(accepted_prefixes):
             continue
         try:
             parsed.append(parse_metar(line, now))
