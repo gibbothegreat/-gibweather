@@ -34,5 +34,5 @@ For GitHub-based observation updates also keep:
 - `.github/workflows/pages.yml`
 
 
-## v1.4 external radar hosts
+## External radar hosts
 Production security headers must allow `https://api.rainviewer.com` in `connect-src`, and `https://*.rainviewer.com` plus `https://tile.openstreetmap.org` in `img-src`. The included Netlify/Vercel/header files are already configured.

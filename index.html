@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="GibWeather" />
-  <meta name="description" content="A Gibraltar-first weather app with Levanter, Rock Cloud, wind, rain and Strait marine forecasts." />
+  <meta name="description" content="A Gibraltar-first weather app with smart local alerts, Levanter, Rock Cloud, rain radar and Strait marine guidance." />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-180-v2.png" />
   <link rel="icon" href="icons/icon-192-v2.png" />
@@ -65,6 +65,19 @@
           </div>
         </article>
 
+        <section id="smartAlertsPanel" class="panel advisory-panel alert-state-waiting" aria-label="Smart Gibraltar alerts" aria-live="polite">
+          <div class="section-heading">
+            <div><div class="eyebrow">NEXT 24 HOURS</div><h2>Smart Gibraltar alerts</h2></div>
+            <span id="advisoryBadge" class="advisory-badge">Checking…</span>
+          </div>
+          <div id="alertSummary" class="alert-summary">
+            <span class="alert-summary-icon">⏳</span>
+            <div><strong>Checking local conditions</strong><small>Reviewing wind, rain, visibility, UV, Levanter, Rock Cloud and sea conditions.</small></div>
+          </div>
+          <div id="advisoryList" class="advisory-list" role="list"></div>
+          <p class="fineprint">These automated forecast flags include modelled marine guidance. They are not official weather warnings and must not be used for navigation.</p>
+        </section>
+
         <section class="panel narrative-panel" aria-label="Gibraltar local forecast narrative">
           <div class="section-heading">
             <div><div class="eyebrow">LOCAL OUTLOOK</div><h2 id="narrativeTitle">Today & tonight</h2></div>
@@ -96,15 +109,6 @@
           <div id="obsMatch" class="observation-match">Comparing observation with the current forecast…</div>
           <details class="metar-details"><summary>Show raw airport report</summary><code id="obsRaw"></code></details>
           <p class="fineprint">Observed weather from Gibraltar Airport (LXGB) via the NOAA/NWS Aviation Weather Center. Airport conditions can differ from other parts of Gibraltar. The METAR feed is refreshed by GibWeather's server-side updater because AviationWeather.gov does not permit browser CORS requests.</p>
-        </section>
-
-        <section class="panel advisory-panel" aria-label="GibWeather local guidance">
-          <div class="section-heading">
-            <div><div class="eyebrow">GIBWEATHER GUIDANCE</div><h2>Local advisories</h2></div>
-            <span id="advisoryBadge" class="advisory-badge">Checking…</span>
-          </div>
-          <div id="advisoryList" class="advisory-list"></div>
-          <p class="fineprint">These are automated GibWeather forecast flags, not official weather warnings.</p>
         </section>
 
         <section class="outlook-grid" aria-label="Next 24 hours overview">
@@ -260,7 +264,7 @@
       </section>
 
       <section id="aboutView" class="view" data-view="about">
-        <div class="page-title"><h2>About GibWeather</h2><p>Release v1.4</p></div>
+        <div class="page-title"><h2>About GibWeather</h2><p>Release v1.5</p></div>
         <article class="panel about-copy">
           <h3>Built for Gibraltar</h3>
           <p>GibWeather is designed around local conditions: Levanter and Poniente flow, gusts, low cloud, humidity, visibility and rain.</p>
@@ -272,7 +276,7 @@
           <p>MeteoGib is linked as an independent local forecast source. GibWeather does not scrape or republish MeteoGib forecasts and is not affiliated with MeteoGib.</p>
           <h3>App status</h3>
           <div class="status-grid">
-            <div><span>Version</span><strong id="versionText">v1.4</strong></div>
+            <div><span>Version</span><strong id="versionText">v1.5</strong></div>
             <div><span>Last refresh</span><strong id="lastRefreshText">—</strong></div>
             <div><span>Data age</span><strong id="dataAgeText">—</strong></div>
             <div><span>Connection</span><strong id="connectionText">—</strong></div>
@@ -314,7 +318,7 @@
             </ol>
           </div>
           <h3>Privacy</h3>
-          <p>GibWeather v1.4 has no account, advertising SDK or analytics tracker. The last successful forecast and your app preferences are stored locally on this device.</p>
+          <p>GibWeather v1.5 has no account, advertising SDK or analytics tracker. The last successful forecast and your app preferences are stored locally on this device.</p>
           <p class="fineprint">The Levanter and Rock Cloud indicators are experimental guidance only. For official or safety-critical weather information, use the relevant official authority or a qualified local forecaster.</p>
         </article>
       </section>

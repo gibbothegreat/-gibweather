@@ -1,5 +1,13 @@
 # GibWeather changelog
 
+## v1.5 · Smart Gibraltar alerts
+- Promotes alerts near the top of the Now screen so important local conditions are visible immediately.
+- Adds clear **Important**, **Watch** and **Info** severity labels plus a highest-priority summary.
+- Adds Rock Cloud likelihood to the 24-hour alert assessment.
+- Adds modelled rough-sea guidance from the Open-Meteo Marine feed.
+- Keeps all alert wording explicitly non-official and marine guidance non-navigational.
+- Refreshes the offline app cache for the v1.5 release.
+
 ## v1.4 · Local outlook release
 - Adds a plain-English **Today / Tonight** Gibraltar forecast narrative generated from the live forecast.
 - Adds quick local cards for Levanter timing, peak gust, rain window and Rock Cloud timing.

@@ -1,4 +1,4 @@
-# GibWeather v1.4
+# GibWeather v1.5
 
 GibWeather is a Gibraltar-first Progressive Web App for iPhone, iPad and modern browsers.
 
@@ -19,6 +19,7 @@ GibWeather is a Gibraltar-first Progressive Web App for iPhone, iPad and modern 
 - System-health and installation-readiness checks
 - Recent Gibraltar-centred rain radar history with timeline animation
 - Direct MeteoGib link for local forecaster commentary
+- Smart Gibraltar alerts with severity, timing, Rock Cloud and rough-sea guidance
 
 ## v1.2 reliability release
 v1.2 corrects the live API contracts used by the app. The main Open-Meteo forecast request now explicitly asks for the daily fields needed by the Today and 7-day screens. The Open-Meteo Marine request now uses only supported marine daily aggregations (`wave_height_max`, dominant wave direction, period, and swell equivalents). A release validator is included at `scripts/validate_release.py` to guard against mixing atmospheric and marine API variables in future builds.
@@ -60,7 +61,7 @@ This checks JavaScript syntax, manifest/version consistency, HTML/JavaScript DOM
 GibWeather is a static app. Deployment configurations are included for GitHub Pages, Netlify and Vercel. See `DEPLOY.md`.
 
 ## Release status
-v1.4 is the stable local-outlook release. It adds a plain-English Today/Tonight Gibraltar narrative, a 12-hour rain timeline and a dedicated Levanter timeline while retaining the v1.3 radar, LXGB, marine and model-comparison features. Synthetic runtime coverage includes the main forecast, 48-hour and 7-day views, ECMWF/GFS/ICON model comparison, Marine forecast, LXGB observation, unit conversion paths, RainViewer metadata parsing, radar timeline controls and Gibraltar-centred radar tile generation without runtime errors.
+v1.5 is the stable smart-alerts release. The prominent alert panel ranks important and watch-level Gibraltar conditions for the next 24 hours, including gusts, rain, visibility, UV, Levanter, Rock Cloud and modelled Strait waves. It retains the v1.4 local narrative, timelines, radar, LXGB observation, marine and model-comparison features.
 
 
 ## Rain radar (v1.3)

@@ -28,6 +28,9 @@ for f in ('app.js','service-worker.js'):
     r=subprocess.run(['node','--check',str(ROOT/f)],capture_output=True,text=True)
     need(r.returncode==0,f'{f} JavaScript syntax failed: {r.stderr.strip()}')
 
+alert_test=subprocess.run(['node',str(ROOT/'scripts/test_smart_alerts.js')],capture_output=True,text=True)
+need(alert_test.returncode==0,f'Smart-alert runtime test failed: {alert_test.stderr.strip()}')
+
 # JSON/TOML
 for f in ('manifest.webmanifest','version.json','vercel.json'):
     try: json.loads((ROOT/f).read_text())

@@ -1,4 +1,4 @@
-const CACHE = 'gibweather-shell-v14-icon2';
+const CACHE = 'gibweather-shell-v15';
 const OBSERVATION_CACHE_KEY = './data/lxgb-observation.json';
 const APP_SHELL = [
   './', './index.html', './styles.css', './app.js', './manifest.webmanifest', './version.json',

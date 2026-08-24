@@ -1,4 +1,4 @@
-# GibWeather v1.4 QA
+# GibWeather v1.5 QA
 
 ## Release validation
 Run:
@@ -7,7 +7,16 @@ Run:
 python3 scripts/validate_release.py
 ```
 
-Expected result: `GibWeather v1.4 release validation passed`.
+Expected result: `GibWeather v1.5 release validation passed`.
+
+## Smart-alert checks
+- Important alerts sort above Watch and Info alerts.
+- Wind, rain, visibility, UV and Levanter thresholds retain their v1.4 behaviour.
+- Likely and possible Rock Cloud signals include the expected time.
+- Modelled wave heights of 2 m or more trigger rough-sea guidance; 3 m or more is Important.
+- Missing marine data does not block land-weather alerts.
+
+Run `node scripts/test_smart_alerts.js` for the synthetic threshold and severity-order smoke test.
 
 ## API contract checks
 v1.3 specifically guards two live-data contracts:

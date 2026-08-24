@@ -1,8 +1,8 @@
-const APP_VERSION = '1.4';
+const APP_VERSION = '1.5';
 const GIBRALTAR = { lat: 36.1408, lon: -5.3536, timezone: 'Europe/Gibraltar' };
-const CACHE_KEY = 'gibweather:last-forecast:v14';
+const CACHE_KEY = 'gibweather:last-forecast:v15';
 const BACKUP_CACHE_KEY = 'gibweather:last-known-good:v1';
-const LEGACY_CACHE_KEYS = ['gibweather:last-forecast:v13','gibweather:last-forecast:v12','gibweather:last-forecast:v11','gibweather:last-forecast:v10','gibweather:last-forecast:v8','gibweather:last-forecast:v7','gibweather:last-forecast:v6', 'gibweather:last-forecast:v5', 'gibweather:last-forecast:v4', 'gibweather:last-forecast:v3', 'gibweather:last-forecast:v2', 'gibweather:last-forecast:v1'];
+const LEGACY_CACHE_KEYS = ['gibweather:last-forecast:v14','gibweather:last-forecast:v13','gibweather:last-forecast:v12','gibweather:last-forecast:v11','gibweather:last-forecast:v10','gibweather:last-forecast:v8','gibweather:last-forecast:v7','gibweather:last-forecast:v6', 'gibweather:last-forecast:v5', 'gibweather:last-forecast:v4', 'gibweather:last-forecast:v3', 'gibweather:last-forecast:v2', 'gibweather:last-forecast:v1'];
 const INTRO_KEY = 'gibweather:intro-seen';
 const SETTINGS_KEY = 'gibweather:settings:v1';
 const DEFAULT_SETTINGS = { temperatureUnit: 'c', windUnit: 'kmh', refreshMinutes: 30 };
@@ -325,8 +325,9 @@ function applyStateCard(el, state) {
   el.classList.add(state.className);
 }
 
-function buildAdvisories(data, start) {
+function buildAdvisories(data, start, marine = marineData) {
   const next24 = snapshots(data, start, 24);
+  const next12 = next24.slice(0, 12);
   const advisories = [];
   const peakGust = findPeak(next24, 'gust');
   const peakRain = findPeak(next24, 'rainChance');
@@ -334,6 +335,18 @@ function buildAdvisories(data, start) {
   const peakUV = findPeak(next24, 'uv');
   const peakLev = next24.map(s => ({ s, state: levanterIndex(s) }))
     .reduce((best, x) => x.state.rank > (best?.state.rank ?? -1) ? x : best, null);
+  const peakRock = next12.map(s => ({ s, state: rockCloudIndex(s) }))
+    .reduce((best, x) => x.state.rank > (best?.state.rank ?? -1) ? x : best, null);
+
+  let peakWave = null;
+  if (marine?.hourly?.time?.length) {
+    const marineStart = marineHourIndex(marine);
+    const marineHours = Array.from(
+      { length: Math.max(0, Math.min(marineStart + 24, marine.hourly.time.length) - marineStart) },
+      (_, offset) => marineSnapshot(marine, marineStart + offset)
+    );
+    peakWave = marineHours.reduce((best, x) => Number(x.wave) > Number(best?.wave ?? -Infinity) ? x : best, null);
+  }
 
   if (Number(peakGust?.gust) >= 60) advisories.push({
     icon: '🌪️', title: 'Strong gusts', level: 'high',
@@ -380,23 +393,56 @@ function buildAdvisories(data, start) {
     detail: `${peakLev.state.detail}.`, time: fmtTime(peakLev.s.time)
   });
 
+  if (peakRock?.state.rank >= 2) advisories.push({
+    icon: '🏔️', title: 'Rock Cloud likely', level: 'medium',
+    detail: `Low cloud and humidity favour Rock Cloud conditions. ${peakRock.state.detail}.`, time: fmtTime(peakRock.s.time)
+  });
+  else if (peakRock?.state.rank >= 1) advisories.push({
+    icon: '🌥️', title: 'Rock Cloud possible', level: 'low',
+    detail: `There is a weaker Rock Cloud signal. ${peakRock.state.detail}.`, time: fmtTime(peakRock.s.time)
+  });
+
+  if (Number(peakWave?.wave) >= 3) advisories.push({
+    icon: '🌊', title: 'Very rough sea guidance', level: 'high',
+    detail: `Modelled waves may reach ${formatWave(peakWave.wave)} in the Strait. Do not use GibWeather for navigation.`, time: fmtTime(peakWave.time)
+  });
+  else if (Number(peakWave?.wave) >= 2) advisories.push({
+    icon: '🌊', title: 'Rough sea guidance', level: 'medium',
+    detail: `Modelled waves may reach ${formatWave(peakWave.wave)} in the Strait.`, time: fmtTime(peakWave.time)
+  });
+
   if (!advisories.length) advisories.push({
     icon: '✅', title: 'No notable forecast flags', level: 'low',
-    detail: 'No strong wind, high rain, poor visibility or high-UV thresholds are triggered in the next 24 hours.', time: '24h'
+    detail: 'No strong wind, high rain, poor visibility, high UV, strong Levanter, likely Rock Cloud or rough-sea thresholds are triggered.', time: '24h'
   });
-  return advisories.slice(0, 5);
+  const priority = { high: 0, medium: 1, low: 2 };
+  return advisories.sort((a, b) => priority[a.level] - priority[b.level]).slice(0, 7);
 }
 
-function renderAdvisories(data) {
+function renderAdvisories(data, marine = marineData) {
   const start = getHourIndex(data);
-  const items = buildAdvisories(data, start);
+  const items = buildAdvisories(data, start, marine);
   const high = items.filter(x => x.level === 'high').length;
   const medium = items.filter(x => x.level === 'medium').length;
-  $('advisoryBadge').textContent = high ? `${high} important` : medium ? `${medium} watch` : 'All clear';
-  $('advisoryList').innerHTML = items.map(x => `<div class="advisory-item level-${x.level}">
+  const state = high ? 'high' : medium ? 'medium' : 'low';
+  const panel = $('smartAlertsPanel');
+  panel.classList.remove('alert-state-waiting','alert-state-low','alert-state-medium','alert-state-high');
+  panel.classList.add(`alert-state-${state}`);
+  $('advisoryBadge').className = `advisory-badge badge-${state}`;
+  $('advisoryBadge').textContent = high
+    ? `${high} important${medium ? ` · ${medium} watch` : ''}`
+    : medium ? `${medium} watch` : 'All clear';
+  const lead = items[0];
+  const summaryTitle = high ? 'Important conditions expected' : medium ? 'Conditions to watch' : 'No important alerts';
+  const summaryDetail = high || medium
+    ? `${lead.title} is the highest-priority flag for the next 24 hours.`
+    : 'No high-severity Gibraltar weather or marine thresholds are currently triggered.';
+  $('alertSummary').innerHTML = `<span class="alert-summary-icon">${high ? '🔴' : medium ? '🟠' : '🟢'}</span><div><strong>${summaryTitle}</strong><small>${summaryDetail}</small></div>`;
+  const levelLabel = { high: 'Important', medium: 'Watch', low: 'Info' };
+  $('advisoryList').innerHTML = items.map(x => `<div class="advisory-item level-${x.level}" role="listitem">
     <div class="advisory-icon">${x.icon}</div>
     <div><strong>${x.title}</strong><small>${x.detail}</small></div>
-    <div class="advisory-time">${x.time}</div>
+    <div class="advisory-time">${x.time}<span>${levelLabel[x.level]}</span></div>
   </div>`).join('');
 }
 
@@ -1305,7 +1351,7 @@ function renderMarine(data) {
 
 function renderAll(data) {
   renderNow(data);
-  renderAdvisories(data);
+  renderAdvisories(data, marineData);
   renderHourly(data);
   renderDaily(data);
   renderWind(data);
