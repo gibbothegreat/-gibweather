@@ -1,0 +1,6 @@
+{
+  "available": false,
+  "station": "LXGB",
+  "station_name": "Gibraltar Airport",
+  "reason": "The live airport-observation feed will populate after the scheduled GitHub Actions updater runs."
+}

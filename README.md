@@ -1,4 +1,4 @@
-# GibWeather v1.3
+# GibWeather v1.4
 
 GibWeather is a Gibraltar-first Progressive Web App for iPhone, iPad and modern browsers.
 
@@ -60,7 +60,7 @@ This checks JavaScript syntax, manifest/version consistency, HTML/JavaScript DOM
 GibWeather is a static app. Deployment configurations are included for GitHub Pages, Netlify and Vercel. See `DEPLOY.md`.
 
 ## Release status
-v1.3 is the stable radar release. Synthetic runtime coverage includes the main forecast, 48-hour and 7-day views, ECMWF/GFS/ICON model comparison, Marine forecast, LXGB observation, unit conversion paths, RainViewer metadata parsing, radar timeline controls and Gibraltar-centred radar tile generation without runtime errors.
+v1.4 is the stable local-outlook release. It adds a plain-English Today/Tonight Gibraltar narrative, a 12-hour rain timeline and a dedicated Levanter timeline while retaining the v1.3 radar, LXGB, marine and model-comparison features. Synthetic runtime coverage includes the main forecast, 48-hour and 7-day views, ECMWF/GFS/ICON model comparison, Marine forecast, LXGB observation, unit conversion paths, RainViewer metadata parsing, radar timeline controls and Gibraltar-centred radar tile generation without runtime errors.
 
 
 ## Rain radar (v1.3)

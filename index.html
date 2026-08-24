@@ -1,52 +1,360 @@
 <!doctype html>
 <html lang="en-GB">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0b2239">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="GibWeather">
-<meta name="description" content="Gibraltar-first weather with Levanter, Rock Cloud, hourly and 7-day forecasts, and Strait marine guidance.">
-<link rel="manifest" href="manifest.webmanifest">
-<title>GibWeather</title>
-<style>
-:root{color-scheme:dark;--bg:#06121d;--panel:#0c2235;--panel2:#102c43;--line:#24445c;--text:#f3f8fb;--muted:#9fb5c5;--accent:#54c7ec;--good:#75e0a7;--warn:#ffd166;--danger:#ff8a8a}*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#071725,#06121d 42%,#040d14);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}button,select{font:inherit}.wrap{max-width:900px;margin:auto;padding:max(18px,env(safe-area-inset-top)) 16px calc(30px + env(safe-area-inset-bottom))}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:15px}.eyebrow{font-size:12px;letter-spacing:.13em;color:#8eddfa;font-weight:800}.brand{font-size:29px;font-weight:800;margin:1px 0}.top button,.control{background:#12314a;border:1px solid #31536b;color:#fff;border-radius:12px;padding:9px 12px}.status{padding:10px 12px;border:1px solid var(--line);background:#0a1d2d;border-radius:12px;color:var(--muted);margin-bottom:12px}.status.err{border-color:#7d4040;color:#ffc2c2}.status.cached{border-color:#6c5b25;color:#ffe39a}.hero,.panel{background:linear-gradient(145deg,#0e293f,#091c2c);border:1px solid var(--line);border-radius:20px;box-shadow:0 12px 30px #0005}.hero{padding:19px}.herohead{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.temp{font-size:62px;font-weight:800;line-height:1}.condition{font-size:20px;font-weight:700}.muted{color:var(--muted)}.pill{display:inline-flex;padding:6px 10px;border-radius:999px;background:#173b57;border:1px solid #315a74;font-weight:700}.specials{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}.special{padding:14px;background:#0b2032;border:1px solid #27485f;border-radius:15px}.special strong{display:block;font-size:20px;margin-top:4px}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px}.metric{padding:12px;background:#0a1e2f;border:1px solid #213e53;border-radius:14px}.metric span{display:block;color:var(--muted);font-size:12px}.metric strong{font-size:16px}.panel{padding:17px;margin-top:14px}h2{font-size:20px;margin:0 0 12px}h3{font-size:16px;margin:0}.sectionhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}.scroll{display:flex;overflow:auto;gap:8px;padding-bottom:5px;scroll-snap-type:x proximity}.hour{min-width:100px;scroll-snap-align:start;padding:11px;background:#0a2031;border:1px solid #24455d;border-radius:14px;text-align:center}.hour .icon{font-size:25px}.hour strong{display:block;font-size:17px}.days{display:grid;gap:8px}.day{display:grid;grid-template-columns:80px 1fr auto;align-items:center;gap:8px;padding:11px;border-radius:13px;background:#0a2031;border:1px solid #24455d}.day .temps{font-weight:800}.marine{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.source{font-size:12px;color:var(--muted);margin-top:13px}.source a{color:#9edff8}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.actions a,.actions button{border:1px solid #31536b;background:#12314a;color:#fff;text-decoration:none;border-radius:11px;padding:9px 11px}.controls{display:flex;gap:8px;flex-wrap:wrap}.controls label{color:var(--muted);font-size:12px}.controls select{display:block;margin-top:3px}.footer{text-align:center;color:var(--muted);font-size:12px;margin-top:18px}.hidden{display:none}@media(max-width:620px){.metrics{grid-template-columns:repeat(2,1fr)}.marine{grid-template-columns:repeat(2,1fr)}.temp{font-size:54px}.herohead{align-items:center}.specials{grid-template-columns:1fr}.brand{font-size:25px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b2239" />
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="GibWeather" />
+  <meta name="description" content="A Gibraltar-first weather app with Levanter, Rock Cloud, wind, rain and Strait marine forecasts." />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>GibWeather</title>
 </head>
 <body>
-<main class="wrap">
-<header class="top"><div><div class="eyebrow">🇬🇮 GIBRALTAR</div><div class="brand">GibWeather</div></div><button id="refresh" type="button">↻ Refresh</button></header>
-<div id="status" class="status">Loading Gibraltar forecast…</div>
-<section class="hero">
- <div class="herohead"><div><div id="condition" class="condition">—</div><div id="temp" class="temp">—°</div><div id="feels" class="muted">Feels like —</div></div><div><span id="online" class="pill">Checking…</span></div></div>
- <div class="specials">
-  <div class="special"><div class="eyebrow">🌬️ WIND REGIME</div><strong id="regime">—</strong><div id="regimeDetail" class="muted">—</div></div>
-  <div class="special"><div class="eyebrow">🏔️ ROCK CLOUD</div><strong id="rock">—</strong><div id="rockDetail" class="muted">Experimental guidance</div></div>
- </div>
- <div class="metrics">
-  <div class="metric"><span>Wind</span><strong id="wind">—</strong></div><div class="metric"><span>Gusts</span><strong id="gust">—</strong></div><div class="metric"><span>Humidity</span><strong id="humidity">—</strong></div><div class="metric"><span>Rain now</span><strong id="rain">—</strong></div><div class="metric"><span>Pressure</span><strong id="pressure">—</strong></div><div class="metric"><span>Cloud</span><strong id="cloud">—</strong></div>
- </div>
-</section>
-<section class="panel"><div class="sectionhead"><h2>Next 12 hours</h2></div><div id="hours" class="scroll"></div></section>
-<section class="panel"><div class="sectionhead"><h2>7-day forecast</h2></div><div id="days" class="days"></div></section>
-<section class="panel"><div class="sectionhead"><h2>🌊 Sea & Strait</h2><span class="pill" id="marineState">Loading…</span></div><div class="marine"><div class="metric"><span>Wave height</span><strong id="wave">—</strong></div><div class="metric"><span>Wave period</span><strong id="period">—</strong></div><div class="metric"><span>Sea temperature</span><strong id="sst">—</strong></div><div class="metric"><span>Current</span><strong id="current">—</strong></div></div><p class="source">Marine model guidance only; coastal accuracy is limited and it must not be used for navigation.</p></section>
-<section class="panel"><div class="sectionhead"><h2>Settings & local sources</h2></div><div class="controls"><label>Temperature<select id="tempUnit" class="control"><option value="c">°C</option><option value="f">°F</option></select></label><label>Wind<select id="windUnit" class="control"><option value="kmh">km/h</option><option value="mph">mph</option></select></label></div><div class="actions"><button id="share" type="button">Share forecast</button><a href="https://www.meteogib.com/" target="_blank" rel="noopener">MeteoGib</a><a href="https://www.rainviewer.com/" target="_blank" rel="noopener">Rain radar</a></div><p class="source">Forecast data: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> · CC BY 4.0. Levanter and Rock Cloud indicators are GibWeather heuristics, not official warnings.</p></section>
-<div class="footer">GibWeather live build · Gibraltar 36.1408°N, 5.3536°W</div>
-</main>
-<script>
-const LOC={lat:36.1408,lon:-5.3536,tz:'Europe/Gibraltar'};let DATA=null,MARINE=null;
-const $=id=>document.getElementById(id),fmt=n=>Number.isFinite(n)?Math.round(n):'—';
-const wx={0:['☀️','Clear'],1:['🌤️','Mainly clear'],2:['⛅','Partly cloudy'],3:['☁️','Overcast'],45:['🌫️','Fog'],48:['🌫️','Rime fog'],51:['🌦️','Light drizzle'],53:['🌦️','Drizzle'],55:['🌧️','Heavy drizzle'],61:['🌦️','Light rain'],63:['🌧️','Rain'],65:['🌧️','Heavy rain'],80:['🌦️','Rain showers'],81:['🌧️','Rain showers'],82:['⛈️','Heavy showers'],95:['⛈️','Thunderstorm'],96:['⛈️','Thunderstorm'],99:['⛈️','Thunderstorm']};
-function desc(c){return wx[c]||['🌤️','Weather'];}function dir(d){const a=['N','NE','E','SE','S','SW','W','NW'];return a[Math.round(((d||0)%360)/45)%8]}
-function t(v){if(!Number.isFinite(v))return'—';return localStorage.tempUnit==='f'?`${Math.round(v*9/5+32)}°F`:`${Math.round(v)}°C`}
-function w(v){if(!Number.isFinite(v))return'—';return localStorage.windUnit==='mph'?`${Math.round(v*.621371)} mph`:`${Math.round(v)} km/h`}
-function regime(d,s){if(d>=45&&d<=135)return['Levanter',`Easterly ${dir(d)} · ${w(s)}`];if(d>=225&&d<=315)return['Poniente',`Westerly ${dir(d)} · ${w(s)}`];return['Variable / other',`${dir(d)} · ${w(s)}`]}
-function rock(d,s,rh,low){const east=d>=45&&d<=135;let score=(east?2:0)+(s>=12?1:0)+(rh>=75?1:0)+(low>=45?1:0);return score>=4?['Likely','Easterly, humid and low-cloud signal']:score>=2?['Possible','Some supporting conditions']:['Low signal','Conditions not strongly supportive']}
-function age(ts){const m=Math.round((Date.now()-ts)/60000);return m<2?'just now':m<60?`${m} min ago`:`${Math.round(m/60)} h ago`}
-function render(){const d=DATA;if(!d)return;const c=d.current,h=d.hourly,dy=d.daily;const i=Math.max(0,h.time.findIndex(x=>new Date(x)>=new Date(c.time)));const [ico,name]=desc(c.weather_code);$('condition').textContent=`${ico} ${name}`;$('temp').textContent=t(c.temperature_2m);$('feels').textContent=`Feels like ${t(c.apparent_temperature)}`;$('wind').textContent=`${w(c.wind_speed_10m)} ${dir(c.wind_direction_10m)}`;$('gust').textContent=w(c.wind_gusts_10m);$('humidity').textContent=`${fmt(c.relative_humidity_2m)}%`;$('rain').textContent=`${Number(c.precipitation||0).toFixed(1)} mm`;$('pressure').textContent=`${fmt(c.pressure_msl)} hPa`;$('cloud').textContent=`${fmt(c.cloud_cover)}%`;let rg=regime(c.wind_direction_10m,c.wind_speed_10m);$('regime').textContent=rg[0];$('regimeDetail').textContent=rg[1];let rk=rock(c.wind_direction_10m,c.wind_speed_10m,c.relative_humidity_2m,h.cloud_cover_low?.[i]||0);$('rock').textContent=rk[0];$('rockDetail').textContent=rk[1];$('hours').innerHTML='';for(let x=i;x<Math.min(i+12,h.time.length);x++){let [wi,wd]=desc(h.weather_code[x]);let el=document.createElement('div');el.className='hour';el.innerHTML=`<div>${new Date(h.time[x]).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</div><div class="icon">${wi}</div><strong>${t(h.temperature_2m[x])}</strong><small>${h.precipitation_probability[x]??0}% rain</small><small>${w(h.wind_speed_10m[x])} ${dir(h.wind_direction_10m[x])}</small>`;$('hours').append(el)}$('days').innerHTML='';dy.time.forEach((x,n)=>{let [wi,wd]=desc(dy.weather_code[n]),el=document.createElement('div');el.className='day';el.innerHTML=`<strong>${new Date(x+'T12:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric'})}</strong><div>${wi} ${wd}<div class="muted">${dy.precipitation_probability_max[n]??0}% rain · gust ${w(dy.wind_gusts_10m_max[n])}</div></div><div class="temps">${t(dy.temperature_2m_max[n])} / ${t(dy.temperature_2m_min[n])}</div>`;$('days').append(el)});$('status').className='status'+(d._cached?' cached':'');$('status').textContent=d._cached?`Offline/cached forecast · saved ${age(d._savedAt)}`:`Live forecast · updated ${new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}`;$('online').textContent=navigator.onLine?'Online':'Offline'}
-function renderMarine(){if(!MARINE?.current){$('marineState').textContent='Unavailable';return}let c=MARINE.current;$('wave').textContent=Number.isFinite(c.wave_height)?`${c.wave_height.toFixed(1)} m ${dir(c.wave_direction)}`:'—';$('period').textContent=Number.isFinite(c.wave_period)?`${c.wave_period.toFixed(1)} s`:'—';$('sst').textContent=t(c.sea_surface_temperature);$('current').textContent=Number.isFinite(c.ocean_current_velocity)?`${c.ocean_current_velocity.toFixed(1)} km/h ${dir(c.ocean_current_direction)}`:'—';$('marineState').textContent='Live model'}
-async function load(){ $('status').className='status';$('status').textContent='Updating Gibraltar forecast…';const base='https://api.open-meteo.com/v1/forecast?latitude='+LOC.lat+'&longitude='+LOC.lon+'&timezone='+encodeURIComponent(LOC.tz)+'&forecast_days=7&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m&hourly=temperature_2m,precipitation_probability,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,relative_humidity_2m,cloud_cover_low&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,sunrise,sunset';const sea='https://marine-api.open-meteo.com/v1/marine?latitude='+LOC.lat+'&longitude='+LOC.lon+'&timezone='+encodeURIComponent(LOC.tz)+'&forecast_days=7&current=wave_height,wave_direction,wave_period,sea_surface_temperature,ocean_current_velocity,ocean_current_direction&daily=wave_height_max,wave_direction_dominant,wave_period_max';try{let [a,b]=await Promise.allSettled([fetch(base,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error(r.status);return r.json()}),fetch(sea,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error(r.status);return r.json()})]);if(a.status==='fulfilled'){DATA=a.value;DATA._savedAt=Date.now();localStorage.setItem('gibweather:last',JSON.stringify(DATA));render()}else throw a.reason;if(b.status==='fulfilled'){MARINE=b.value;renderMarine()}else $('marineState').textContent='Unavailable'}catch(e){try{DATA=JSON.parse(localStorage.getItem('gibweather:last'));if(DATA){DATA._cached=true;render()}else throw e}catch(_){$('status').className='status err';$('status').textContent='Forecast unavailable. Check your internet connection and refresh.'}}}
-$('refresh').onclick=load;$('tempUnit').value=localStorage.tempUnit||'c';$('windUnit').value=localStorage.windUnit||'kmh';$('tempUnit').onchange=e=>{localStorage.tempUnit=e.target.value;render();renderMarine()};$('windUnit').onchange=e=>{localStorage.windUnit=e.target.value;render()};$('share').onclick=async()=>{let txt=DATA?`GibWeather: ${$('condition').textContent}, ${$('temp').textContent}, ${$('regime').textContent}, wind ${$('wind').textContent}.`:'GibWeather Gibraltar forecast';try{if(navigator.share)await navigator.share({title:'GibWeather',text:txt,url:location.href});else await navigator.clipboard.writeText(txt+' '+location.href)}catch(e){}};window.addEventListener('online',()=>{$('online').textContent='Online';load()});window.addEventListener('offline',()=>{$('online').textContent='Offline'});if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));load();setInterval(load,30*60*1000);
-</script>
-</body></html>
+  <a class="skip-link" href="#mainContent">Skip to forecast</a>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">🇬🇮 GIBRALTAR</div>
+        <h1>GibWeather</h1>
+      </div>
+      <button id="refreshBtn" type="button" class="icon-btn" aria-label="Refresh forecast" title="Refresh">↻</button>
+    </header>
+
+    <main id="mainContent" tabindex="-1">
+      <section id="statusBanner" class="status-banner" role="status" aria-live="polite" aria-atomic="true">Loading Gibraltar forecast…</section>
+      <div class="source-attribution" aria-label="Weather data source">Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a> · units/indicators adapted by GibWeather</div>
+
+      <section id="nowView" class="view active" data-view="now">
+        <article class="hero-card">
+          <div class="hero-top">
+            <div>
+              <div id="currentCondition" class="condition">—</div>
+              <div class="temperature-row">
+                <span id="currentIcon" class="weather-icon">⛅</span>
+                <span id="currentTemp" class="temperature">—°</span>
+              </div>
+              <div id="feelsLike" class="muted">Feels like —°C</div>
+            </div>
+            <div class="hero-meta">
+              <div id="updatedAt">Updated —</div>
+              <div id="onlineState" class="pill">Checking…</div>
+            </div>
+          </div>
+
+          <div id="weatherSummary" class="weather-summary">Building your Gibraltar outlook…</div>
+
+          <div class="gibraltar-grid">
+            <div class="special-card" id="levanterCard">
+              <div class="special-label">🌬️ LEVANTER</div>
+              <div id="levanterStatus" class="special-value">Calculating…</div>
+              <div id="levanterDetail" class="special-detail">—</div>
+              <div id="levanterConfidence" class="confidence">—</div>
+            </div>
+            <div class="special-card" id="rockCloudCard">
+              <div class="special-label">🏔️ ROCK CLOUD</div>
+              <div id="rockCloudStatus" class="special-value">Calculating…</div>
+              <div id="rockCloudDetail" class="special-detail">—</div>
+              <div id="rockCloudOutlook" class="confidence">—</div>
+            </div>
+          </div>
+        </article>
+
+        <section class="panel narrative-panel" aria-label="Gibraltar local forecast narrative">
+          <div class="section-heading">
+            <div><div class="eyebrow">LOCAL OUTLOOK</div><h2 id="narrativeTitle">Today & tonight</h2></div>
+            <span class="agreement-badge agreement-high">GibWeather</span>
+          </div>
+          <p id="localNarrative" class="narrative-copy">Building a plain-English Gibraltar forecast…</p>
+          <div class="narrative-grid">
+            <div><span>🌬️ Levanter</span><strong id="narrativeWind">—</strong></div>
+            <div><span>🌪️ Peak gust</span><strong id="narrativeGust">—</strong></div>
+            <div><span>🌧️ Rain window</span><strong id="narrativeRain">—</strong></div>
+            <div><span>🏔️ Rock Cloud</span><strong id="narrativeRock">—</strong></div>
+          </div>
+          <div class="mini-timeline-heading"><strong>Rain · next 12 hours</strong><small>Probability</small></div>
+          <div id="rainTimeline" class="rain-timeline" aria-label="Rain probability timeline"></div>
+          <p class="fineprint">This narrative is generated from GibWeather's forecast heuristics and is not an official warning or human forecaster bulletin.</p>
+        </section>
+
+        <section id="observationPanel" class="panel observation-panel" aria-label="Gibraltar Airport observed weather">
+          <div class="section-heading">
+            <div><div class="eyebrow">ACTUAL CONDITIONS · LXGB</div><h2>Gibraltar Airport observation</h2><p id="observationTime" class="subheading">Loading observation…</p></div>
+            <span id="observationBadge" class="agreement-badge">Checking…</span>
+          </div>
+          <div class="observation-grid">
+            <div><span>🌡️ Observed</span><strong id="obsTemp">—</strong><small id="obsTempDetail">—</small></div>
+            <div><span>💨 Wind</span><strong id="obsWind">—</strong><small id="obsWindDetail">—</small></div>
+            <div><span>👁️ Visibility</span><strong id="obsVisibility">—</strong><small id="obsCloud">—</small></div>
+            <div><span>📊 Pressure</span><strong id="obsPressure">—</strong><small id="obsRegime">—</small></div>
+          </div>
+          <div id="obsMatch" class="observation-match">Comparing observation with the current forecast…</div>
+          <details class="metar-details"><summary>Show raw airport report</summary><code id="obsRaw"></code></details>
+          <p class="fineprint">Observed weather from Gibraltar Airport (LXGB) via the NOAA/NWS Aviation Weather Center. Airport conditions can differ from other parts of Gibraltar. The METAR feed is refreshed by GibWeather's server-side updater because AviationWeather.gov does not permit browser CORS requests.</p>
+        </section>
+
+        <section class="panel advisory-panel" aria-label="GibWeather local guidance">
+          <div class="section-heading">
+            <div><div class="eyebrow">GIBWEATHER GUIDANCE</div><h2>Local advisories</h2></div>
+            <span id="advisoryBadge" class="advisory-badge">Checking…</span>
+          </div>
+          <div id="advisoryList" class="advisory-list"></div>
+          <p class="fineprint">These are automated GibWeather forecast flags, not official weather warnings.</p>
+        </section>
+
+        <section class="outlook-grid" aria-label="Next 24 hours overview">
+          <article class="outlook-card"><span>🌬️ Wind regime</span><strong id="windRegime">—</strong><small id="windOutlook">—</small></article>
+          <article class="outlook-card"><span>🌪️ Peak gust</span><strong id="peakGust24">—</strong><small id="peakGustTime">—</small></article>
+          <article class="outlook-card"><span>🌧️ Rain risk</span><strong id="rainRisk24">—</strong><small id="rainWindow24">—</small></article>
+        </section>
+
+        <section class="panel confidence-panel" aria-label="GibWeather forecast confidence">
+          <div class="section-heading">
+            <div><div class="eyebrow">GIBWEATHER CONFIDENCE</div><h2>Wind outlook confidence</h2></div>
+            <div id="forecastConfidenceBadge" class="agreement-badge">Checking…</div>
+          </div>
+          <p id="forecastConfidenceText" class="model-copy">Comparing model agreement and data freshness…</p>
+          <p class="fineprint">This is a GibWeather heuristic for the wind/Levanter outlook, not a probabilistic forecast or official confidence product.</p>
+        </section>
+
+        <section class="metrics-grid" aria-label="Current weather details">
+          <article class="metric"><span>💨 Wind</span><strong id="windNow">—</strong><small id="windDirNow">—</small></article>
+          <article class="metric"><span>🌪️ Gusts</span><strong id="gustNow">—</strong><small>10 m forecast</small></article>
+          <article class="metric"><span>💧 Humidity</span><strong id="humidityNow">—</strong><small id="dewPointNow">Dew point —</small></article>
+          <article class="metric"><span>🌧️ Rain</span><strong id="rainNow">—</strong><small id="rainAmountNow">— mm</small></article>
+          <article class="metric"><span>👁️ Visibility</span><strong id="visibilityNow">—</strong><small>Modelled</small></article>
+          <article class="metric"><span>☀️ UV</span><strong id="uvNow">—</strong><small id="uvTextNow">—</small></article>
+          <article class="metric"><span>📊 Pressure</span><strong id="pressureNow">—</strong><small>Sea level</small></article>
+          <article class="metric"><span>☁️ Low cloud</span><strong id="lowCloudNow">—</strong><small>Rock-cloud input</small></article>
+        </section>
+
+        <section class="panel">
+          <div class="section-heading">
+            <h2>Next 8 hours</h2>
+            <button class="text-btn" data-go="hourly">See hourly →</button>
+          </div>
+          <div id="nextHours" class="hour-strip"></div>
+        </section>
+
+        <section class="panel" aria-label="Today's Gibraltar forecast summary">
+          <div class="section-heading"><h2>Today at a glance</h2></div>
+          <div class="today-grid">
+            <div><span>🌡️ High / low</span><strong id="todayHighLow">—</strong><small id="todayFeelsRange">Feels —</small></div>
+            <div><span>🌧️ Max rain</span><strong id="todayRainMax">—</strong><small id="todayRainTotal">— mm total</small></div>
+            <div><span>☀️ Max UV</span><strong id="todayUvMax">—</strong><small id="todayUvLabel">—</small></div>
+            <div><span>☀️ Daylight</span><strong id="todayDaylight">—</strong><small><span id="sunriseToday">—</span> → <span id="sunsetToday">—</span></small></div>
+          </div>
+        </section>
+
+        <section class="panel local-panel">
+          <div>
+            <div class="eyebrow">LOCAL FORECASTER</div>
+            <h2>MeteoGib</h2>
+            <p>For Gibraltar-specific forecaster commentary and local context, check MeteoGib directly.</p>
+          </div>
+          <a class="primary-link" href="https://www.meteogib.com/" target="_blank" rel="noopener">Open MeteoGib ↗</a>
+        </section>
+      </section>
+
+      <section id="hourlyView" class="view" data-view="hourly">
+        <div class="page-title"><h2>Hourly forecast</h2><p>Next 48 hours · Gibraltar local time</p></div>
+        <article class="panel chart-panel">
+          <div class="section-heading"><div><div class="eyebrow">NEXT 24 HOURS</div><h3>Temperature & rain</h3></div></div>
+          <figure class="forecast-chart"><div id="temperatureRainChart" class="chart-wrap" role="img" aria-label="Temperature and rain chart loading"></div><figcaption>Temperature line with hourly rain-probability bars.</figcaption></figure>
+        </article>
+        <article class="panel chart-panel">
+          <div class="section-heading"><div><div class="eyebrow">NEXT 24 HOURS</div><h3>Wind & gusts</h3></div></div>
+          <figure class="forecast-chart"><div id="windGustChart" class="chart-wrap" role="img" aria-label="Wind and gust chart loading"></div><figcaption>Sustained 10 m wind with forecast gusts.</figcaption></figure>
+        </article>
+        <div id="hourlyList" class="hourly-list"></div>
+      </section>
+
+      <section id="dailyView" class="view" data-view="daily">
+        <div class="page-title"><h2>7-day forecast</h2><p>Highs, lows, rain, UV and wind</p></div>
+        <div id="dailyList" class="daily-list"></div>
+      </section>
+
+      <section id="windView" class="view" data-view="wind">
+        <div class="page-title"><h2>Wind & Levanter</h2><p>Experimental Gibraltar interpretation</p></div>
+        <article class="panel model-panel">
+          <div class="section-heading">
+            <div><div class="eyebrow">ECMWF · GFS · ICON</div><h3>Model agreement</h3></div>
+            <div id="modelAgreementBadge" class="agreement-badge">Loading…</div>
+          </div>
+          <p id="modelAgreementText" class="model-copy">Comparing wind forecasts…</p>
+          <div id="modelRows" class="model-rows"></div>
+          <p class="fineprint">Model agreement is a GibWeather comparison of forecast wind direction and speed. It is not an official confidence product.</p>
+        </article>
+        <article class="panel lev-timeline-panel">
+          <div class="section-heading"><div><div class="eyebrow">NEXT 12 HOURS</div><h3>Levanter timeline</h3></div></div>
+          <div id="levanterTimeline" class="levanter-timeline" aria-label="Levanter strength timeline"></div>
+          <p class="fineprint">Bar length follows forecast gust strength; the label combines wind direction, wind speed and GibWeather's Levanter heuristic.</p>
+        </article>
+        <article class="panel explainer">
+          <h3>Levanter outlook</h3>
+          <p id="levanterExplanation">Waiting for forecast data…</p>
+          <div class="legend">
+            <span>🟢 None</span><span>🔵 Light</span><span>🟠 Moderate</span><span>🔴 Strong</span>
+          </div>
+          <p class="fineprint">Levanter strength is based mainly on easterly wind and gusts. Humidity, dew-point spread and low cloud are used as supporting evidence, not as the definition of Levanter. This is experimental guidance, not an official warning.</p>
+        </article>
+        <div id="windHours" class="wind-list"></div>
+      </section>
+
+
+      <section id="seaView" class="view" data-view="sea">
+        <div class="page-title"><h2>Sea & Strait</h2><p>Wave, swell, sea temperature and current guidance</p></div>
+        <section id="seaStatus" class="status-banner notice" role="status">Loading marine forecast…</section>
+        <section class="metrics-grid" aria-label="Current Strait marine forecast">
+          <article class="metric"><span>🌊 Wave height</span><strong id="seaWaveNow">—</strong><small id="seaWaveDirNow">—</small></article>
+          <article class="metric"><span>⏱️ Wave period</span><strong id="seaPeriodNow">—</strong><small>Modelled</small></article>
+          <article class="metric"><span>🌡️ Sea temperature</span><strong id="seaTempNow">—</strong><small>Surface</small></article>
+          <article class="metric"><span>🧭 Ocean current</span><strong id="seaCurrentNow">—</strong><small>Modelled flow</small></article>
+          <article class="metric"><span>📏 Sea level</span><strong id="seaLevelNow">—</strong><small>Relative to global MSL</small></article>
+        </section>
+        <article class="panel">
+          <div class="section-heading"><div><div class="eyebrow">NEXT 24 HOURS</div><h3>Waves & swell</h3></div></div>
+          <div id="seaHours" class="sea-list"></div>
+        </article>
+        <article class="panel">
+          <div class="section-heading"><div><div class="eyebrow">NEXT 7 DAYS</div><h3>Daily sea outlook</h3></div></div>
+          <div id="seaDaily" class="sea-list"></div>
+        </article>
+        <article class="panel explainer">
+          <h3>Marine data caution</h3>
+          <p>Marine values are model guidance for the Strait of Gibraltar. Coastal tides and currents can be inaccurate at this resolution and must not be used for navigation or safety-critical decisions.</p>
+          <p class="fineprint">For boating or coastal safety, use official maritime information, local harbour guidance and an appropriate nautical forecast.</p>
+        </article>
+      </section>
+
+      <section id="radarView" class="view" data-view="radar">
+        <div class="page-title"><h2>Rain radar</h2><p>Recent precipitation · Gibraltar & Strait</p></div>
+        <section id="radarStatus" class="status-banner notice" role="status">Loading recent radar…</section>
+        <article class="panel radar-panel">
+          <div class="section-heading">
+            <div><div class="eyebrow">LAST 2 HOURS</div><h3>Radar history</h3><p id="radarFrameTime" class="subheading">—</p></div>
+            <span id="radarAgeBadge" class="agreement-badge">Checking…</span>
+          </div>
+          <div id="radarMap" class="radar-map" role="img" aria-label="Weather radar centred on Gibraltar">
+            <div id="radarTileGrid" class="radar-tile-grid" aria-hidden="true"></div>
+            <div class="radar-center-marker" aria-hidden="true"><span>🇬🇮</span></div>
+            <div class="radar-map-label" aria-hidden="true">Gibraltar</div>
+          </div>
+          <div class="radar-controls">
+            <button id="radarPlayBtn" class="secondary-btn radar-play" type="button">▶ Play</button>
+            <label class="radar-slider-label"><span>Older</span><input id="radarSlider" type="range" min="0" max="0" value="0" step="1" aria-label="Radar history frame"><span>Latest</span></label>
+          </div>
+          <div class="radar-attribution">Radar: <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">RainViewer</a> · Map: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a></div>
+          <p class="fineprint">Radar is observational history, not a forecast. RainViewer's public API provides past radar frames only; future nowcast frames are not available in the 2026 public API.</p>
+        </article>
+        <article class="panel explainer">
+          <h3>Using the radar in Gibraltar</h3>
+          <p>Use the timeline to see whether rain echoes are approaching, weakening or moving away from Gibraltar. Radar coverage and intensity can vary around the Strait and nearby mountains, so compare it with the hourly forecast and MeteoGib for local interpretation.</p>
+          <a class="primary-link" href="https://www.rainviewer.com/map.html" target="_blank" rel="noopener">Open full RainViewer map ↗</a>
+        </article>
+      </section>
+
+      <section id="aboutView" class="view" data-view="about">
+        <div class="page-title"><h2>About GibWeather</h2><p>Release v1.4</p></div>
+        <article class="panel about-copy">
+          <h3>Built for Gibraltar</h3>
+          <p>GibWeather is designed around local conditions: Levanter and Poniente flow, gusts, low cloud, humidity, visibility and rain.</p>
+          <h3>Forecast & observation sources</h3>
+          <p>Weather and marine forecasts are provided by Open-Meteo under CC BY 4.0. GibWeather uses the best-match forecast plus the Marine Weather API and keeps a last-known-good forecast on your device for offline fallback.</p>
+          <p>Current airport observations come from Gibraltar Airport METAR reports (LXGB) supplied by the NOAA/NWS Aviation Weather Center. GibWeather retrieves these server-side and publishes a small same-origin observation file for the app.</p>
+          <p>Recent rain-radar imagery is loaded on demand from RainViewer's public Weather Maps API and displayed over OpenStreetMap tiles. Radar imagery is not stored as part of the GibWeather offline forecast.</p>
+          <h3>MeteoGib</h3>
+          <p>MeteoGib is linked as an independent local forecast source. GibWeather does not scrape or republish MeteoGib forecasts and is not affiliated with MeteoGib.</p>
+          <h3>App status</h3>
+          <div class="status-grid">
+            <div><span>Version</span><strong id="versionText">v1.4</strong></div>
+            <div><span>Last refresh</span><strong id="lastRefreshText">—</strong></div>
+            <div><span>Data age</span><strong id="dataAgeText">—</strong></div>
+            <div><span>Connection</span><strong id="connectionText">—</strong></div>
+          </div>
+          <div class="action-row">
+            <button id="shareBtn" class="secondary-btn" type="button">Share forecast</button>
+            <button id="clearCacheBtn" class="secondary-btn" type="button">Clear saved forecast</button>
+          </div>
+
+          <h3>Preferences</h3>
+          <p id="settingsSummary">°C · km/h · refresh every 30 min</p>
+          <div class="settings-grid">
+            <label><span>Temperature</span><select id="temperatureUnitSelect"><option value="c">Celsius (°C)</option><option value="f">Fahrenheit (°F)</option></select></label>
+            <label><span>Wind speed</span><select id="windUnitSelect"><option value="kmh">km/h</option><option value="mph">mph</option></select></label>
+            <label><span>Auto refresh</span><select id="refreshIntervalSelect"><option value="15">Every 15 min</option><option value="30">Every 30 min</option><option value="60">Every 60 min</option></select></label>
+          </div>
+          <div class="action-row">
+            <button id="saveSettingsBtn" class="secondary-btn" type="button">Save preferences</button>
+            <button id="resetSettingsBtn" class="secondary-btn" type="button">Reset defaults</button>
+          </div>
+
+          <h3>System health</h3>
+          <p>Checks GibWeather's live forecast feed, airport observation, model comparison, marine feed, offline shell, saved data, secure hosting and installed-app status.</p>
+          <div id="healthGrid" class="health-grid" aria-label="GibWeather system health"></div>
+          <button id="healthCheckBtn" class="secondary-btn" type="button">Run health check</button>
+
+          <h3>Install on iPhone/iPad</h3>
+          <p id="installState">Once hosted over HTTPS, open GibWeather in Safari, tap Share, then choose <strong>Add to Home Screen</strong>.</p>
+          <div id="installDiagnostics" class="diagnostic-grid" aria-label="Installation readiness"></div>
+          <button id="installCheckBtn" class="secondary-btn" type="button">Check install readiness</button>
+          <button id="installHelpBtn" class="secondary-btn" type="button">Show installation steps</button>
+          <div id="installHelp" class="install-help" hidden>
+            <ol>
+              <li>Open the GibWeather web address in <strong>Safari</strong>.</li>
+              <li>Tap <strong>More/Share</strong>.</li>
+              <li>Choose <strong>Add to Home Screen</strong>.</li>
+              <li>Turn on <strong>Open as Web App</strong>.</li>
+              <li>Tap <strong>Add</strong>. GibWeather will then open in its own app window.</li>
+            </ol>
+          </div>
+          <h3>Privacy</h3>
+          <p>GibWeather v1.4 has no account, advertising SDK or analytics tracker. The last successful forecast and your app preferences are stored locally on this device.</p>
+          <p class="fineprint">The Levanter and Rock Cloud indicators are experimental guidance only. For official or safety-critical weather information, use the relevant official authority or a qualified local forecaster.</p>
+        </article>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Main navigation">
+      <button class="nav-btn active" type="button" data-target="now" aria-current="page"><span>☀️</span><small>Now</small></button>
+      <button class="nav-btn" type="button" data-target="hourly"><span>🕐</span><small>Hourly</small></button>
+      <button class="nav-btn" type="button" data-target="daily"><span>📅</span><small>7 Days</small></button>
+      <button class="nav-btn" type="button" data-target="wind"><span>🌬️</span><small>Wind</small></button>
+      <button class="nav-btn" type="button" data-target="sea"><span>🌊</span><small>Sea</small></button>
+      <button class="nav-btn" type="button" data-target="radar"><span>🌧️</span><small>Radar</small></button>
+      <button class="nav-btn" type="button" data-target="about"><span>ⓘ</span><small>About</small></button>
+    </nav>
+  </div>
+
+  <div id="onboarding" class="onboarding-backdrop" hidden>
+    <section class="onboarding-card" role="dialog" aria-modal="true" aria-labelledby="onboardingTitle">
+      <div class="onboarding-mark">🇬🇮</div>
+      <div class="eyebrow">WELCOME TO</div>
+      <h2 id="onboardingTitle">GibWeather</h2>
+      <p>A Gibraltar-first forecast with live Gibraltar Airport observations, Levanter, Poniente, Rock Cloud, rain, wind and Strait guidance in one place.</p>
+      <div class="onboarding-points">
+        <div><span>🌬️</span><strong>Local wind focus</strong><small>Levanter and Poniente interpretation</small></div>
+        <div><span>🏔️</span><strong>Rock Cloud</strong><small>Experimental low-cloud likelihood</small></div>
+        <div><span>🛫</span><strong>Airport observation</strong><small>Actual LXGB conditions vs the forecast</small></div>
+        <div><span>📊</span><strong>Model comparison</strong><small>ECMWF, GFS and ICON wind agreement</small></div>
+        <div><span>🌊</span><strong>Strait marine outlook</strong><small>Waves, swell, sea temperature and currents</small></div>
+        <div><span>🌧️</span><strong>Rain radar</strong><small>Recent radar history centred on Gibraltar</small></div>
+      </div>
+      <p class="fineprint">GibWeather guidance is experimental and is not an official weather-warning service.</p>
+      <button id="startBtn" class="primary-btn" type="button">Start GibWeather</button>
+    </section>
+  </div>
+
+  <div id="updateToast" class="update-toast" hidden role="status">
+    <div><strong>GibWeather updated</strong><small>A newer app shell is ready.</small></div>
+    <button id="reloadAppBtn" type="button">Reload</button>
+  </div>
+
+  <script src="app.js" defer></script>
+</body>
+</html>

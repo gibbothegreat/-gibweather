@@ -2,13 +2,36 @@
   "id": "./",
   "name": "GibWeather",
   "short_name": "GibWeather",
-  "description": "Gibraltar-first weather with Levanter, Rock Cloud, hourly and 7-day forecasts, and Strait marine guidance.",
+  "description": "Gibraltar-first weather with LXGB observations, Levanter, Rock Cloud, rain radar, forecasts and Strait marine guidance.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#06121d",
+  "background_color": "#07131f",
   "theme_color": "#0b2239",
   "orientation": "portrait-primary",
+  "categories": [
+    "weather",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
   "lang": "en-GB",
-  "categories": ["weather","utilities"]
+  "dir": "ltr",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "prefer_related_applications": false
 }
