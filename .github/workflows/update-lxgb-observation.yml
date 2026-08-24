@@ -1,0 +1,41 @@
+name: Update Gibraltar Airport observation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/update-lxgb-observation.yml'
+      - 'scripts/update_lxgb_observation.py'
+  schedule:
+    - cron: '23,53 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lxgb-observation
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: main
+      - name: Fetch latest LXGB METAR
+        run: python3 scripts/update_lxgb_observation.py
+      - name: Publish changed observation
+        shell: bash
+        run: |
+          if git diff --quiet -- data/lxgb-observation.json; then
+            echo "No new observation."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/lxgb-observation.json
+          git commit -m "chore: update LXGB observation"
+          git push
