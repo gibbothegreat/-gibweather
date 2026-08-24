@@ -18,18 +18,33 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Rebuild and deploy v1.4 when package is complete
+      - name: Rebuild and deploy v1.4 when corrected package is complete
         shell: bash
         run: |
           set -euo pipefail
-          shopt -s nullglob
-          parts=(.deploy/v14/part-*)
-          if [ "${#parts[@]}" -ne 10 ]; then
-            echo "Package incomplete: ${#parts[@]}/10 parts present."
-            exit 0
-          fi
+          files=(
+            .deploy/v14/part-00
+            .deploy/v14/part-01
+            .deploy/v14/part-02
+            .deploy/v14/part-03
+            .deploy/v14/part-04
+            .deploy/v14/fix-05a
+            .deploy/v14/fix-05b
+            .deploy/v14/part-06
+            .deploy/v14/part-07
+            .deploy/v14/fix-08a
+            .deploy/v14/fix-08b
+            .deploy/v14/part-09
+          )
+          for f in "${files[@]}"; do
+            if [ ! -f "$f" ]; then
+              echo "Package correction incomplete: missing $f"
+              exit 0
+            fi
+          done
 
-          cat "${parts[@]}" | base64 -d > /tmp/gibweather-v1.4.zip
+          cat "${files[@]}" | base64 -d > /tmp/gibweather-v1.4.zip
+          unzip -t /tmp/gibweather-v1.4.zip
           rm -rf /tmp/gibweather-v1.4
           mkdir -p /tmp/gibweather-v1.4
           unzip -oq /tmp/gibweather-v1.4.zip -d /tmp/gibweather-v1.4
