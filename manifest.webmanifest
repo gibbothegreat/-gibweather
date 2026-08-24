@@ -1,0 +1,14 @@
+{
+  "id": "./",
+  "name": "GibWeather",
+  "short_name": "GibWeather",
+  "description": "Gibraltar-first weather with Levanter, Rock Cloud, hourly and 7-day forecasts, and Strait marine guidance.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#06121d",
+  "theme_color": "#0b2239",
+  "orientation": "portrait-primary",
+  "lang": "en-GB",
+  "categories": ["weather","utilities"]
+}
