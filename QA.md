@@ -1,4 +1,4 @@
-# GibWeather v1.5 QA
+# GibWeather v1.6 QA
 
 ## Release validation
 Run:
@@ -7,14 +7,18 @@ Run:
 python3 scripts/validate_release.py
 ```
 
-Expected result: `GibWeather v1.5 release validation passed`.
+Expected result: `GibWeather v1.6 release validation passed`.
 
 ## Smart-alert checks
 - Important alerts sort above Watch and Info alerts.
-- Wind, rain, visibility, UV and Levanter thresholds retain their v1.4 behaviour.
+- Default wind, rain, visibility, UV and Levanter thresholds retain their v1.5 behaviour.
 - Likely and possible Rock Cloud signals include the expected time.
 - Modelled wave heights of 2 m or more trigger rough-sea guidance; 3 m or more is Important.
 - Missing marine data does not block land-weather alerts.
+- Switching off a category suppresses only that alert type.
+- Personal wind, rain, visibility, UV and wave thresholds control when guidance first appears.
+- Switching off every category shows a paused state rather than a false all-clear.
+- The header count excludes the paused/all-clear information row.
 
 Run `node scripts/test_smart_alerts.js` for the synthetic threshold and severity-order smoke test.
 

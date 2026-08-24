@@ -1,5 +1,13 @@
 # GibWeather changelog
 
+## v1.6 · Custom alerts
+- Lets each device choose which Gibraltar alert categories are enabled: wind, rain, visibility, UV, Levanter, Rock Cloud and rough seas.
+- Adds personal trigger thresholds for gusts, rain chance, visibility, UV and modelled wave height.
+- Keeps higher **Important** severity thresholds fixed while personal thresholds control when guidance first appears.
+- Shows the current custom-alert count beside the version badge at the top of the app.
+- Saves alert choices locally alongside the existing unit and refresh preferences.
+- Adds synthetic coverage for disabled categories, custom thresholds, paused alerts and the header count.
+
 ## v1.5 · Smart Gibraltar alerts
 - Promotes alerts near the top of the Now screen so important local conditions are visible immediately.
 - Adds clear **Important**, **Watch** and **Info** severity labels plus a highest-priority summary.

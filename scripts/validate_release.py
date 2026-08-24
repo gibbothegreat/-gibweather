@@ -77,6 +77,16 @@ need('RainViewer' in HTML and 'OpenStreetMap contributors' in HTML,'radar attrib
 need('data-view=\"radar\"' in HTML,'radar view missing')
 need(f'Release v{version.get("version")}' in HTML,'About release label and version.json disagree')
 
+# Custom-alert release guardrails.
+for control_id in (
+    'topAlertCount','alertWindToggle','alertRainToggle','alertVisibilityToggle','alertUvToggle',
+    'alertLevanterToggle','alertRockCloudToggle','alertSeaToggle','alertGustThresholdSelect',
+    'alertRainThresholdSelect','alertVisibilityThresholdSelect','alertUvThresholdSelect','alertWaveThresholdSelect'
+):
+    need(f'id="{control_id}"' in HTML,f'custom alert control missing: {control_id}')
+need('activeAlertCategoryCount' in APP,'custom alert category logic missing')
+need('alertThreshold' in APP,'custom alert threshold logic missing')
+
 # METAR updater identity/version.
 updater=(ROOT/'scripts/update_lxgb_observation.py').read_text()
 need('LXGB' in updater,'LXGB updater station missing')

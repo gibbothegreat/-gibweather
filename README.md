@@ -1,4 +1,4 @@
-# GibWeather v1.5
+# GibWeather v1.6
 
 GibWeather is a Gibraltar-first Progressive Web App for iPhone, iPad and modern browsers.
 
@@ -20,6 +20,7 @@ GibWeather is a Gibraltar-first Progressive Web App for iPhone, iPad and modern 
 - Recent Gibraltar-centred rain radar history with timeline animation
 - Direct MeteoGib link for local forecaster commentary
 - Smart Gibraltar alerts with severity, timing, Rock Cloud and rough-sea guidance
+- Per-device alert categories and personal trigger thresholds with a live header count
 
 ## v1.2 reliability release
 v1.2 corrects the live API contracts used by the app. The main Open-Meteo forecast request now explicitly asks for the daily fields needed by the Today and 7-day screens. The Open-Meteo Marine request now uses only supported marine daily aggregations (`wave_height_max`, dominant wave direction, period, and swell equivalents). A release validator is included at `scripts/validate_release.py` to guard against mixing atmospheric and marine API variables in future builds.
@@ -55,13 +56,13 @@ The bundled `data/lxgb-observation.json` is an unavailable placeholder until the
 python3 scripts/validate_release.py
 ```
 
-This checks JavaScript syntax, manifest/version consistency, HTML/JavaScript DOM references, app-shell files, deployment JSON/TOML, the main daily forecast contract, the Marine API daily contract, and the LXGB updater configuration.
+This checks JavaScript syntax, custom-alert behavior, manifest/version consistency, HTML/JavaScript DOM references, app-shell files, deployment JSON/TOML, the main daily forecast contract, the Marine API daily contract, and the LXGB updater configuration.
 
 ## Deploy
 GibWeather is a static app. Deployment configurations are included for GitHub Pages, Netlify and Vercel. See `DEPLOY.md`.
 
 ## Release status
-v1.5 is the stable smart-alerts release. The prominent alert panel ranks important and watch-level Gibraltar conditions for the next 24 hours, including gusts, rain, visibility, UV, Levanter, Rock Cloud and modelled Strait waves. It retains the v1.4 local narrative, timelines, radar, LXGB observation, marine and model-comparison features.
+v1.6 is the stable custom-alerts release. Each device can enable the Gibraltar conditions it cares about and choose personal trigger thresholds for gusts, rain, visibility, UV and modelled Strait waves. Important severity thresholds remain fixed, and the live custom-alert count appears at the top of the app. It retains the v1.5 severity ranking, local narrative, timelines, radar, LXGB observation, marine and model-comparison features.
 
 
 ## Rain radar (v1.3)

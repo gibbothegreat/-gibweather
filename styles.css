@@ -47,6 +47,13 @@ p { line-height: 1.5; }
   background: rgba(206,17,38,.88); color: #fff;
   box-shadow: 0 3px 10px rgba(0,0,0,.2); font-size: 11px; font-weight: 800; letter-spacing: .3px;
 }
+.top-alert-count {
+  display:inline-flex; align-items:center; min-height:21px; padding:2px 7px;
+  border:1px solid var(--line); border-radius:999px; background:rgba(255,255,255,.07);
+  color:var(--accent2); font-size:11px; font-weight:800; letter-spacing:.2px;
+}
+.top-alert-count.count-medium { color:#ffe08a; border-color:rgba(255,210,74,.38); background:rgba(255,210,74,.10); }
+.top-alert-count.count-high { color:#ffb0b0; border-color:rgba(255,91,91,.42); background:rgba(255,91,91,.11); }
 .icon-btn {
   width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line);
   background: rgba(255,255,255,.06); color: var(--text); font-size: 24px; cursor: pointer;
@@ -280,7 +287,22 @@ main { padding: 0 14px 20px; }
 .settings-grid label { display:block; padding:10px 11px; border:1px solid var(--line); border-radius:13px; background:rgba(255,255,255,.035); }
 .settings-grid label > span { display:block; margin-bottom:7px; color:var(--muted); font-size:11px; }
 .settings-grid select { width:100%; border:1px solid var(--line); border-radius:10px; padding:9px 10px; background:#0b2239; color:var(--text); font:inherit; font-size:12px; }
+.alert-toggle-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:10px 0; }
+.alert-toggle {
+  display:flex; align-items:center; gap:9px; min-height:44px; padding:10px 11px;
+  border:1px solid var(--line); border-radius:13px; background:rgba(255,255,255,.035); cursor:pointer;
+}
+.alert-toggle input { width:18px; height:18px; margin:0; accent-color:var(--accent); }
+.alert-toggle span { color:var(--text); font-size:12px; font-weight:700; }
+.alert-threshold-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
 @media (max-width: 540px) { .settings-grid { grid-template-columns:1fr; } }
+@media (max-width: 380px) {
+  .topbar { padding-left:14px; padding-right:14px; }
+  h1 { font-size:25px; }
+  .brand-title { gap:6px; }
+  .top-version,.top-alert-count { padding-left:6px; padding-right:6px; }
+  .alert-toggle-grid { grid-template-columns:1fr; }
+}
 
 
 /* v0.8 daily summary, charts and accessibility */

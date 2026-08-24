@@ -116,6 +116,13 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+function setAlertSettings(overrides = {}) {
+  context.__settingsOverrides = overrides;
+  vm.runInContext('settings = { ...DEFAULT_SETTINGS, ...__settingsOverrides };', context);
+  delete context.__settingsOverrides;
+}
+
+setAlertSettings();
 const severe = context.buildAdvisories(weather({
   humidity: 92, dew: 23, rain: 82, lowCloud: 95, visibility: 1800,
   wind: 45, direction: 90, gust: 66, uv: 9
@@ -133,4 +140,30 @@ assert(clear.length === 1 && clear[0].title === 'No notable forecast flags', 'Cl
 const landOnly = context.buildAdvisories(weather({ rain: 75 }), 0, null);
 assert(landOnly.some(item => item.title === 'High rain chance'), 'Missing marine data blocked land alert generation');
 
-process.stdout.write('Smart Gibraltar alert smoke test passed\n');
+setAlertSettings({ alertRain: false });
+const rainDisabled = context.buildAdvisories(weather({ rain: 82 }), 0, null);
+assert(!rainDisabled.some(item => /rain|shower/i.test(item.title)), 'Disabled rain category still generated an alert');
+
+setAlertSettings({ alertRainThreshold: 70 });
+const belowCustomRain = context.buildAdvisories(weather({ rain: 65 }), 0, null);
+assert(!belowCustomRain.some(item => /rain|shower/i.test(item.title)), 'Rain alert ignored the custom threshold');
+
+setAlertSettings({ alertRainThreshold: 60 });
+const atCustomRain = context.buildAdvisories(weather({ rain: 60 }), 0, null);
+assert(atCustomRain.some(item => item.title === 'Showers possible'), 'Rain alert did not trigger at the custom threshold');
+
+setAlertSettings({
+  alertWind: false, alertRain: false, alertVisibility: false, alertUv: false,
+  alertLevanter: false, alertRockCloud: false, alertSea: false
+});
+const paused = context.buildAdvisories(weather({ gust: 70, rain: 90, uv: 10 }), 0, marine(3.5));
+assert(paused.length === 1 && paused[0].title === 'Custom alerts paused', 'All categories off should show the paused state');
+
+setAlertSettings({
+  alertWind: false, alertVisibility: false, alertUv: false,
+  alertLevanter: false, alertRockCloud: false, alertSea: false
+});
+context.renderAdvisories(weather({ rain: 82 }), null);
+assert(element('topAlertCount').textContent === '🔔 1', 'Header alert count did not update');
+
+process.stdout.write('GibWeather custom alert smoke test passed\n');

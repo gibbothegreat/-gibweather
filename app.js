@@ -1,11 +1,20 @@
-const APP_VERSION = '1.5';
+const APP_VERSION = '1.6';
 const GIBRALTAR = { lat: 36.1408, lon: -5.3536, timezone: 'Europe/Gibraltar' };
-const CACHE_KEY = 'gibweather:last-forecast:v15';
+const CACHE_KEY = 'gibweather:last-forecast:v16';
 const BACKUP_CACHE_KEY = 'gibweather:last-known-good:v1';
-const LEGACY_CACHE_KEYS = ['gibweather:last-forecast:v14','gibweather:last-forecast:v13','gibweather:last-forecast:v12','gibweather:last-forecast:v11','gibweather:last-forecast:v10','gibweather:last-forecast:v8','gibweather:last-forecast:v7','gibweather:last-forecast:v6', 'gibweather:last-forecast:v5', 'gibweather:last-forecast:v4', 'gibweather:last-forecast:v3', 'gibweather:last-forecast:v2', 'gibweather:last-forecast:v1'];
+const LEGACY_CACHE_KEYS = ['gibweather:last-forecast:v15','gibweather:last-forecast:v14','gibweather:last-forecast:v13','gibweather:last-forecast:v12','gibweather:last-forecast:v11','gibweather:last-forecast:v10','gibweather:last-forecast:v8','gibweather:last-forecast:v7','gibweather:last-forecast:v6', 'gibweather:last-forecast:v5', 'gibweather:last-forecast:v4', 'gibweather:last-forecast:v3', 'gibweather:last-forecast:v2', 'gibweather:last-forecast:v1'];
 const INTRO_KEY = 'gibweather:intro-seen';
 const SETTINGS_KEY = 'gibweather:settings:v1';
-const DEFAULT_SETTINGS = { temperatureUnit: 'c', windUnit: 'kmh', refreshMinutes: 30 };
+const DEFAULT_SETTINGS = {
+  temperatureUnit: 'c', windUnit: 'kmh', refreshMinutes: 30,
+  alertWind: true, alertRain: true, alertVisibility: true, alertUv: true,
+  alertLevanter: true, alertRockCloud: true, alertSea: true,
+  alertGustThreshold: 40, alertRainThreshold: 45, alertVisibilityThreshold: 6000,
+  alertUvThreshold: 6, alertWaveThreshold: 2
+};
+const ALERT_TOGGLE_KEYS = [
+  'alertWind','alertRain','alertVisibility','alertUv','alertLevanter','alertRockCloud','alertSea'
+];
 const OBSERVATION_URL = './data/lxgb-observation.json';
 const RADAR_API_URL = 'https://api.rainviewer.com/public/weather-maps.json';
 const RADAR_ZOOM = 7;
@@ -325,6 +334,15 @@ function applyStateCard(el, state) {
   el.classList.add(state.className);
 }
 
+function activeAlertCategoryCount(prefs = settings) {
+  return ALERT_TOGGLE_KEYS.filter(key => prefs[key] !== false).length;
+}
+
+function alertThreshold(key) {
+  const value = Number(settings[key]);
+  return Number.isFinite(value) ? value : Number(DEFAULT_SETTINGS[key]);
+}
+
 function buildAdvisories(data, start, marine = marineData) {
   const next24 = snapshots(data, start, 24);
   const next12 = next24.slice(0, 12);
@@ -348,73 +366,82 @@ function buildAdvisories(data, start, marine = marineData) {
     peakWave = marineHours.reduce((best, x) => Number(x.wave) > Number(best?.wave ?? -Infinity) ? x : best, null);
   }
 
-  if (Number(peakGust?.gust) >= 60) advisories.push({
+  const gustThreshold = alertThreshold('alertGustThreshold');
+  const rainThreshold = alertThreshold('alertRainThreshold');
+  const visibilityThreshold = alertThreshold('alertVisibilityThreshold');
+  const uvThreshold = alertThreshold('alertUvThreshold');
+  const waveThreshold = alertThreshold('alertWaveThreshold');
+
+  if (settings.alertWind !== false && Number(peakGust?.gust) >= gustThreshold && Number(peakGust?.gust) >= 60) advisories.push({
     icon: '🌪️', title: 'Strong gusts', level: 'high',
     detail: `Peak gusts around ${formatWind(peakGust.gust)} in the next 24 hours.`, time: fmtTime(peakGust.time)
   });
-  else if (Number(peakGust?.gust) >= 40) advisories.push({
+  else if (settings.alertWind !== false && Number(peakGust?.gust) >= gustThreshold) advisories.push({
     icon: '💨', title: 'Breezy / gusty', level: 'medium',
     detail: `Gusts may reach about ${formatWind(peakGust.gust)}.`, time: fmtTime(peakGust.time)
   });
 
-  if (Number(peakRain?.rainChance) >= 70) advisories.push({
+  if (settings.alertRain !== false && Number(peakRain?.rainChance) >= rainThreshold && Number(peakRain?.rainChance) >= 70) advisories.push({
     icon: '🌧️', title: 'High rain chance', level: 'high',
     detail: `Rain probability peaks near ${round(peakRain.rainChance)}%.`, time: fmtTime(peakRain.time)
   });
-  else if (Number(peakRain?.rainChance) >= 45) advisories.push({
+  else if (settings.alertRain !== false && Number(peakRain?.rainChance) >= rainThreshold) advisories.push({
     icon: '🌦️', title: 'Showers possible', level: 'medium',
     detail: `Rain probability reaches ${round(peakRain.rainChance)}%.`, time: fmtTime(peakRain.time)
   });
 
-  if (Number(lowestVisibility?.visibility) > 0 && Number(lowestVisibility.visibility) < 3000) advisories.push({
+  if (settings.alertVisibility !== false && Number(lowestVisibility?.visibility) > 0 && Number(lowestVisibility.visibility) <= visibilityThreshold && Number(lowestVisibility.visibility) < 3000) advisories.push({
     icon: '🌫️', title: 'Poor visibility', level: 'high',
     detail: `Modelled visibility could fall to ${kmVisibility(lowestVisibility.visibility)}.`, time: fmtTime(lowestVisibility.time)
   });
-  else if (Number(lowestVisibility?.visibility) > 0 && Number(lowestVisibility.visibility) < 6000) advisories.push({
+  else if (settings.alertVisibility !== false && Number(lowestVisibility?.visibility) > 0 && Number(lowestVisibility.visibility) <= visibilityThreshold) advisories.push({
     icon: '👁️', title: 'Reduced visibility', level: 'medium',
     detail: `Modelled visibility could fall to ${kmVisibility(lowestVisibility.visibility)}.`, time: fmtTime(lowestVisibility.time)
   });
 
-  if (Number(peakUV?.uv) >= 8) advisories.push({
+  if (settings.alertUv !== false && Number(peakUV?.uv) >= uvThreshold && Number(peakUV?.uv) >= 8) advisories.push({
     icon: '☀️', title: 'Very high UV', level: 'high',
     detail: `UV index may reach ${Number(peakUV.uv).toFixed(1)}.`, time: fmtTime(peakUV.time)
   });
-  else if (Number(peakUV?.uv) >= 6) advisories.push({
+  else if (settings.alertUv !== false && Number(peakUV?.uv) >= uvThreshold) advisories.push({
     icon: '☀️', title: 'High UV', level: 'medium',
     detail: `UV index may reach ${Number(peakUV.uv).toFixed(1)}.`, time: fmtTime(peakUV.time)
   });
 
-  if (peakLev?.state.rank >= 3) advisories.push({
+  if (settings.alertLevanter !== false && peakLev?.state.rank >= 3) advisories.push({
     icon: '🌬️', title: 'Strong Levanter signal', level: 'high',
     detail: `${peakLev.state.detail}. ${peakLev.state.confidence}.`, time: fmtTime(peakLev.s.time)
   });
-  else if (peakLev?.state.rank >= 2) advisories.push({
+  else if (settings.alertLevanter !== false && peakLev?.state.rank >= 2) advisories.push({
     icon: '🌬️', title: 'Levanter signal', level: 'medium',
     detail: `${peakLev.state.detail}.`, time: fmtTime(peakLev.s.time)
   });
 
-  if (peakRock?.state.rank >= 2) advisories.push({
+  if (settings.alertRockCloud !== false && peakRock?.state.rank >= 2) advisories.push({
     icon: '🏔️', title: 'Rock Cloud likely', level: 'medium',
     detail: `Low cloud and humidity favour Rock Cloud conditions. ${peakRock.state.detail}.`, time: fmtTime(peakRock.s.time)
   });
-  else if (peakRock?.state.rank >= 1) advisories.push({
+  else if (settings.alertRockCloud !== false && peakRock?.state.rank >= 1) advisories.push({
     icon: '🌥️', title: 'Rock Cloud possible', level: 'low',
     detail: `There is a weaker Rock Cloud signal. ${peakRock.state.detail}.`, time: fmtTime(peakRock.s.time)
   });
 
-  if (Number(peakWave?.wave) >= 3) advisories.push({
+  if (settings.alertSea !== false && Number(peakWave?.wave) >= waveThreshold && Number(peakWave?.wave) >= 3) advisories.push({
     icon: '🌊', title: 'Very rough sea guidance', level: 'high',
     detail: `Modelled waves may reach ${formatWave(peakWave.wave)} in the Strait. Do not use GibWeather for navigation.`, time: fmtTime(peakWave.time)
   });
-  else if (Number(peakWave?.wave) >= 2) advisories.push({
+  else if (settings.alertSea !== false && Number(peakWave?.wave) >= waveThreshold) advisories.push({
     icon: '🌊', title: 'Rough sea guidance', level: 'medium',
     detail: `Modelled waves may reach ${formatWave(peakWave.wave)} in the Strait.`, time: fmtTime(peakWave.time)
   });
 
-  if (!advisories.length) advisories.push({
-    icon: '✅', title: 'No notable forecast flags', level: 'low',
-    detail: 'No strong wind, high rain, poor visibility, high UV, strong Levanter, likely Rock Cloud or rough-sea thresholds are triggered.', time: '24h'
-  });
+  if (!advisories.length) {
+    const paused = activeAlertCategoryCount() === 0;
+    advisories.push({
+      icon: paused ? '⏸️' : '✅', title: paused ? 'Custom alerts paused' : 'No notable forecast flags', level: 'low', isClear: true,
+      detail: paused ? 'All custom alert categories are switched off.' : 'None of your enabled custom alert thresholds are triggered.', time: '24h'
+    });
+  }
   const priority = { high: 0, medium: 1, low: 2 };
   return advisories.sort((a, b) => priority[a.level] - priority[b.level]).slice(0, 7);
 }
@@ -424,20 +451,28 @@ function renderAdvisories(data, marine = marineData) {
   const items = buildAdvisories(data, start, marine);
   const high = items.filter(x => x.level === 'high').length;
   const medium = items.filter(x => x.level === 'medium').length;
+  const alertCount = items.filter(x => !x.isClear).length;
+  const activeCategories = activeAlertCategoryCount();
   const state = high ? 'high' : medium ? 'medium' : 'low';
   const panel = $('smartAlertsPanel');
   panel.classList.remove('alert-state-waiting','alert-state-low','alert-state-medium','alert-state-high');
   panel.classList.add(`alert-state-${state}`);
   $('advisoryBadge').className = `advisory-badge badge-${state}`;
-  $('advisoryBadge').textContent = high
+  $('advisoryBadge').textContent = !activeCategories ? 'Paused' : high
     ? `${high} important${medium ? ` · ${medium} watch` : ''}`
     : medium ? `${medium} watch` : 'All clear';
+  const topCount = $('topAlertCount');
+  if (topCount) {
+    topCount.className = `top-alert-count count-${state}`;
+    topCount.textContent = `🔔 ${alertCount}`;
+    topCount.setAttribute('aria-label', `${alertCount} custom weather alert${alertCount === 1 ? '' : 's'}`);
+  }
   const lead = items[0];
-  const summaryTitle = high ? 'Important conditions expected' : medium ? 'Conditions to watch' : 'No important alerts';
+  const summaryTitle = !activeCategories ? 'Custom alerts paused' : high ? 'Important conditions expected' : medium ? 'Conditions to watch' : 'No important alerts';
   const summaryDetail = high || medium
     ? `${lead.title} is the highest-priority flag for the next 24 hours.`
-    : 'No high-severity Gibraltar weather or marine thresholds are currently triggered.';
-  $('alertSummary').innerHTML = `<span class="alert-summary-icon">${high ? '🔴' : medium ? '🟠' : '🟢'}</span><div><strong>${summaryTitle}</strong><small>${summaryDetail}</small></div>`;
+    : !activeCategories ? 'Turn on the categories you want in About → Custom alerts.' : 'None of your enabled Gibraltar weather or marine thresholds are currently triggered.';
+  $('alertSummary').innerHTML = `<span class="alert-summary-icon">${!activeCategories ? '⏸️' : high ? '🔴' : medium ? '🟠' : '🟢'}</span><div><strong>${summaryTitle}</strong><small>${summaryDetail}</small></div>`;
   const levelLabel = { high: 'Important', medium: 'Watch', low: 'Info' };
   $('advisoryList').innerHTML = items.map(x => `<div class="advisory-item level-${x.level}" role="listitem">
     <div class="advisory-icon">${x.icon}</div>
@@ -502,16 +537,47 @@ function renderSettings() {
   if (t) t.value = settings.temperatureUnit;
   if (w) w.value = settings.windUnit;
   if (r) r.value = String(settings.refreshMinutes);
+  const toggles = {
+    alertWindToggle: 'alertWind', alertRainToggle: 'alertRain',
+    alertVisibilityToggle: 'alertVisibility', alertUvToggle: 'alertUv',
+    alertLevanterToggle: 'alertLevanter', alertRockCloudToggle: 'alertRockCloud',
+    alertSeaToggle: 'alertSea'
+  };
+  Object.entries(toggles).forEach(([id, key]) => { if ($(id)) $(id).checked = settings[key] !== false; });
+  const thresholds = {
+    alertGustThresholdSelect: 'alertGustThreshold', alertRainThresholdSelect: 'alertRainThreshold',
+    alertVisibilityThresholdSelect: 'alertVisibilityThreshold', alertUvThresholdSelect: 'alertUvThreshold',
+    alertWaveThresholdSelect: 'alertWaveThreshold'
+  };
+  Object.entries(thresholds).forEach(([id, key]) => { if ($(id)) $(id).value = String(alertThreshold(key)); });
   const summary = $('settingsSummary');
   if (summary) summary.textContent = `${tempUnitLabel()} · ${windUnitLabel()} · refresh every ${settings.refreshMinutes} min`;
+  const alertSummary = $('alertSettingsSummary');
+  if (alertSummary) alertSummary.textContent = `${activeAlertCategoryCount()} of ${ALERT_TOGGLE_KEYS.length} alert types on · saved on this device`;
 }
 
 function applySettingsFromUI() {
   const t = $('temperatureUnitSelect'), w = $('windUnitSelect'), r = $('refreshIntervalSelect');
+  const selectNumber = (id, allowed, fallback) => {
+    const value = Number($(id)?.value);
+    return allowed.includes(value) ? value : fallback;
+  };
   settings = {
     temperatureUnit: t?.value === 'f' ? 'f' : 'c',
     windUnit: w?.value === 'mph' ? 'mph' : 'kmh',
-    refreshMinutes: [15,30,60].includes(Number(r?.value)) ? Number(r.value) : 30
+    refreshMinutes: [15,30,60].includes(Number(r?.value)) ? Number(r.value) : 30,
+    alertWind: Boolean($('alertWindToggle')?.checked),
+    alertRain: Boolean($('alertRainToggle')?.checked),
+    alertVisibility: Boolean($('alertVisibilityToggle')?.checked),
+    alertUv: Boolean($('alertUvToggle')?.checked),
+    alertLevanter: Boolean($('alertLevanterToggle')?.checked),
+    alertRockCloud: Boolean($('alertRockCloudToggle')?.checked),
+    alertSea: Boolean($('alertSeaToggle')?.checked),
+    alertGustThreshold: selectNumber('alertGustThresholdSelect', [30,40,50,60], DEFAULT_SETTINGS.alertGustThreshold),
+    alertRainThreshold: selectNumber('alertRainThresholdSelect', [30,45,60,70], DEFAULT_SETTINGS.alertRainThreshold),
+    alertVisibilityThreshold: selectNumber('alertVisibilityThresholdSelect', [2000,3000,6000,10000], DEFAULT_SETTINGS.alertVisibilityThreshold),
+    alertUvThreshold: selectNumber('alertUvThresholdSelect', [3,6,8,11], DEFAULT_SETTINGS.alertUvThreshold),
+    alertWaveThreshold: selectNumber('alertWaveThresholdSelect', [1.5,2,2.5,3], DEFAULT_SETTINGS.alertWaveThreshold)
   };
   persistSettings();
   renderSettings();

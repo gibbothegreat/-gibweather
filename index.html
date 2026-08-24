@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="GibWeather" />
-  <meta name="description" content="A Gibraltar-first weather app with smart local alerts, Levanter, Rock Cloud, rain radar and Strait marine guidance." />
+  <meta name="description" content="A Gibraltar-first weather app with custom local alerts, Levanter, Rock Cloud, rain radar and Strait marine guidance." />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-180-v2.png" />
   <link rel="icon" href="icons/icon-192-v2.png" />
@@ -23,7 +23,8 @@
         <div class="eyebrow">🇬🇮 GIBRALTAR</div>
         <div class="brand-title">
           <h1>GibWeather</h1>
-          <span id="topVersion" class="top-version" aria-label="App version 1.5">v1.5</span>
+          <span id="topVersion" class="top-version" aria-label="App version 1.6">v1.6</span>
+          <span id="topAlertCount" class="top-alert-count count-low" aria-label="Custom weather alerts loading">🔔 —</span>
         </div>
       </div>
       <button id="refreshBtn" type="button" class="icon-btn" aria-label="Refresh forecast" title="Refresh">↻</button>
@@ -267,7 +268,7 @@
       </section>
 
       <section id="aboutView" class="view" data-view="about">
-        <div class="page-title"><h2>About GibWeather</h2><p>Release v1.5</p></div>
+        <div class="page-title"><h2>About GibWeather</h2><p>Release v1.6</p></div>
         <article class="panel about-copy">
           <h3>Built for Gibraltar</h3>
           <p>GibWeather is designed around local conditions: Levanter and Poniente flow, gusts, low cloud, humidity, visibility and rain.</p>
@@ -279,7 +280,7 @@
           <p>MeteoGib is linked as an independent local forecast source. GibWeather does not scrape or republish MeteoGib forecasts and is not affiliated with MeteoGib.</p>
           <h3>App status</h3>
           <div class="status-grid">
-            <div><span>Version</span><strong id="versionText">v1.5</strong></div>
+            <div><span>Version</span><strong id="versionText">v1.6</strong></div>
             <div><span>Last refresh</span><strong id="lastRefreshText">—</strong></div>
             <div><span>Data age</span><strong id="dataAgeText">—</strong></div>
             <div><span>Connection</span><strong id="connectionText">—</strong></div>
@@ -296,6 +297,26 @@
             <label><span>Wind speed</span><select id="windUnitSelect"><option value="kmh">km/h</option><option value="mph">mph</option></select></label>
             <label><span>Auto refresh</span><select id="refreshIntervalSelect"><option value="15">Every 15 min</option><option value="30">Every 30 min</option><option value="60">Every 60 min</option></select></label>
           </div>
+
+          <h3>Custom alerts</h3>
+          <p id="alertSettingsSummary">7 of 7 alert types on · saved on this device</p>
+          <div class="alert-toggle-grid" aria-label="Choose custom alert types">
+            <label class="alert-toggle"><input id="alertWindToggle" type="checkbox" checked /><span>💨 Wind gusts</span></label>
+            <label class="alert-toggle"><input id="alertRainToggle" type="checkbox" checked /><span>🌧️ Rain</span></label>
+            <label class="alert-toggle"><input id="alertVisibilityToggle" type="checkbox" checked /><span>🌫️ Visibility</span></label>
+            <label class="alert-toggle"><input id="alertUvToggle" type="checkbox" checked /><span>☀️ UV</span></label>
+            <label class="alert-toggle"><input id="alertLevanterToggle" type="checkbox" checked /><span>🌬️ Levanter</span></label>
+            <label class="alert-toggle"><input id="alertRockCloudToggle" type="checkbox" checked /><span>🏔️ Rock Cloud</span></label>
+            <label class="alert-toggle"><input id="alertSeaToggle" type="checkbox" checked /><span>🌊 Rough seas</span></label>
+          </div>
+          <div class="settings-grid alert-threshold-grid">
+            <label><span>Wind alert from</span><select id="alertGustThresholdSelect"><option value="30">30 km/h · 19 mph</option><option value="40" selected>40 km/h · 25 mph</option><option value="50">50 km/h · 31 mph</option><option value="60">60 km/h · 37 mph</option></select></label>
+            <label><span>Rain alert from</span><select id="alertRainThresholdSelect"><option value="30">30% chance</option><option value="45" selected>45% chance</option><option value="60">60% chance</option><option value="70">70% chance</option></select></label>
+            <label><span>Visibility alert below</span><select id="alertVisibilityThresholdSelect"><option value="2000">2 km</option><option value="3000">3 km</option><option value="6000" selected>6 km</option><option value="10000">10 km</option></select></label>
+            <label><span>UV alert from</span><select id="alertUvThresholdSelect"><option value="3">UV 3</option><option value="6" selected>UV 6</option><option value="8">UV 8</option><option value="11">UV 11</option></select></label>
+            <label><span>Wave alert from</span><select id="alertWaveThresholdSelect"><option value="1.5">1.5 m</option><option value="2" selected>2 m</option><option value="2.5">2.5 m</option><option value="3">3 m</option></select></label>
+          </div>
+          <p class="fineprint">Thresholds control when an alert first appears. Important conditions keep GibWeather's higher safety thresholds.</p>
           <div class="action-row">
             <button id="saveSettingsBtn" class="secondary-btn" type="button">Save preferences</button>
             <button id="resetSettingsBtn" class="secondary-btn" type="button">Reset defaults</button>
@@ -321,7 +342,7 @@
             </ol>
           </div>
           <h3>Privacy</h3>
-          <p>GibWeather v1.5 has no account, advertising SDK or analytics tracker. The last successful forecast and your app preferences are stored locally on this device.</p>
+          <p>GibWeather v1.6 has no account, advertising SDK or analytics tracker. The last successful forecast and your app preferences are stored locally on this device.</p>
           <p class="fineprint">The Levanter and Rock Cloud indicators are experimental guidance only. For official or safety-critical weather information, use the relevant official authority or a qualified local forecaster.</p>
         </article>
       </section>
