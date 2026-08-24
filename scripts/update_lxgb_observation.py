@@ -9,7 +9,6 @@ from __future__ import annotations
 import calendar
 import json
 import math
-import os
 import re
 import sys
 from datetime import datetime, timezone
@@ -45,15 +44,18 @@ def resolve_obs_time(day: int, hour: int, minute: int, now: datetime) -> datetim
             candidates.append(datetime(y, m, day, hour, minute, tzinfo=timezone.utc))
     if not candidates:
         return now
-    # Observations should not be materially in the future; still tolerate clock skew.
-    candidates.sort(key=lambda dt: (dt > now.replace(microsecond=0) and (dt-now).total_seconds() > 7200, abs((dt-now).total_seconds())))
+    candidates.sort(
+        key=lambda dt: (
+            dt > now.replace(microsecond=0) and (dt - now).total_seconds() > 7200,
+            abs((dt - now).total_seconds()),
+        )
+    )
     return candidates[0]
 
 
 def rh_from_temp_dew(temp_c: float | None, dew_c: float | None) -> float | None:
     if temp_c is None or dew_c is None:
         return None
-    # Magnus approximation over typical surface-temperature ranges.
     a, b = 17.625, 243.04
     sat = math.exp((a * temp_c) / (b + temp_c))
     act = math.exp((a * dew_c) / (b + dew_c))
@@ -64,14 +66,17 @@ def parse_metar(raw: str, now: datetime | None = None) -> dict:
     now = now or datetime.now(timezone.utc)
     raw = " ".join(raw.strip().split())
     tokens = raw.split()
-    # The Aviation Weather API may prefix reports with METAR or SPECI.
-    # Accept both forms while retaining the original report text for display.
-    if tokens and tokens[0] in {"METAR", "SPECI"}:
-        tokens = tokens[1:]
-    if len(tokens) < 3 or tokens[0] != STATION:
+    # Raw aviation feeds may prefix reports with METAR or SPECI. Normalize the
+    # token stream for parsing while preserving the original report text.
+    report_tokens = tokens[1:] if tokens and tokens[0] in {"METAR", "SPECI"} else tokens
+    if len(report_tokens) < 3 or report_tokens[0] != STATION:
         raise ValueError(f"Not an {STATION} METAR: {raw[:80]}")
+    tokens = report_tokens
 
-    time_match = next((re.fullmatch(r"(\d{2})(\d{2})(\d{2})Z", t) for t in tokens if re.fullmatch(r"\d{6}Z", t)), None)
+    time_match = next(
+        (re.fullmatch(r"(\d{2})(\d{2})(\d{2})Z", t) for t in tokens if re.fullmatch(r"\d{6}Z", t)),
+        None,
+    )
     if not time_match:
         raise ValueError("METAR observation time not found")
     day, hour, minute = map(int, time_match.groups())
@@ -95,18 +100,15 @@ def parse_metar(raw: str, now: datetime | None = None) -> dict:
     else:
         for t in tokens:
             if re.fullmatch(r"\d{4}", t):
-                # ICAO 9999 means 10 km or more.
                 visibility_m = 10000 if t == "9999" else int(t)
                 break
 
     temp_c = dew_c = None
-    temp_index = None
-    for idx, t in enumerate(tokens):
+    for t in tokens:
         m = re.fullmatch(r"(M?\d{2}|//)/(M?\d{2}|//)", t)
         if m:
             temp_c = parse_signed_temp(m.group(1))
             dew_c = parse_signed_temp(m.group(2))
-            temp_index = idx
             break
 
     pressure_hpa = None
@@ -125,16 +127,22 @@ def parse_metar(raw: str, now: datetime | None = None) -> dict:
         feet = None if height == "///" else int(height) * 100
         clouds.append({"amount": amount, "height_ft": feet})
 
-    ceiling_candidates = [c["height_ft"] for c in clouds if c["amount"] in {"BKN", "OVC", "VV"} and c["height_ft"] is not None]
+    ceiling_candidates = [
+        c["height_ft"]
+        for c in clouds
+        if c["amount"] in {"BKN", "OVC", "VV"} and c["height_ft"] is not None
+    ]
     ceiling_ft = min(ceiling_candidates) if ceiling_candidates else None
 
-    # Keep only common present-weather groups. This is descriptive, not a full METAR decoder.
     weather_codes = []
-    wx_re = re.compile(r"^(?:[-+]?|VC)(?:MI|PR|BC|DR|BL|SH|TS|FZ)?(?:DZ|RA|SN|SG|IC|PL|GR|GS|UP|BR|FG|FU|VA|DU|SA|HZ|PY|SQ|FC|SS|DS)+$")
+    wx_re = re.compile(
+        r"^(?:[-+]?|VC)(?:MI|PR|BC|DR|BL|SH|TS|FZ)?(?:DZ|RA|SN|SG|IC|PL|GR|GS|UP|BR|FG|FU|VA|DU|SA|HZ|PY|SQ|FC|SS|DS)+$"
+    )
     for t in tokens:
         if wx_re.fullmatch(t):
             weather_codes.append(t)
 
+    rh = rh_from_temp_dew(temp_c, dew_c)
     return {
         "available": True,
         "station": STATION,
@@ -151,7 +159,7 @@ def parse_metar(raw: str, now: datetime | None = None) -> dict:
         "visibility_10km_or_more": cavok or visibility_m == 10000,
         "temperature_c": temp_c,
         "dew_point_c": dew_c,
-        "relative_humidity_pct": None if rh_from_temp_dew(temp_c, dew_c) is None else round(rh_from_temp_dew(temp_c, dew_c), 1),
+        "relative_humidity_pct": None if rh is None else round(rh, 1),
         "pressure_hpa": pressure_hpa,
         "clouds": clouds,
         "ceiling_ft": ceiling_ft,
@@ -165,8 +173,11 @@ def newest_metar(text: str, now: datetime) -> dict:
     parsed = []
     for line in text.splitlines():
         line = line.strip()
-        accepted_prefixes = (STATION + " ", "METAR " + STATION + " ", "SPECI " + STATION + " ")
-        if not line.startswith(accepted_prefixes):
+        if not (
+            line.startswith(STATION + " ")
+            or line.startswith("METAR " + STATION + " ")
+            or line.startswith("SPECI " + STATION + " ")
+        ):
             continue
         try:
             parsed.append(parse_metar(line, now))
