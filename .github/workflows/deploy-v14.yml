@@ -29,11 +29,14 @@ jobs:
             .deploy/v14/part-03
             .deploy/v14/part-04
             .deploy/v14/fix-05a
-            .deploy/v14/fix-05b
+            .deploy/v14/fix-05b0.hex
+            .deploy/v14/fix-05b1.hex
             .deploy/v14/part-06
             .deploy/v14/part-07
-            .deploy/v14/fix-08a
-            .deploy/v14/fix-08b
+            .deploy/v14/fix-08-0.hex
+            .deploy/v14/fix-08-1.hex
+            .deploy/v14/fix-08-2.hex
+            .deploy/v14/fix-08-3.hex
             .deploy/v14/part-09
           )
           for f in "${files[@]}"; do
@@ -43,7 +46,23 @@ jobs:
             fi
           done
 
-          cat "${files[@]}" | base64 -d > /tmp/gibweather-v1.4.zip
+          cat .deploy/v14/fix-05b0.hex .deploy/v14/fix-05b1.hex | xxd -r -p > /tmp/fix-05b
+          cat .deploy/v14/fix-08-0.hex .deploy/v14/fix-08-1.hex .deploy/v14/fix-08-2.hex .deploy/v14/fix-08-3.hex | xxd -r -p > /tmp/fix-08
+
+          cat \
+            .deploy/v14/part-00 \
+            .deploy/v14/part-01 \
+            .deploy/v14/part-02 \
+            .deploy/v14/part-03 \
+            .deploy/v14/part-04 \
+            .deploy/v14/fix-05a \
+            /tmp/fix-05b \
+            .deploy/v14/part-06 \
+            .deploy/v14/part-07 \
+            /tmp/fix-08 \
+            .deploy/v14/part-09 \
+            | base64 -d > /tmp/gibweather-v1.4.zip
+
           unzip -t /tmp/gibweather-v1.4.zip
           rm -rf /tmp/gibweather-v1.4
           mkdir -p /tmp/gibweather-v1.4
