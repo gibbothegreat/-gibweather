@@ -1,0 +1,51 @@
+name: Deploy GibWeather v1.4 package
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.deploy/v14/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Rebuild and deploy v1.4 when package is complete
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          parts=(.deploy/v14/part-*)
+          if [ "${#parts[@]}" -ne 10 ]; then
+            echo "Package incomplete: ${#parts[@]}/10 parts present."
+            exit 0
+          fi
+
+          cat "${parts[@]}" | base64 -d > /tmp/gibweather-v1.4.zip
+          rm -rf /tmp/gibweather-v1.4
+          mkdir -p /tmp/gibweather-v1.4
+          unzip -oq /tmp/gibweather-v1.4.zip -d /tmp/gibweather-v1.4
+          cp -a /tmp/gibweather-v1.4/. ./
+          rm -rf .deploy/v14
+
+          python3 scripts/validate_release.py
+          node --check app.js
+          node --check service-worker.js
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'No deployment changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Deploy GibWeather v1.4'
+          git push
