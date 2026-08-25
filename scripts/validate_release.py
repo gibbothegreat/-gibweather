@@ -29,7 +29,7 @@ for f in ('app.js','service-worker.js'):
     need(r.returncode==0,f'{f} JavaScript syntax failed: {r.stderr.strip()}')
 
 alert_test=subprocess.run(['node',str(ROOT/'scripts/test_smart_alerts.js')],capture_output=True,text=True)
-need(alert_test.returncode==0,f'Smart-alert runtime test failed: {alert_test.stderr.strip()}')
+need(alert_test.returncode==0,f'Forecast runtime test failed: {alert_test.stderr.strip()}')
 
 # JSON/TOML
 for f in ('manifest.webmanifest','version.json','vercel.json'):
@@ -89,6 +89,21 @@ need('alertThreshold' in APP,'custom alert threshold logic missing')
 need('id="themeSelect"' in HTML,'appearance selector missing')
 need('applyTheme' in APP,'theme application logic missing')
 need('html[data-theme="light"]' in (ROOT/'styles.css').read_text(),'light theme styles missing')
+
+# v1.7 detailed 24-hour forecast guardrails.
+for control_id in (
+    'outdoorBadge','outdoorWindow','outdoorReason','outdoorRain','outdoorGust','outdoorUv',
+    'daylightTimeline','daylightSummary','temperatureRainChart','windGustChart','hourlyList'
+):
+    need(f'id="{control_id}"' in HTML,f'24-hour forecast element missing: {control_id}')
+need('bestOutdoorPeriod' in APP,'best outdoor-period logic missing')
+need('outdoorHourScore' in APP,'outdoor scoring logic missing')
+need('renderDaylightTimeline' in APP,'sunrise/sunset timeline logic missing')
+need('snapshots(data, start, 24)' in APP,'hourly screen is not limited to 24 hours')
+need('Next 48 hours' not in HTML,'obsolete 48-hour label remains')
+styles=(ROOT/'styles.css').read_text()
+need('.hourly-detail-row' in styles,'detailed hourly-row styles missing')
+need('.daylight-track' in styles,'daylight timeline styles missing')
 
 # METAR updater identity/version.
 updater=(ROOT/'scripts/update_lxgb_observation.py').read_text()

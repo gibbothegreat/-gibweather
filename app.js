@@ -1,8 +1,8 @@
-const APP_VERSION = '1.6.2';
+const APP_VERSION = '1.7';
 const GIBRALTAR = { lat: 36.1408, lon: -5.3536, timezone: 'Europe/Gibraltar' };
-const CACHE_KEY = 'gibweather:last-forecast:v16';
+const CACHE_KEY = 'gibweather:last-forecast:v17';
 const BACKUP_CACHE_KEY = 'gibweather:last-known-good:v1';
-const LEGACY_CACHE_KEYS = ['gibweather:last-forecast:v15','gibweather:last-forecast:v14','gibweather:last-forecast:v13','gibweather:last-forecast:v12','gibweather:last-forecast:v11','gibweather:last-forecast:v10','gibweather:last-forecast:v8','gibweather:last-forecast:v7','gibweather:last-forecast:v6', 'gibweather:last-forecast:v5', 'gibweather:last-forecast:v4', 'gibweather:last-forecast:v3', 'gibweather:last-forecast:v2', 'gibweather:last-forecast:v1'];
+const LEGACY_CACHE_KEYS = ['gibweather:last-forecast:v16','gibweather:last-forecast:v15','gibweather:last-forecast:v14','gibweather:last-forecast:v13','gibweather:last-forecast:v12','gibweather:last-forecast:v11','gibweather:last-forecast:v10','gibweather:last-forecast:v8','gibweather:last-forecast:v7','gibweather:last-forecast:v6', 'gibweather:last-forecast:v5', 'gibweather:last-forecast:v4', 'gibweather:last-forecast:v3', 'gibweather:last-forecast:v2', 'gibweather:last-forecast:v1'];
 const INTRO_KEY = 'gibweather:intro-seen';
 const SETTINGS_KEY = 'gibweather:settings:v1';
 const DEFAULT_SETTINGS = {
@@ -1226,27 +1226,163 @@ function renderNow(data) {
   }).join('');
 }
 
+function outdoorHourScore(s) {
+  let score = 100;
+  const rain = Number(s.rainChance), precipitation = Number(s.precipitation);
+  const gust = Number(s.gust), wind = Number(s.wind), uv = Number(s.uv);
+  const visibility = Number(s.visibility), feels = Number(s.feels);
+  if (Number(s.isDay) !== 1) score -= 45;
+  if (Number.isFinite(rain)) score -= Math.min(55, Math.max(0, rain) * .55);
+  if (Number.isFinite(precipitation) && precipitation > .1) score -= Math.min(20, precipitation * 9);
+  if (Number.isFinite(gust) && gust > 20) score -= Math.min(32, (gust - 20) * .9);
+  if (Number.isFinite(wind) && wind > 30) score -= Math.min(12, (wind - 30) * .5);
+  if (Number.isFinite(visibility) && visibility < 10000) score -= Math.min(24, (10000 - visibility) / 420);
+  if (Number.isFinite(uv) && uv > 7) score -= Math.min(18, (uv - 7) * 4.5);
+  if (Number.isFinite(feels) && feels < 10) score -= Math.min(18, (10 - feels) * 2);
+  if (Number.isFinite(feels) && feels > 30) score -= Math.min(22, (feels - 30) * 2.4);
+  if (Number(s.code) >= 95) score -= 25;
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function outdoorRating(score) {
+  if (score >= 76) return { label: 'Great', className: 'outdoor-great' };
+  if (score >= 61) return { label: 'Good', className: 'outdoor-good' };
+  if (score >= 43) return { label: 'Fair', className: 'outdoor-fair' };
+  return { label: 'Limited', className: 'outdoor-limited' };
+}
+
+function bestOutdoorPeriod(items) {
+  if (!Array.isArray(items) || !items.length) return null;
+  let candidates = [];
+  for (const length of [3, 2, 4]) {
+    for (let start=0; start + length <= items.length; start++) {
+      const hours = items.slice(start, start + length);
+      if (!hours.every(s => Number(s.isDay) === 1)) continue;
+      const scores = hours.map(outdoorHourScore);
+      const average = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+      candidates.push({ startIndex:start, endIndex:start+length-1, hours, score:Math.round(average), rank:average + (length===3 ? 2 : 0) });
+    }
+  }
+  if (!candidates.length) {
+    candidates = items.map((s, index) => ({ startIndex:index, endIndex:index, hours:[s], score:outdoorHourScore(s), rank:outdoorHourScore(s) }));
+  }
+  const best = candidates.reduce((winner, item) => item.rank > (winner?.rank ?? -Infinity) ? item : winner, null);
+  const rain = Math.max(...best.hours.map(s => Number(s.rainChance) || 0));
+  const gust = Math.max(...best.hours.map(s => Number(s.gust) || 0));
+  const uv = Math.max(...best.hours.map(s => Number(s.uv) || 0));
+  const visibilityValues = best.hours.map(s => Number(s.visibility)).filter(Number.isFinite);
+  const visibility = visibilityValues.length ? Math.min(...visibilityValues) : null;
+  return { ...best, rain, gust, uv, visibility, ...outdoorRating(best.score) };
+}
+
+function addHoursIso(iso, hours) {
+  const epoch = fakeLocalEpoch(iso);
+  return Number.isFinite(epoch) ? new Date(epoch + hours * 3600000).toISOString().slice(0,16) : iso;
+}
+
+function outdoorWindowText(period) {
+  if (!period?.hours?.length) return 'No suitable window found';
+  const start = period.hours[0].time;
+  const end = addHoursIso(period.hours[period.hours.length-1].time, 1);
+  const startText = period.startIndex === 0 ? 'Now' : fmtTime(start);
+  const crossesDay = String(start).slice(0,10) !== String(end).slice(0,10);
+  return crossesDay ? `${startText}–${fmtDay(String(end).slice(0,10))} ${fmtTime(end)}` : `${startText}–${fmtTime(end)}`;
+}
+
+function renderOutdoorSummary(items, period) {
+  const badge = $('outdoorBadge');
+  if (!period) {
+    badge.textContent = 'Unavailable';
+    badge.className = 'outdoor-badge outdoor-limited';
+    $('outdoorWindow').textContent = 'Outdoor window unavailable';
+    $('outdoorReason').textContent = 'The hourly forecast does not contain enough information yet.';
+    return;
+  }
+  badge.textContent = period.label;
+  badge.className = `outdoor-badge ${period.className}`;
+  $('outdoorWindow').textContent = outdoorWindowText(period);
+  $('outdoorRain').textContent = `${round(period.rain)}% peak`;
+  $('outdoorGust').textContent = formatWind(period.gust);
+  $('outdoorUv').textContent = `${Number(period.uv).toFixed(1)} · ${uvLabel(period.uv)}`;
+  const reasons = [];
+  if (period.rain < 25) reasons.push('low rain risk');
+  else if (period.rain < 50) reasons.push('some shower risk');
+  else reasons.push('rain may limit plans');
+  if (period.gust < 25) reasons.push('lighter winds');
+  else if (period.gust < 40) reasons.push('breezy conditions');
+  else reasons.push('strong gusts');
+  if (Number.isFinite(period.visibility) && period.visibility < 6000) reasons.push('reduced visibility');
+  else reasons.push('useful visibility');
+  $('outdoorReason').textContent = `The strongest daylight match combines ${reasons.join(', ')}.`;
+}
+
+function solarEventsForWindow(data, items) {
+  if (!items.length) return [];
+  const start = fakeLocalEpoch(items[0].time);
+  const end = fakeLocalEpoch(addHoursIso(items[items.length-1].time, 1));
+  const daily = data?.daily || {};
+  const events = [];
+  (daily.time || []).forEach((date, index) => {
+    [['sunrise','Sunrise','🌅'],['sunset','Sunset','🌇']].forEach(([key,label,icon]) => {
+      const time = daily[key]?.[index];
+      const epoch = fakeLocalEpoch(time);
+      if (time && Number.isFinite(epoch) && epoch >= start && epoch <= end) events.push({ key, label, icon, time, epoch, date });
+    });
+  });
+  return events.sort((a,b) => a.epoch - b.epoch);
+}
+
+function renderDaylightTimeline(data, items) {
+  const root = $('daylightTimeline');
+  if (!root || !items.length) return;
+  const start = fakeLocalEpoch(items[0].time);
+  const endIso = addHoursIso(items[items.length-1].time, 1);
+  const end = fakeLocalEpoch(endIso);
+  const events = solarEventsForWindow(data, items);
+  const segments = items.map(s => `<span class="daylight-segment ${Number(s.isDay)===1?'is-day':'is-night'}" title="${fmtTime(s.time)} · ${Number(s.isDay)===1?'daylight':'night'}"></span>`).join('');
+  const markers = events.map(event => {
+    const position = Math.max(0, Math.min(100, (event.epoch-start) / Math.max(1,end-start) * 100));
+    const edge = position < 14 ? 'edge-left' : position > 86 ? 'edge-right' : '';
+    return `<span class="solar-marker ${event.key} ${edge}" style="left:${position.toFixed(2)}%"><i></i><b>${event.icon} ${fmtTime(event.time)}</b></span>`;
+  }).join('');
+  root.innerHTML = `<div class="daylight-track">${segments}${markers}</div><div class="daylight-axis"><span>Now</span><span>+6h</span><span>+12h</span><span>+18h</span><span>+24h</span></div>`;
+  const firstDate = String(items[0].time).slice(0,10);
+  const summaries = events.map(event => `${event.label} ${event.date===firstDate?'today':event.date} at ${fmtTime(event.time)}`);
+  $('daylightSummary').textContent = summaries.length ? summaries.join(' · ') : 'No sunrise or sunset falls inside this 24-hour window.';
+  root.setAttribute('aria-label', `Daylight timeline for the next 24 hours. ${summaries.join('. ') || 'No solar event in the window.'}`);
+}
+
 function renderHourly(data) {
   renderForecastCharts(data);
   const start = getHourIndex(data);
-  const limit = Math.min(start + 48, data.hourly.time.length);
+  const items = snapshots(data, start, 24);
+  const period = bestOutdoorPeriod(items);
+  renderOutdoorSummary(items, period);
+  renderDaylightTimeline(data, items);
   const rows = [];
   let lastDate = null;
-  for (let i=start; i<limit; i++) {
-    const s = hourSnapshot(data, i), [, icon] = weatherInfo(s.code, s.isDay);
+  items.forEach((s, offset) => {
+    const [condition, icon] = weatherInfo(s.code, s.isDay);
     const date = String(s.time).slice(0,10);
     if (date !== lastDate) {
-      const label = i === start ? 'Today' : fmtDay(date, true);
+      const label = offset === 0 ? 'Today' : fmtDay(date, true);
       rows.push(`<div class="day-divider">${label}</div>`);
       lastDate = date;
     }
-    rows.push(`<div class="hour-row">
-      <div><strong>${i===start?'Now':fmtTime(s.time)}</strong></div>
-      <div class="row-icon">${icon}</div>
-      <div><strong>${formatTemp(s.temp)}</strong><div class="details">${compass(s.dir)} ${formatWind(s.wind)} · gust ${formatWind(s.gust)}</div></div>
-      <div class="rain">🌧️ ${round(s.rainChance)}%<br><span class="details">${Number(s.precipitation||0).toFixed(1)} mm</span></div>
+    const recommended = period && offset >= period.startIndex && offset <= period.endIndex;
+    rows.push(`<div class="hour-row hourly-detail-row ${recommended?'outdoor-recommended':''}">
+      <div class="hour-time"><strong>${offset===0?'Now':fmtTime(s.time)}</strong>${recommended?'<span class="best-hour-tag">Best</span>':''}</div>
+      <div class="hour-weather"><span class="row-icon">${icon}</span><strong>${formatTemp(s.temp)}</strong><small>${condition}</small></div>
+      <div class="hour-facts">
+        <div><span>Feels</span><strong>${formatTemp(s.feels)}</strong></div>
+        <div><span>Rain</span><strong>${round(s.rainChance)}% · ${Number(s.precipitation||0).toFixed(1)} mm</strong></div>
+        <div><span>Wind</span><strong>${compass(s.dir)} ${formatWind(s.wind)}</strong><small>Gust ${formatWind(s.gust)}</small></div>
+        <div><span>Humidity</span><strong>${round(s.humidity)}%</strong></div>
+        <div><span>Visibility</span><strong>${kmVisibility(s.visibility)}</strong></div>
+        <div><span>UV</span><strong>${s.uv==null?'—':Number(s.uv).toFixed(1)} · ${uvLabel(s.uv)}</strong></div>
+      </div>
     </div>`);
-  }
+  });
   $('hourlyList').innerHTML = rows.join('');
 }
 

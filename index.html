@@ -23,7 +23,7 @@
         <div class="eyebrow">🇬🇮 GIBRALTAR</div>
         <div class="brand-title">
           <h1>GibWeather</h1>
-          <span id="topVersion" class="top-version" aria-label="App version 1.6.2">v1.6.2</span>
+          <span id="topVersion" class="top-version" aria-label="App version 1.7">v1.7</span>
           <span id="topAlertCount" class="top-alert-count count-low" aria-label="Custom weather alerts loading">🔔 —</span>
         </div>
       </div>
@@ -170,7 +170,26 @@
       </section>
 
       <section id="hourlyView" class="view" data-view="hourly">
-        <div class="page-title"><h2>Hourly forecast</h2><p>Next 48 hours · Gibraltar local time</p></div>
+        <div class="page-title"><h2>24-hour forecast</h2><p>Detailed conditions · Gibraltar local time</p></div>
+        <article class="panel outdoor-panel" aria-labelledby="outdoorTitle">
+          <div class="section-heading">
+            <div><div class="eyebrow">BEST FORECAST WINDOW</div><h3 id="outdoorTitle">Time outdoors</h3></div>
+            <div id="outdoorBadge" class="outdoor-badge">Checking…</div>
+          </div>
+          <strong id="outdoorWindow" class="outdoor-window">Reviewing the next 24 hours…</strong>
+          <p id="outdoorReason" class="outdoor-reason">Comparing daylight, rain, wind, visibility, UV and feels-like temperature.</p>
+          <div class="outdoor-metrics" aria-label="Recommended outdoor window details">
+            <div><span>🌧️ Rain</span><strong id="outdoorRain">—</strong></div>
+            <div><span>🌪️ Gusts</span><strong id="outdoorGust">—</strong></div>
+            <div><span>☀️ UV</span><strong id="outdoorUv">—</strong></div>
+          </div>
+          <p class="fineprint">This is an automated convenience guide, not safety advice. Check GibWeather alerts and official information before weather-sensitive activities.</p>
+        </article>
+        <article class="panel daylight-panel" aria-labelledby="daylightTitle">
+          <div class="section-heading"><div><div class="eyebrow">SUN & DAYLIGHT</div><h3 id="daylightTitle">Next 24 hours</h3></div></div>
+          <div id="daylightTimeline" class="daylight-timeline" role="img" aria-label="Daylight timeline loading"></div>
+          <p id="daylightSummary" class="daylight-summary">Finding the next sunrise and sunset…</p>
+        </article>
         <article class="panel chart-panel">
           <div class="section-heading"><div><div class="eyebrow">NEXT 24 HOURS</div><h3>Temperature & rain</h3></div></div>
           <figure class="forecast-chart"><div id="temperatureRainChart" class="chart-wrap" role="img" aria-label="Temperature and rain chart loading"></div><figcaption>Temperature line with hourly rain-probability bars.</figcaption></figure>
@@ -268,7 +287,7 @@
       </section>
 
       <section id="aboutView" class="view" data-view="about">
-        <div class="page-title"><h2>About GibWeather</h2><p>Release v1.6.2</p></div>
+        <div class="page-title"><h2>About GibWeather</h2><p>Release v1.7</p></div>
         <article class="panel about-copy">
           <h3>Built for Gibraltar</h3>
           <p>GibWeather is designed around local conditions: Levanter and Poniente flow, gusts, low cloud, humidity, visibility and rain.</p>
@@ -280,7 +299,7 @@
           <p>MeteoGib is linked as an independent local forecast source. GibWeather does not scrape or republish MeteoGib forecasts and is not affiliated with MeteoGib.</p>
           <h3>App status</h3>
           <div class="status-grid">
-            <div><span>Version</span><strong id="versionText">v1.6.2</strong></div>
+            <div><span>Version</span><strong id="versionText">v1.7</strong></div>
             <div><span>Last refresh</span><strong id="lastRefreshText">—</strong></div>
             <div><span>Data age</span><strong id="dataAgeText">—</strong></div>
             <div><span>Connection</span><strong id="connectionText">—</strong></div>
@@ -343,7 +362,7 @@
             </ol>
           </div>
           <h3>Privacy</h3>
-          <p>GibWeather v1.6.2 has no account, advertising SDK or analytics tracker. The last successful forecast and your app preferences are stored locally on this device.</p>
+          <p>GibWeather v1.7 has no account, advertising SDK or analytics tracker. The last successful forecast and your app preferences are stored locally on this device.</p>
           <p class="fineprint">The Levanter and Rock Cloud indicators are experimental guidance only. For official or safety-critical weather information, use the relevant official authority or a qualified local forecaster.</p>
         </article>
       </section>

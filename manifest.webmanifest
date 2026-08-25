@@ -2,7 +2,7 @@
   "id": "./",
   "name": "GibWeather",
   "short_name": "GibWeather",
-  "description": "Gibraltar-first weather with custom local alerts, LXGB observations, Levanter, Rock Cloud, rain radar and Strait marine guidance.",
+  "description": "Gibraltar-first weather with a detailed 24-hour outlook, custom local alerts, LXGB observations, Levanter, Rock Cloud, rain radar and Strait marine guidance.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

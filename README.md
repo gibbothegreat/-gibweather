@@ -1,4 +1,4 @@
-# GibWeather v1.6.2
+# GibWeather v1.7
 
 GibWeather is a Gibraltar-first Progressive Web App for iPhone, iPad and modern browsers.
 
@@ -64,7 +64,7 @@ This checks JavaScript syntax, custom-alert behavior, manifest/version consisten
 GibWeather is a static app. Deployment configurations are included for GitHub Pages, Netlify and Vercel. See `DEPLOY.md`.
 
 ## Release status
-v1.6.2 installs the selected natural-colour golden-hour GibWeather icon. It retains the automatic, dark and light appearances, custom alert categories, personal thresholds and live header count alongside the local narrative, timelines, radar, LXGB observation, marine and model-comparison features.
+v1.7 upgrades the Hourly screen with a detailed 24-hour view, sunrise and sunset markers, and a highlighted best outdoor-period guide. Every hour now includes temperature, feels-like, rain probability and amount, wind and gusts, humidity, visibility and UV. It retains the natural-colour icon, light and dark appearances, custom alerts, local narrative, radar, LXGB observation, marine and model-comparison features.
 
 
 ## Rain radar (v1.3)

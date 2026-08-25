@@ -65,7 +65,12 @@ vm.runInContext(fs.readFileSync(path.join(root, 'app.js'), 'utf8'), context, { f
 function weather(overrides = {}) {
   const length = 30;
   const values = (value) => Array.from({ length }, () => value);
-  const times = Array.from({ length }, (_, i) => `2026-08-25T${String(i).padStart(2, '0')}:00`);
+  const startEpoch = Date.UTC(2026, 7, 25, 0, 0, 0);
+  const times = Array.from({ length }, (_, i) => new Date(startEpoch + i * 3600000).toISOString().slice(0, 16));
+  const daylight = times.map(time => {
+    const hour = Number(time.slice(11, 13));
+    return hour >= 7 && hour < 21 ? 1 : 0;
+  });
   const hourly = {
     time: times,
     temperature_2m: values(24),
@@ -83,7 +88,7 @@ function weather(overrides = {}) {
     wind_direction_10m: values(overrides.direction ?? 270),
     wind_gusts_10m: values(overrides.gust ?? 15),
     uv_index: values(overrides.uv ?? 2),
-    is_day: values(1)
+    is_day: daylight
   };
   return {
     current: {
@@ -95,7 +100,11 @@ function weather(overrides = {}) {
       precipitation: 0, pressure_msl: 1017
     },
     hourly,
-    daily: { time: ['2026-08-25'] }
+    daily: {
+      time: ['2026-08-25', '2026-08-26'],
+      sunrise: ['2026-08-25T07:40', '2026-08-26T07:41'],
+      sunset: ['2026-08-25T20:56', '2026-08-26T20:55']
+    }
   };
 }
 
@@ -172,4 +181,15 @@ assert(document.documentElement.dataset.theme === 'light', 'Light theme did not 
 context.applyTheme('dark');
 assert(document.documentElement.dataset.theme === 'dark', 'Dark theme did not apply');
 
-process.stdout.write('GibWeather custom alert smoke test passed\n');
+const hourlyUpgrade = weather();
+const outdoor = context.bestOutdoorPeriod(context.snapshots(hourlyUpgrade, 0, 24));
+assert(outdoor && outdoor.startIndex === 7 && outdoor.endIndex === 9, 'Outdoor guide did not choose the first strong daylight window');
+assert(outdoor.label === 'Great', 'Outdoor guide rating is incorrect for clear calm weather');
+context.renderHourly(hourlyUpgrade);
+assert(element('hourlyList').innerHTML.includes('Feels'), 'Detailed hourly rows are missing feels-like data');
+assert(element('hourlyList').innerHTML.includes('Visibility'), 'Detailed hourly rows are missing visibility data');
+assert(element('hourlyList').innerHTML.includes('best-hour-tag'), 'Recommended outdoor hours were not highlighted');
+assert(element('daylightTimeline').innerHTML.includes('solar-marker'), 'Sunrise or sunset markers were not rendered');
+assert(element('outdoorWindow').textContent.length > 0, 'Outdoor window summary was not rendered');
+
+process.stdout.write('GibWeather forecast smoke tests passed\n');

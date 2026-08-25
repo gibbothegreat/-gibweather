@@ -1,7 +1,7 @@
 {
   "name": "GibWeather",
-  "version": "1.6.2",
+  "version": "1.7",
   "channel": "stable",
   "released": "2026-08-25",
-  "cache": "gibweather-shell-v16-2"
+  "cache": "gibweather-shell-v17"
 }

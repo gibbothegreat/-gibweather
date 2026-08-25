@@ -1,5 +1,12 @@
 # GibWeather changelog
 
+## v1.7 · Detailed 24-hour forecast
+- Rebuilds the Hourly screen around the next 24 hours in Gibraltar local time.
+- Adds an automated best outdoor-period guide based on daylight, rain, wind, visibility, UV and feels-like temperature.
+- Adds a daylight timeline with sunrise and sunset markers.
+- Expands every hourly row with temperature, feels-like, rain probability and amount, wind and gusts, humidity, visibility and UV.
+- Highlights the recommended outdoor hours without treating the guide as a safety forecast.
+
 ## v1.6.2 · Natural-colour icon
 - Replaces the red-and-white icon with the selected warm natural-colour design.
 - Uses golden-hour sky, limestone Rock, golden sun, soft cloud and deep-blue sea colours.

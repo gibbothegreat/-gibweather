@@ -1,4 +1,4 @@
-# GibWeather v1.6.2 QA
+# GibWeather v1.7 QA
 
 ## Release validation
 Run:
@@ -7,7 +7,14 @@ Run:
 python3 scripts/validate_release.py
 ```
 
-Expected result: `GibWeather v1.6.2 release validation passed`.
+Expected result: `GibWeather v1.7 release validation passed`.
+
+## 24-hour forecast checks
+- The Hourly screen shows exactly the next 24 forecast hours.
+- The best outdoor-period card identifies and highlights a daylight window.
+- The daylight bar places sunrise and sunset markers within the correct 24-hour span.
+- Every hourly row includes temperature, feels-like, rain probability and amount, wind and gusts, humidity, visibility and UV.
+- Outdoor guidance remains labelled as an automated convenience guide rather than safety advice.
 
 ## Appearance and icon checks
 - Automatic appearance follows the device colour scheme.
