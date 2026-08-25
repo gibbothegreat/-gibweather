@@ -51,7 +51,7 @@ missing=sorted(refs-ids)
 need(not missing,'app.js references missing HTML ids: '+', '.join(missing))
 
 # App shell
-required=['index.html','styles.css','app.js','manifest.webmanifest','version.json','data/lxgb-observation.json','icons/icon-192.png','icons/icon-512.png','icons/icon-180.png']
+required=['index.html','styles.css','app.js','manifest.webmanifest','version.json','data/lxgb-observation.json','icons/icon-192-v3.png','icons/icon-512-v3.png','icons/icon-180-v3.png']
 for rel in required: need((ROOT/rel).exists(),f'missing app-shell file: {rel}')
 
 # Open-Meteo contract guardrails. These deliberately check the API families are not mixed up.
@@ -86,6 +86,9 @@ for control_id in (
     need(f'id="{control_id}"' in HTML,f'custom alert control missing: {control_id}')
 need('activeAlertCategoryCount' in APP,'custom alert category logic missing')
 need('alertThreshold' in APP,'custom alert threshold logic missing')
+need('id="themeSelect"' in HTML,'appearance selector missing')
+need('applyTheme' in APP,'theme application logic missing')
+need('html[data-theme="light"]' in (ROOT/'styles.css').read_text(),'light theme styles missing')
 
 # METAR updater identity/version.
 updater=(ROOT/'scripts/update_lxgb_observation.py').read_text()

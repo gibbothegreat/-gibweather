@@ -1,5 +1,12 @@
 # GibWeather changelog
 
+## v1.6.1 · Light appearance and refreshed icon
+- Adds a complete light appearance across forecasts, alerts, settings, navigation, charts and status surfaces.
+- Adds **Automatic**, **Dark** and **Light** appearance choices saved on each device.
+- Updates the browser theme colour to match the active appearance.
+- Introduces the selected red-and-white Rock, cloud and yellow-sun GibWeather icon at all PWA and Apple Home Screen sizes.
+- Refreshes the offline shell so installed apps receive the new appearance and icon assets.
+
 ## v1.6 · Custom alerts
 - Lets each device choose which Gibraltar alert categories are enabled: wind, rain, visibility, UV, Levanter, Rock Cloud and rough seas.
 - Adds personal trigger thresholds for gusts, rain chance, visibility, UV and modelled wave height.

@@ -18,7 +18,7 @@ from urllib.request import Request, urlopen
 STATION = "LXGB"
 SOURCE_URL = f"https://aviationweather.gov/api/data/metar?ids={STATION}&format=raw&hours=2"
 OUT = Path(__file__).resolve().parents[1] / "data" / "lxgb-observation.json"
-USER_AGENT = "GibWeather/1.6 (+https://github.com/)"
+USER_AGENT = "GibWeather/1.6.1 (+https://github.com/)"
 
 
 def parse_signed_temp(token: str | None) -> float | None:

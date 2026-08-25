@@ -1,4 +1,4 @@
-const APP_VERSION = '1.6';
+const APP_VERSION = '1.6.1';
 const GIBRALTAR = { lat: 36.1408, lon: -5.3536, timezone: 'Europe/Gibraltar' };
 const CACHE_KEY = 'gibweather:last-forecast:v16';
 const BACKUP_CACHE_KEY = 'gibweather:last-known-good:v1';
@@ -6,7 +6,7 @@ const LEGACY_CACHE_KEYS = ['gibweather:last-forecast:v15','gibweather:last-forec
 const INTRO_KEY = 'gibweather:intro-seen';
 const SETTINGS_KEY = 'gibweather:settings:v1';
 const DEFAULT_SETTINGS = {
-  temperatureUnit: 'c', windUnit: 'kmh', refreshMinutes: 30,
+  temperatureUnit: 'c', windUnit: 'kmh', refreshMinutes: 30, theme: 'dark',
   alertWind: true, alertRain: true, alertVisibility: true, alertUv: true,
   alertLevanter: true, alertRockCloud: true, alertSea: true,
   alertGustThreshold: 40, alertRainThreshold: 45, alertVisibilityThreshold: 6000,
@@ -108,6 +108,20 @@ function loadSettings() {
 }
 
 let settings = loadSettings();
+
+function resolvedTheme(choice = settings.theme) {
+  if (choice === 'light' || choice === 'dark') return choice;
+  return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
+
+function applyTheme(choice = settings.theme) {
+  const theme = resolvedTheme(choice);
+  document.documentElement.dataset.theme = theme;
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  if (themeMeta) themeMeta.setAttribute('content', theme === 'light' ? '#eef4f8' : '#0b2239');
+}
+
+applyTheme();
 
 function persistSettings() {
   try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch (_) {}
@@ -533,10 +547,11 @@ function renderForecastConfidence() {
 }
 
 function renderSettings() {
-  const t = $('temperatureUnitSelect'), w = $('windUnitSelect'), r = $('refreshIntervalSelect');
+  const t = $('temperatureUnitSelect'), w = $('windUnitSelect'), r = $('refreshIntervalSelect'), theme = $('themeSelect');
   if (t) t.value = settings.temperatureUnit;
   if (w) w.value = settings.windUnit;
   if (r) r.value = String(settings.refreshMinutes);
+  if (theme) theme.value = ['auto','dark','light'].includes(settings.theme) ? settings.theme : DEFAULT_SETTINGS.theme;
   const toggles = {
     alertWindToggle: 'alertWind', alertRainToggle: 'alertRain',
     alertVisibilityToggle: 'alertVisibility', alertUvToggle: 'alertUv',
@@ -551,13 +566,14 @@ function renderSettings() {
   };
   Object.entries(thresholds).forEach(([id, key]) => { if ($(id)) $(id).value = String(alertThreshold(key)); });
   const summary = $('settingsSummary');
-  if (summary) summary.textContent = `${tempUnitLabel()} · ${windUnitLabel()} · refresh every ${settings.refreshMinutes} min`;
+  const themeLabel = settings.theme === 'light' ? 'Light' : settings.theme === 'auto' ? 'Automatic' : 'Dark';
+  if (summary) summary.textContent = `${tempUnitLabel()} · ${windUnitLabel()} · ${themeLabel} · refresh every ${settings.refreshMinutes} min`;
   const alertSummary = $('alertSettingsSummary');
   if (alertSummary) alertSummary.textContent = `${activeAlertCategoryCount()} of ${ALERT_TOGGLE_KEYS.length} alert types on · saved on this device`;
 }
 
 function applySettingsFromUI() {
-  const t = $('temperatureUnitSelect'), w = $('windUnitSelect'), r = $('refreshIntervalSelect');
+  const t = $('temperatureUnitSelect'), w = $('windUnitSelect'), r = $('refreshIntervalSelect'), theme = $('themeSelect');
   const selectNumber = (id, allowed, fallback) => {
     const value = Number($(id)?.value);
     return allowed.includes(value) ? value : fallback;
@@ -566,6 +582,7 @@ function applySettingsFromUI() {
     temperatureUnit: t?.value === 'f' ? 'f' : 'c',
     windUnit: w?.value === 'mph' ? 'mph' : 'kmh',
     refreshMinutes: [15,30,60].includes(Number(r?.value)) ? Number(r.value) : 30,
+    theme: ['auto','dark','light'].includes(theme?.value) ? theme.value : DEFAULT_SETTINGS.theme,
     alertWind: Boolean($('alertWindToggle')?.checked),
     alertRain: Boolean($('alertRainToggle')?.checked),
     alertVisibility: Boolean($('alertVisibilityToggle')?.checked),
@@ -580,6 +597,7 @@ function applySettingsFromUI() {
     alertWaveThreshold: selectNumber('alertWaveThresholdSelect', [1.5,2,2.5,3], DEFAULT_SETTINGS.alertWaveThreshold)
   };
   persistSettings();
+  applyTheme();
   renderSettings();
   if (weatherData) renderAll(weatherData);
   scheduleAutoRefresh();
@@ -589,6 +607,7 @@ function applySettingsFromUI() {
 function resetSettings() {
   settings = { ...DEFAULT_SETTINGS };
   persistSettings();
+  applyTheme();
   renderSettings();
   if (weatherData) renderAll(weatherData);
   scheduleAutoRefresh();
@@ -1689,6 +1708,7 @@ $('installCheckBtn')?.addEventListener('click', () => { updateInstallUI(); setSt
 $('healthCheckBtn')?.addEventListener('click', runHealthCheck);
 $('saveSettingsBtn')?.addEventListener('click', applySettingsFromUI);
 $('resetSettingsBtn')?.addEventListener('click', resetSettings);
+$('themeSelect')?.addEventListener('change', event => applyTheme(event.target.value));
 $('startBtn')?.addEventListener('click', dismissFirstRun);
 $('reloadAppBtn')?.addEventListener('click', () => location.reload());
 $('radarPlayBtn')?.addEventListener('click', playRadar);
@@ -1701,6 +1721,9 @@ $('installHelpBtn').addEventListener('click', () => {
 });
 window.addEventListener('online', () => refreshAll(true));
 window.addEventListener('offline', setOnlineUI);
+window.matchMedia?.('(prefers-color-scheme: light)').addEventListener?.('change', () => {
+  if (settings.theme === 'auto') applyTheme('auto');
+});
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible' || !navigator.onLine || loadInFlight) return;
   const age = dataAgeMinutes();

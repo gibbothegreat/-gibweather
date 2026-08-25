@@ -1,4 +1,4 @@
-# GibWeather v1.6 QA
+# GibWeather v1.6.1 QA
 
 ## Release validation
 Run:
@@ -7,7 +7,14 @@ Run:
 python3 scripts/validate_release.py
 ```
 
-Expected result: `GibWeather v1.6 release validation passed`.
+Expected result: `GibWeather v1.6.1 release validation passed`.
+
+## Appearance and icon checks
+- Automatic appearance follows the device colour scheme.
+- Dark and Light choices override the device colour scheme and persist after reload.
+- Forecast cards, alerts, navigation, settings and status text remain legible in both appearances.
+- Browser theme colour follows the active appearance.
+- Manifest, Apple touch icon, favicon and offline shell use the v3 yellow-sun icon assets.
 
 ## Smart-alert checks
 - Important alerts sort above Watch and Info alerts.

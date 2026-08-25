@@ -31,6 +31,7 @@ const element = id => {
 const storage = new Map();
 const document = {
   visibilityState: 'visible',
+  documentElement: { dataset: {} },
   getElementById: element,
   querySelectorAll: () => [],
   querySelector: () => null,
@@ -49,7 +50,7 @@ const context = {
   },
   window: {
     addEventListener() {},
-    matchMedia: () => ({ matches: true }),
+    matchMedia: () => ({ matches: true, addEventListener() {} }),
     scrollTo() {}
   },
   setTimeout, clearTimeout,
@@ -165,5 +166,10 @@ setAlertSettings({
 });
 context.renderAdvisories(weather({ rain: 82 }), null);
 assert(element('topAlertCount').textContent === '🔔 1', 'Header alert count did not update');
+
+context.applyTheme('light');
+assert(document.documentElement.dataset.theme === 'light', 'Light theme did not apply');
+context.applyTheme('dark');
+assert(document.documentElement.dataset.theme === 'dark', 'Dark theme did not apply');
 
 process.stdout.write('GibWeather custom alert smoke test passed\n');

@@ -1,4 +1,4 @@
-# GibWeather v1.6
+# GibWeather v1.6.1
 
 GibWeather is a Gibraltar-first Progressive Web App for iPhone, iPad and modern browsers.
 
@@ -21,6 +21,8 @@ GibWeather is a Gibraltar-first Progressive Web App for iPhone, iPad and modern 
 - Direct MeteoGib link for local forecaster commentary
 - Smart Gibraltar alerts with severity, timing, Rock Cloud and rough-sea guidance
 - Per-device alert categories and personal trigger thresholds with a live header count
+- Automatic, dark and light appearances saved per device
+- Red-and-white Rock and cloud icon with a yellow sun
 
 ## v1.2 reliability release
 v1.2 corrects the live API contracts used by the app. The main Open-Meteo forecast request now explicitly asks for the daily fields needed by the Today and 7-day screens. The Open-Meteo Marine request now uses only supported marine daily aggregations (`wave_height_max`, dominant wave direction, period, and swell equivalents). A release validator is included at `scripts/validate_release.py` to guard against mixing atmospheric and marine API variables in future builds.
@@ -62,7 +64,7 @@ This checks JavaScript syntax, custom-alert behavior, manifest/version consisten
 GibWeather is a static app. Deployment configurations are included for GitHub Pages, Netlify and Vercel. See `DEPLOY.md`.
 
 ## Release status
-v1.6 is the stable custom-alerts release. Each device can enable the Gibraltar conditions it cares about and choose personal trigger thresholds for gusts, rain, visibility, UV and modelled Strait waves. Important severity thresholds remain fixed, and the live custom-alert count appears at the top of the app. It retains the v1.5 severity ranking, local narrative, timelines, radar, LXGB observation, marine and model-comparison features.
+v1.6.1 adds automatic, dark and light appearances plus the selected yellow-sun GibWeather icon. It retains v1.6 custom alert categories, personal thresholds and the live header count alongside the local narrative, timelines, radar, LXGB observation, marine and model-comparison features.
 
 
 ## Rain radar (v1.3)

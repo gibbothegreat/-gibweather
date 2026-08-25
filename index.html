@@ -10,8 +10,8 @@
   <meta name="apple-mobile-web-app-title" content="GibWeather" />
   <meta name="description" content="A Gibraltar-first weather app with custom local alerts, Levanter, Rock Cloud, rain radar and Strait marine guidance." />
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="apple-touch-icon" href="icons/icon-180-v2.png" />
-  <link rel="icon" href="icons/icon-192-v2.png" />
+  <link rel="apple-touch-icon" href="icons/icon-180-v3.png" />
+  <link rel="icon" href="icons/icon-192-v3.png" />
   <link rel="stylesheet" href="styles.css" />
   <title>GibWeather</title>
 </head>
@@ -23,7 +23,7 @@
         <div class="eyebrow">🇬🇮 GIBRALTAR</div>
         <div class="brand-title">
           <h1>GibWeather</h1>
-          <span id="topVersion" class="top-version" aria-label="App version 1.6">v1.6</span>
+          <span id="topVersion" class="top-version" aria-label="App version 1.6.1">v1.6.1</span>
           <span id="topAlertCount" class="top-alert-count count-low" aria-label="Custom weather alerts loading">🔔 —</span>
         </div>
       </div>
@@ -268,7 +268,7 @@
       </section>
 
       <section id="aboutView" class="view" data-view="about">
-        <div class="page-title"><h2>About GibWeather</h2><p>Release v1.6</p></div>
+        <div class="page-title"><h2>About GibWeather</h2><p>Release v1.6.1</p></div>
         <article class="panel about-copy">
           <h3>Built for Gibraltar</h3>
           <p>GibWeather is designed around local conditions: Levanter and Poniente flow, gusts, low cloud, humidity, visibility and rain.</p>
@@ -280,7 +280,7 @@
           <p>MeteoGib is linked as an independent local forecast source. GibWeather does not scrape or republish MeteoGib forecasts and is not affiliated with MeteoGib.</p>
           <h3>App status</h3>
           <div class="status-grid">
-            <div><span>Version</span><strong id="versionText">v1.6</strong></div>
+            <div><span>Version</span><strong id="versionText">v1.6.1</strong></div>
             <div><span>Last refresh</span><strong id="lastRefreshText">—</strong></div>
             <div><span>Data age</span><strong id="dataAgeText">—</strong></div>
             <div><span>Connection</span><strong id="connectionText">—</strong></div>
@@ -296,6 +296,7 @@
             <label><span>Temperature</span><select id="temperatureUnitSelect"><option value="c">Celsius (°C)</option><option value="f">Fahrenheit (°F)</option></select></label>
             <label><span>Wind speed</span><select id="windUnitSelect"><option value="kmh">km/h</option><option value="mph">mph</option></select></label>
             <label><span>Auto refresh</span><select id="refreshIntervalSelect"><option value="15">Every 15 min</option><option value="30">Every 30 min</option><option value="60">Every 60 min</option></select></label>
+            <label><span>Appearance</span><select id="themeSelect"><option value="auto">Automatic</option><option value="dark">Dark</option><option value="light">Light</option></select></label>
           </div>
 
           <h3>Custom alerts</h3>
@@ -342,7 +343,7 @@
             </ol>
           </div>
           <h3>Privacy</h3>
-          <p>GibWeather v1.6 has no account, advertising SDK or analytics tracker. The last successful forecast and your app preferences are stored locally on this device.</p>
+          <p>GibWeather v1.6.1 has no account, advertising SDK or analytics tracker. The last successful forecast and your app preferences are stored locally on this device.</p>
           <p class="fineprint">The Levanter and Rock Cloud indicators are experimental guidance only. For official or safety-critical weather information, use the relevant official authority or a qualified local forecaster.</p>
         </article>
       </section>
