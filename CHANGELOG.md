@@ -1,5 +1,10 @@
 # GibWeather changelog
 
+## v1.6.2 · Natural-colour icon
+- Replaces the red-and-white icon with the selected warm natural-colour design.
+- Uses golden-hour sky, limestone Rock, golden sun, soft cloud and deep-blue sea colours.
+- Refreshes the Apple Home Screen, browser, manifest and offline icon assets.
+
 ## v1.6.1 · Light appearance and refreshed icon
 - Adds a complete light appearance across forecasts, alerts, settings, navigation, charts and status surfaces.
 - Adds **Automatic**, **Dark** and **Light** appearance choices saved on each device.

@@ -51,7 +51,7 @@ missing=sorted(refs-ids)
 need(not missing,'app.js references missing HTML ids: '+', '.join(missing))
 
 # App shell
-required=['index.html','styles.css','app.js','manifest.webmanifest','version.json','data/lxgb-observation.json','icons/icon-192-v3.png','icons/icon-512-v3.png','icons/icon-180-v3.png']
+required=['index.html','styles.css','app.js','manifest.webmanifest','version.json','data/lxgb-observation.json','icons/icon-192-v4.png','icons/icon-512-v4.png','icons/icon-180-v4.png']
 for rel in required: need((ROOT/rel).exists(),f'missing app-shell file: {rel}')
 
 # Open-Meteo contract guardrails. These deliberately check the API families are not mixed up.

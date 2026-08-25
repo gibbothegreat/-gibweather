@@ -1,4 +1,4 @@
-const APP_VERSION = '1.6.1';
+const APP_VERSION = '1.6.2';
 const GIBRALTAR = { lat: 36.1408, lon: -5.3536, timezone: 'Europe/Gibraltar' };
 const CACHE_KEY = 'gibweather:last-forecast:v16';
 const BACKUP_CACHE_KEY = 'gibweather:last-known-good:v1';
