@@ -2,8 +2,10 @@ name: Upgrade GibWeather v1.9
 
 on:
   push:
+    branches: [main]
     paths:
       - '.github/workflows/upgrade-v19.yml'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -16,187 +18,22 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - name: Apply v1.9 airport verification upgrade
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import json, re
 
-          def replace_once(text, old, new, label):
-              if old not in text:
-                  raise SystemExit(f'Anchor not found: {label}')
-              return text.replace(old, new, 1)
+      - name: Apply v1.9 upgrade
+        run: python3 scripts/upgrade_v19.py
 
-          root = Path('.')
-          app_path = root/'app.js'
-          html_path = root/'index.html'
-          css_path = root/'styles.css'
-          sw_path = root/'service-worker.js'
-          version_path = root/'version.json'
-          changelog_path = root/'CHANGELOG.md'
-          readme_path = root/'README.md'
-          qa_path = root/'QA.md'
-          validator_path = root/'scripts/validate_release.py'
-          updater_path = root/'scripts/update_lxgb_observation.py'
+      - name: Validate v1.9 release
+        run: python3 scripts/validate_release.py
 
-          app = app_path.read_text()
-          app = replace_once(app, "const APP_VERSION = '1.8';", "const APP_VERSION = '1.9';", 'APP_VERSION')
-          app = replace_once(app, "const CACHE_KEY = 'gibweather:last-forecast:v18';", "const CACHE_KEY = 'gibweather:last-forecast:v19';", 'forecast cache')
-          app = replace_once(app,
-              "const LEGACY_CACHE_KEYS = ['gibweather:last-forecast:v17'",
-              "const LEGACY_CACHE_KEYS = ['gibweather:last-forecast:v18','gibweather:last-forecast:v17'",
-              'legacy cache list')
-
-          helper = r'''
-function directionGap(a, b) {
-  if (!Number.isFinite(Number(a)) || !Number.isFinite(Number(b))) return null;
-  const diff = Math.abs((((Number(a) - Number(b)) + 540) % 360) - 180);
-  return diff;
-}
-
-function signedDelta(value, digits = 0) {
-  if (!Number.isFinite(Number(value))) return '—';
-  const n = Number(value);
-  const shown = digits ? n.toFixed(digits) : Math.round(n).toString();
-  return `${n > 0 ? '+' : ''}${shown}`;
-}
-
-function renderObservationDeltas(obs, data=weatherData) {
-  const ids = ['obsDeltaTemp','obsDeltaWind','obsDeltaDir','obsDeltaPressure'];
-  const clear = () => ids.forEach(id => { if ($(id)) $(id).textContent = '—'; });
-  if (!obs?.available || !data?.hourly?.time?.length) { clear(); return; }
-
-  const i = getHourIndex(data);
-  const s = hourSnapshot(data, i);
-  const tempDiffC = Number(obs.temperature_c) - Number(s.temp);
-  const windDiffKmh = Number(obs.wind_speed_kmh) - Number(s.wind);
-  const pressureDiff = Number(obs.pressure_hpa) - Number(s.pressure);
-  const dirDiff = obs.variable_wind ? null : directionGap(obs.wind_direction_deg, s.dir);
-
-  if ($('obsDeltaTemp')) {
-    if (Number.isFinite(tempDiffC)) {
-      const delta = settings.temperatureUnit === 'f' ? tempDiffC * 9/5 : tempDiffC;
-      $('obsDeltaTemp').textContent = `${signedDelta(delta, 1)}°${settings.temperatureUnit === 'f' ? 'F' : 'C'}`;
-    } else $('obsDeltaTemp').textContent = '—';
-  }
-  if ($('obsDeltaWind')) {
-    const delta = windValue(windDiffKmh);
-    $('obsDeltaWind').textContent = Number.isFinite(delta) ? `${signedDelta(delta)} ${windUnitLabel()}` : '—';
-  }
-  if ($('obsDeltaDir')) $('obsDeltaDir').textContent = dirDiff == null ? (obs.variable_wind ? 'VRB' : '—') : `${Math.round(dirDiff)}° apart`;
-  if ($('obsDeltaPressure')) $('obsDeltaPressure').textContent = Number.isFinite(pressureDiff) ? `${signedDelta(pressureDiff)} hPa` : '—';
-}
-
-'''
-          app = replace_once(app, "function renderObservation(obs, data=weatherData) {", helper + "function renderObservation(obs, data=weatherData) {", 'observation helper insertion')
-          app = replace_once(app,
-              "    $('obsRaw').textContent = '';\n    return;",
-              "    $('obsRaw').textContent = '';\n    renderObservationDeltas(null, data);\n    return;",
-              'unavailable observation deltas')
-          app = replace_once(app,
-              "  } else $('obsMatch').textContent = 'Forecast comparison unavailable.';\n  $('obsRaw').textContent = obs.raw || '';",
-              "  } else $('obsMatch').textContent = 'Forecast comparison unavailable.';\n  renderObservationDeltas(obs, data);\n  $('obsRaw').textContent = obs.raw || '';",
-              'available observation deltas')
-          app_path.write_text(app)
-
-          html = html_path.read_text()
-          html = html.replace('v1.8', 'v1.9')
-          anchor = '          <div id="obsMatch" class="observation-match">Comparing observation with the current forecast…</div>\n          <details class="metar-details">'
-          block = '''          <div id="obsMatch" class="observation-match">Comparing observation with the current forecast…</div>
-          <div class="observation-delta-grid" aria-label="Observed minus forecast differences">
-            <div><span>🌡️ Temperature difference</span><strong id="obsDeltaTemp">—</strong><small>Observed − forecast</small></div>
-            <div><span>💨 Wind-speed difference</span><strong id="obsDeltaWind">—</strong><small>Observed − forecast</small></div>
-            <div><span>🧭 Direction difference</span><strong id="obsDeltaDir">—</strong><small>Angular separation</small></div>
-            <div><span>📊 Pressure difference</span><strong id="obsDeltaPressure">—</strong><small>Observed − forecast</small></div>
-          </div>
-          <details class="metar-details">'''
-          html = replace_once(html, anchor, block, 'observation delta grid')
-          html_path.write_text(html)
-
-          css = css_path.read_text()
-          css += r'''
-
-/* v1.9 · detailed LXGB forecast verification */
-.observation-delta-grid {
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:8px;
-  margin:12px 0 2px;
-}
-.observation-delta-grid > div {
-  min-width:0;
-  padding:11px;
-  border:1px solid var(--line);
-  border-radius:14px;
-  background:var(--card2);
-}
-.observation-delta-grid span,
-.observation-delta-grid small { display:block; color:var(--muted); }
-.observation-delta-grid span { font-size:11px; margin-bottom:5px; }
-.observation-delta-grid strong { display:block; font-size:15px; line-height:1.25; }
-.observation-delta-grid small { margin-top:4px; font-size:10px; }
-@media (max-width:620px) {
-  .observation-delta-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
-}
-'''
-          css_path.write_text(css)
-
-          sw = sw_path.read_text()
-          sw = replace_once(sw, "const CACHE = 'gibweather-shell-v18';", "const CACHE = 'gibweather-shell-v19';", 'service worker cache')
-          sw_path.write_text(sw)
-
-          version = json.loads(version_path.read_text())
-          version.update({'version':'1.9','released':'2026-08-26','cache':'gibweather-shell-v19'})
-          version_path.write_text(json.dumps(version, indent=2) + '\n')
-
-          changelog = changelog_path.read_text()
-          entry = '''## v1.9 · Airport verification detail
-- Expands the LXGB actual-conditions panel with immediate observed-vs-forecast differences.
-- Shows temperature, wind-speed and pressure deltas plus wind-direction angular separation.
-- Uses the same current forecast snapshot as GibWeather's existing LXGB match rating so the figures stay internally consistent.
-- Converts temperature and wind deltas with the user's selected units.
-- Keeps the existing airport freshness, raw METAR and overall forecast-match assessment.
-- Locks v1.8 on a dedicated release branch before the v1.9 upgrade.
-
-'''
-          changelog = replace_once(changelog, '# GibWeather changelog\n\n', '# GibWeather changelog\n\n' + entry, 'changelog header')
-          changelog_path.write_text(changelog)
-
-          readme = readme_path.read_text()
-          readme = replace_once(readme, '# GibWeather v1.8', '# GibWeather v1.9', 'README version')
-          bullet = '- Actual Gibraltar Airport (LXGB) METAR observation with forecast-vs-observation match indicator\n'
-          readme = replace_once(readme, bullet, bullet + '- Detailed LXGB observed-vs-forecast differences for temperature, wind, direction and pressure\n', 'README airport bullet')
-          readme = re.sub(r'(## Release status\n)([^\n]+\n)', r'\1v1.9 expands the Gibraltar Airport verification panel with direct observed-minus-forecast differences for temperature, wind speed and pressure, plus wind-direction separation. It retains the v1.8 forecast change tracker, v1.7 detailed 24-hour view, natural-colour icon, light and dark appearances, custom alerts, local narrative, radar, marine and model-comparison features.\n', readme, count=1)
-          readme_path.write_text(readme)
-
-          qa = qa_path.read_text()
-          qa = qa.replace('# GibWeather v1.8 QA', '# GibWeather v1.9 QA')
-          qa = qa.replace('Expected result: `GibWeather v1.8 release validation passed`.', 'Expected result: `GibWeather v1.9 release validation passed`.')
-          qa += '''\n## v1.9 LXGB verification detail\n- A fresh airport observation populates four observed-vs-forecast comparison values.\n- Temperature delta follows Celsius/Fahrenheit preference without adding an absolute-temperature offset.\n- Wind-speed delta follows km/h or mph preference.\n- Wind-direction difference uses the shortest angular separation across north (0°/360°).\n- Unavailable observations clear all four delta fields.\n'''
-          qa_path.write_text(qa)
-
-          validator = validator_path.read_text()
-          guard = '''\n# v1.9 LXGB observed-vs-forecast detail guardrails.\nfor control_id in ('obsDeltaTemp','obsDeltaWind','obsDeltaDir','obsDeltaPressure'):\n    need(f'id="{control_id}"' in HTML,f'LXGB delta element missing: {control_id}')\nneed('renderObservationDeltas' in APP,'LXGB delta rendering logic missing')\nneed('directionGap' in APP,'LXGB wind-direction comparison logic missing')\n'''
-          marker = '# METAR updater identity/version.\n'
-          validator = replace_once(validator, marker, guard + '\n' + marker, 'validator v1.9 guardrails')
-          validator_path.write_text(validator)
-
-          updater = updater_path.read_text()
-          updater = re.sub(r'GibWeather/\d+\.\d+', 'GibWeather/1.9', updater)
-          updater_path.write_text(updater)
-          PY
-
-          rm -f .github/workflows/upgrade-v18.yml .github/workflows/upgrade-v19.yml
-          node --check app.js
-          node --check service-worker.js
-          python3 scripts/validate_release.py
       - name: Publish v1.9
-        shell: bash
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git commit -m 'release: GibWeather v1.9 airport verification detail'
-          git pull --rebase origin main
-          git push origin main
+          if git diff --cached --quiet; then
+            echo "GibWeather v1.9 is already applied."
+          else
+            git commit -m "release: GibWeather v1.9 airport verification detail"
+            git pull --rebase origin main
+            git push origin main
+          fi
