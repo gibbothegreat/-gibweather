@@ -1,10 +1,11 @@
-# GibWeather v1.8
+# GibWeather v1.9
 
 GibWeather is a Gibraltar-first Progressive Web App for iPhone, iPad and modern browsers.
 
 ## Main features
 - Current Gibraltar forecast and feels-like temperature
 - Actual Gibraltar Airport (LXGB) METAR observation with forecast-vs-observation match indicator
+- Detailed LXGB observed-vs-forecast differences for temperature, wind, direction and pressure
 - 48-hour hourly forecast and 7-day forecast
 - 24-hour temperature/rain and wind/gust charts
 - Levanter / Poniente interpretation
@@ -65,7 +66,7 @@ This checks JavaScript syntax, custom-alert behavior, manifest/version consisten
 GibWeather is a static app. Deployment configurations are included for GitHub Pages, Netlify and Vercel. See `DEPLOY.md`.
 
 ## Release status
-v1.8 adds a device-local forecast change tracker. After a live refresh, GibWeather compares matching forecast hours with the previous successful refresh and highlights changes in temperature, peak gusts, rain risk and Levanter timing. It retains the v1.7 detailed 24-hour view, natural-colour icon, light and dark appearances, custom alerts, local narrative, radar, LXGB observation, marine and model-comparison features.
+v1.9 expands the Gibraltar Airport verification panel with direct observed-minus-forecast differences for temperature, wind speed and pressure, plus wind-direction separation. It retains the v1.8 forecast change tracker, v1.7 detailed 24-hour view, natural-colour icon, light and dark appearances, custom alerts, local narrative, radar, marine and model-comparison features.
 
 
 ## Rain radar (v1.3)

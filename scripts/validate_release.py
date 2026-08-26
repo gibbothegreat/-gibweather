@@ -114,6 +114,13 @@ need('TREND_CACHE_KEY' in APP,'forecast-change baseline cache missing')
 need('buildForecastChanges' in APP,'forecast-change comparison logic missing')
 need('preserveForecastBaseline' in APP,'forecast-change baseline capture missing')
 
+
+# v1.9 LXGB observed-vs-forecast detail guardrails.
+for control_id in ('obsDeltaTemp','obsDeltaWind','obsDeltaDir','obsDeltaPressure'):
+    need(f'id="{control_id}"' in HTML,f'LXGB delta element missing: {control_id}')
+need('renderObservationDeltas' in APP,'LXGB delta rendering logic missing')
+need('directionGap' in APP,'LXGB wind-direction comparison logic missing')
+
 # METAR updater identity/version.
 updater=(ROOT/'scripts/update_lxgb_observation.py').read_text()
 need('LXGB' in updater,'LXGB updater station missing')

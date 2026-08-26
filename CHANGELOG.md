@@ -1,5 +1,13 @@
 # GibWeather changelog
 
+## v1.9 · Airport verification detail
+- Expands the LXGB actual-conditions panel with immediate observed-vs-forecast differences.
+- Shows temperature, wind-speed and pressure deltas plus wind-direction angular separation.
+- Uses the same current forecast snapshot as GibWeather's existing LXGB match rating so the figures stay internally consistent.
+- Converts temperature and wind deltas with the selected units.
+- Keeps the existing airport freshness, raw METAR and overall forecast-match assessment.
+- Locks v1.8 on a dedicated release branch before the v1.9 upgrade.
+
 ## v1.8 · Forecast change tracker
 - Adds a **What changed?** panel to the Now screen.
 - Compares matching forecast hours with the previous successful live refresh saved on the same device.

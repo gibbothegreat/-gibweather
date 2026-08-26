@@ -1,4 +1,4 @@
-# GibWeather v1.8 QA
+# GibWeather v1.9 QA
 
 ## Release validation
 Run:
@@ -7,7 +7,7 @@ Run:
 python3 scripts/validate_release.py
 ```
 
-Expected result: `GibWeather v1.8 release validation passed`.
+Expected result: `GibWeather v1.9 release validation passed`.
 
 ## 24-hour forecast checks
 - The Hourly screen shows exactly the next 24 forecast hours.
@@ -89,3 +89,10 @@ Marine coastal/tide/current guidance must remain labelled as non-navigational mo
 - Comparison uses matching future timestamps, not unrelated hourly positions.
 - Temperature, peak gust, rain probability and Levanter change states are covered by a synthetic Node test.
 - Offline mode labels change tracking as unavailable rather than presenting stale revisions as current.
+
+## v1.9 LXGB verification detail
+- A fresh airport observation populates four observed-vs-forecast comparison values.
+- Temperature delta follows Celsius/Fahrenheit preference without adding an absolute-temperature offset.
+- Wind-speed delta follows km/h or mph preference.
+- Wind-direction difference uses the shortest angular separation across north (0°/360°).
+- Unavailable observations clear all four delta fields.

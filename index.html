@@ -23,7 +23,7 @@
         <div class="eyebrow">🇬🇮 GIBRALTAR</div>
         <div class="brand-title">
           <h1>GibWeather</h1>
-          <span id="topVersion" class="top-version" aria-label="App version 1.8">v1.8</span>
+          <span id="topVersion" class="top-version" aria-label="App version 1.8">v1.9</span>
           <span id="topAlertCount" class="top-alert-count count-low" aria-label="Custom weather alerts loading">🔔 —</span>
         </div>
       </div>
@@ -126,6 +126,12 @@
             <div><span>📊 Pressure</span><strong id="obsPressure">—</strong><small id="obsRegime">—</small></div>
           </div>
           <div id="obsMatch" class="observation-match">Comparing observation with the current forecast…</div>
+          <div class="observation-delta-grid" aria-label="Observed minus forecast differences">
+            <div><span>🌡️ Temperature difference</span><strong id="obsDeltaTemp">—</strong><small>Observed − forecast</small></div>
+            <div><span>💨 Wind-speed difference</span><strong id="obsDeltaWind">—</strong><small>Observed − forecast</small></div>
+            <div><span>🧭 Direction difference</span><strong id="obsDeltaDir">—</strong><small>Angular separation</small></div>
+            <div><span>📊 Pressure difference</span><strong id="obsDeltaPressure">—</strong><small>Observed − forecast</small></div>
+          </div>
           <details class="metar-details"><summary>Show raw airport report</summary><code id="obsRaw"></code></details>
           <p class="fineprint">Observed weather from Gibraltar Airport (LXGB) via the NOAA/NWS Aviation Weather Center. Airport conditions can differ from other parts of Gibraltar. The METAR feed is refreshed by GibWeather's server-side updater because AviationWeather.gov does not permit browser CORS requests.</p>
         </section>
@@ -302,7 +308,7 @@
       </section>
 
       <section id="aboutView" class="view" data-view="about">
-        <div class="page-title"><h2>About GibWeather</h2><p>Release v1.8</p></div>
+        <div class="page-title"><h2>About GibWeather</h2><p>Release v1.9</p></div>
         <article class="panel about-copy">
           <h3>Built for Gibraltar</h3>
           <p>GibWeather is designed around local conditions: Levanter and Poniente flow, gusts, low cloud, humidity, visibility and rain.</p>
@@ -314,7 +320,7 @@
           <p>MeteoGib is linked as an independent local forecast source. GibWeather does not scrape or republish MeteoGib forecasts and is not affiliated with MeteoGib.</p>
           <h3>App status</h3>
           <div class="status-grid">
-            <div><span>Version</span><strong id="versionText">v1.8</strong></div>
+            <div><span>Version</span><strong id="versionText">v1.9</strong></div>
             <div><span>Last refresh</span><strong id="lastRefreshText">—</strong></div>
             <div><span>Data age</span><strong id="dataAgeText">—</strong></div>
             <div><span>Connection</span><strong id="connectionText">—</strong></div>
@@ -377,7 +383,7 @@
             </ol>
           </div>
           <h3>Privacy</h3>
-          <p>GibWeather v1.8 has no account, advertising SDK or analytics tracker. The last successful forecast and your app preferences are stored locally on this device.</p>
+          <p>GibWeather v1.9 has no account, advertising SDK or analytics tracker. The last successful forecast and your app preferences are stored locally on this device.</p>
           <p class="fineprint">The Levanter and Rock Cloud indicators are experimental guidance only. For official or safety-critical weather information, use the relevant official authority or a qualified local forecaster.</p>
         </article>
       </section>

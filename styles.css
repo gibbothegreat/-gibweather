@@ -613,3 +613,27 @@ html[data-theme="light"] .best-hour-tag { color:#176c43; background:rgba(34,143,
   .outdoor-metrics { grid-template-columns:1fr; }
   .hour-facts { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
+
+
+/* v1.9 · detailed LXGB forecast verification */
+.observation-delta-grid {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+  margin:12px 0 2px;
+}
+.observation-delta-grid > div {
+  min-width:0;
+  padding:11px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:var(--card2);
+}
+.observation-delta-grid span,
+.observation-delta-grid small { display:block; color:var(--muted); }
+.observation-delta-grid span { font-size:11px; margin-bottom:5px; }
+.observation-delta-grid strong { display:block; font-size:15px; line-height:1.25; }
+.observation-delta-grid small { margin-top:4px; font-size:10px; }
+@media (max-width:620px) {
+  .observation-delta-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}

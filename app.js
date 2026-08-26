@@ -1,9 +1,9 @@
-const APP_VERSION = '1.8';
+const APP_VERSION = '1.9';
 const GIBRALTAR = { lat: 36.1408, lon: -5.3536, timezone: 'Europe/Gibraltar' };
-const CACHE_KEY = 'gibweather:last-forecast:v18';
+const CACHE_KEY = 'gibweather:last-forecast:v19';
 const TREND_CACHE_KEY = 'gibweather:forecast-baseline:v1';
 const BACKUP_CACHE_KEY = 'gibweather:last-known-good:v1';
-const LEGACY_CACHE_KEYS = ['gibweather:last-forecast:v17','gibweather:last-forecast:v16','gibweather:last-forecast:v15','gibweather:last-forecast:v14','gibweather:last-forecast:v13','gibweather:last-forecast:v12','gibweather:last-forecast:v11','gibweather:last-forecast:v10','gibweather:last-forecast:v8','gibweather:last-forecast:v7','gibweather:last-forecast:v6', 'gibweather:last-forecast:v5', 'gibweather:last-forecast:v4', 'gibweather:last-forecast:v3', 'gibweather:last-forecast:v2', 'gibweather:last-forecast:v1'];
+const LEGACY_CACHE_KEYS = ['gibweather:last-forecast:v18','gibweather:last-forecast:v17','gibweather:last-forecast:v16','gibweather:last-forecast:v15','gibweather:last-forecast:v14','gibweather:last-forecast:v13','gibweather:last-forecast:v12','gibweather:last-forecast:v11','gibweather:last-forecast:v10','gibweather:last-forecast:v8','gibweather:last-forecast:v7','gibweather:last-forecast:v6', 'gibweather:last-forecast:v5', 'gibweather:last-forecast:v4', 'gibweather:last-forecast:v3', 'gibweather:last-forecast:v2', 'gibweather:last-forecast:v1'];
 const INTRO_KEY = 'gibweather:intro-seen';
 const SETTINGS_KEY = 'gibweather:settings:v1';
 const DEFAULT_SETTINGS = {
@@ -969,6 +969,46 @@ function forecastObservationMatch(obs, data) {
   return { level, className, score, details: checks.map(x => x.text) };
 }
 
+
+function directionGap(a, b) {
+  if (a == null || b == null || !Number.isFinite(Number(a)) || !Number.isFinite(Number(b))) return null;
+  return Math.abs((((Number(a) - Number(b)) + 540) % 360) - 180);
+}
+
+function signedDelta(value, digits = 0) {
+  if (!Number.isFinite(Number(value))) return '—';
+  const n = Number(value);
+  const shown = digits ? n.toFixed(digits) : Math.round(n).toString();
+  return `${n > 0 ? '+' : ''}${shown}`;
+}
+
+function renderObservationDeltas(obs, data=weatherData) {
+  const ids = ['obsDeltaTemp','obsDeltaWind','obsDeltaDir','obsDeltaPressure'];
+  const clear = () => ids.forEach(id => { if ($(id)) $(id).textContent = '—'; });
+  if (!obs?.available || !data?.hourly?.time?.length) { clear(); return; }
+
+  const i = getHourIndex(data);
+  const s = hourSnapshot(data, i);
+  const difference = (a, b) => (a == null || b == null || !Number.isFinite(Number(a)) || !Number.isFinite(Number(b))) ? null : Number(a) - Number(b);
+  const tempDiffC = difference(obs.temperature_c, s.temp);
+  const windDiffKmh = difference(obs.wind_speed_kmh, s.wind);
+  const pressureDiff = difference(obs.pressure_hpa, s.pressure);
+  const dirDiff = obs.variable_wind ? null : directionGap(obs.wind_direction_deg, s.dir);
+
+  if ($('obsDeltaTemp')) {
+    if (Number.isFinite(tempDiffC)) {
+      const delta = settings.temperatureUnit === 'f' ? tempDiffC * 9/5 : tempDiffC;
+      $('obsDeltaTemp').textContent = `${signedDelta(delta, 1)}°${settings.temperatureUnit === 'f' ? 'F' : 'C'}`;
+    } else $('obsDeltaTemp').textContent = '—';
+  }
+  if ($('obsDeltaWind')) {
+    const delta = windValue(windDiffKmh);
+    $('obsDeltaWind').textContent = Number.isFinite(delta) ? `${signedDelta(delta)} ${windUnitLabel()}` : '—';
+  }
+  if ($('obsDeltaDir')) $('obsDeltaDir').textContent = dirDiff == null ? (obs.variable_wind ? 'VRB' : '—') : `${Math.round(dirDiff)}° apart`;
+  if ($('obsDeltaPressure')) $('obsDeltaPressure').textContent = Number.isFinite(pressureDiff) ? `${signedDelta(pressureDiff)} hPa` : '—';
+}
+
 function renderObservation(obs, data=weatherData) {
   const root = $('observationPanel');
   if (!root) return;
@@ -985,6 +1025,7 @@ function renderObservation(obs, data=weatherData) {
     $('obsCloud').textContent = obs?.reason || 'Airport observation has not been published yet.';
     $('obsMatch').textContent = 'Forecast comparison will appear when a fresh airport observation is available.';
     $('obsRaw').textContent = '';
+    renderObservationDeltas(null, data);
     return;
   }
   root.classList.remove('observation-unavailable');
@@ -1010,6 +1051,7 @@ function renderObservation(obs, data=weatherData) {
   if (match) {
     $('obsMatch').innerHTML = `<strong class="obs-match ${match.className}">${match.level} forecast match</strong><span>${match.details.slice(0,3).join(' · ')}</span>`;
   } else $('obsMatch').textContent = 'Forecast comparison unavailable.';
+  renderObservationDeltas(obs, data);
   $('obsRaw').textContent = obs.raw || '';
 }
 
