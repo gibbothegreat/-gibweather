@@ -1,5 +1,14 @@
 # GibWeather changelog
 
+## v1.8 · Forecast change tracker
+- Adds a **What changed?** panel to the Now screen.
+- Compares matching forecast hours with the previous successful live refresh saved on the same device.
+- Tracks temperature, next-12-hour peak gusts, next-12-hour rain risk and Levanter timing/strength changes.
+- Distinguishes forecast revision from observed weather verification; LXGB remains the actual-conditions comparison.
+- Pauses change tracking while offline and resumes after a successful live refresh.
+- Keeps the comparison private in local browser storage with the existing forecast cache.
+- Refreshes the offline shell and release validation for v1.8.
+
 ## v1.7 · Detailed 24-hour forecast
 - Rebuilds the Hourly screen around the next 24 hours in Gibraltar local time.
 - Adds an automated best outdoor-period guide based on daylight, rain, wind, visibility, UV and feels-like temperature.

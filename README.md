@@ -1,4 +1,4 @@
-# GibWeather v1.7
+# GibWeather v1.8
 
 GibWeather is a Gibraltar-first Progressive Web App for iPhone, iPad and modern browsers.
 
@@ -20,9 +20,10 @@ GibWeather is a Gibraltar-first Progressive Web App for iPhone, iPad and modern 
 - Recent Gibraltar-centred rain radar history with timeline animation
 - Direct MeteoGib link for local forecaster commentary
 - Smart Gibraltar alerts with severity, timing, Rock Cloud and rough-sea guidance
+- Forecast change tracker comparing temperature, peak gusts, rain risk and Levanter timing with the previous live refresh
 - Per-device alert categories and personal trigger thresholds with a live header count
 - Automatic, dark and light appearances saved per device
-- Red-and-white Rock and cloud icon with a yellow sun
+- Natural-colour Rock, sun, cloud and sea Home Screen icon
 
 ## v1.2 reliability release
 v1.2 corrects the live API contracts used by the app. The main Open-Meteo forecast request now explicitly asks for the daily fields needed by the Today and 7-day screens. The Open-Meteo Marine request now uses only supported marine daily aggregations (`wave_height_max`, dominant wave direction, period, and swell equivalents). A release validator is included at `scripts/validate_release.py` to guard against mixing atmospheric and marine API variables in future builds.
@@ -64,7 +65,7 @@ This checks JavaScript syntax, custom-alert behavior, manifest/version consisten
 GibWeather is a static app. Deployment configurations are included for GitHub Pages, Netlify and Vercel. See `DEPLOY.md`.
 
 ## Release status
-v1.7 upgrades the Hourly screen with a detailed 24-hour view, sunrise and sunset markers, and a highlighted best outdoor-period guide. Every hour now includes temperature, feels-like, rain probability and amount, wind and gusts, humidity, visibility and UV. It retains the natural-colour icon, light and dark appearances, custom alerts, local narrative, radar, LXGB observation, marine and model-comparison features.
+v1.8 adds a device-local forecast change tracker. After a live refresh, GibWeather compares matching forecast hours with the previous successful refresh and highlights changes in temperature, peak gusts, rain risk and Levanter timing. It retains the v1.7 detailed 24-hour view, natural-colour icon, light and dark appearances, custom alerts, local narrative, radar, LXGB observation, marine and model-comparison features.
 
 
 ## Rain radar (v1.3)

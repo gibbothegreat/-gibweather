@@ -30,6 +30,8 @@ for f in ('app.js','service-worker.js'):
 
 alert_test=subprocess.run(['node',str(ROOT/'scripts/test_smart_alerts.js')],capture_output=True,text=True)
 need(alert_test.returncode==0,f'Forecast runtime test failed: {alert_test.stderr.strip()}')
+trend_test=subprocess.run(['node',str(ROOT/'scripts/test_forecast_changes.js')],capture_output=True,text=True)
+need(trend_test.returncode==0,f'Forecast change test failed: {trend_test.stderr.strip()}')
 
 # JSON/TOML
 for f in ('manifest.webmanifest','version.json','vercel.json'):
@@ -104,6 +106,13 @@ need('Next 48 hours' not in HTML,'obsolete 48-hour label remains')
 styles=(ROOT/'styles.css').read_text()
 need('.hourly-detail-row' in styles,'detailed hourly-row styles missing')
 need('.daylight-track' in styles,'daylight timeline styles missing')
+
+# v1.8 forecast-change tracker guardrails.
+for control_id in ('forecastChangeBadge','forecastChangeSummary','forecastChangeTemp','forecastChangeGust','forecastChangeRain','forecastChangeLevanter'):
+    need(f'id="{control_id}"' in HTML,f'forecast-change element missing: {control_id}')
+need('TREND_CACHE_KEY' in APP,'forecast-change baseline cache missing')
+need('buildForecastChanges' in APP,'forecast-change comparison logic missing')
+need('preserveForecastBaseline' in APP,'forecast-change baseline capture missing')
 
 # METAR updater identity/version.
 updater=(ROOT/'scripts/update_lxgb_observation.py').read_text()

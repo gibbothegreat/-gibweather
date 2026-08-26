@@ -1,4 +1,4 @@
-# GibWeather v1.7 QA
+# GibWeather v1.8 QA
 
 ## Release validation
 Run:
@@ -7,7 +7,7 @@ Run:
 python3 scripts/validate_release.py
 ```
 
-Expected result: `GibWeather v1.7 release validation passed`.
+Expected result: `GibWeather v1.8 release validation passed`.
 
 ## 24-hour forecast checks
 - The Hourly screen shows exactly the next 24 forecast hours.
@@ -83,3 +83,9 @@ Marine coastal/tide/current guidance must remain labelled as non-navigational mo
 - OpenStreetMap and RainViewer attribution are visible on the radar screen.
 - Radar failure/offline state does not block the forecast, model, marine or LXGB observation screens.
 - Hosting CSP allows the required RainViewer and OpenStreetMap hosts.
+
+## v1.8 forecast-change tracker
+- Baseline is stored only after a successful live refresh.
+- Comparison uses matching future timestamps, not unrelated hourly positions.
+- Temperature, peak gust, rain probability and Levanter change states are covered by a synthetic Node test.
+- Offline mode labels change tracking as unavailable rather than presenting stale revisions as current.

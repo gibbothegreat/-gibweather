@@ -23,7 +23,7 @@
         <div class="eyebrow">🇬🇮 GIBRALTAR</div>
         <div class="brand-title">
           <h1>GibWeather</h1>
-          <span id="topVersion" class="top-version" aria-label="App version 1.7">v1.7</span>
+          <span id="topVersion" class="top-version" aria-label="App version 1.8">v1.8</span>
           <span id="topAlertCount" class="top-alert-count count-low" aria-label="Custom weather alerts loading">🔔 —</span>
         </div>
       </div>
@@ -97,6 +97,21 @@
           <div class="mini-timeline-heading"><strong>Rain · next 12 hours</strong><small>Probability</small></div>
           <div id="rainTimeline" class="rain-timeline" aria-label="Rain probability timeline"></div>
           <p class="fineprint">This narrative is generated from GibWeather's forecast heuristics and is not an official warning or human forecaster bulletin.</p>
+        </section>
+
+        <section class="panel" aria-label="Forecast changes since the previous refresh">
+          <div class="section-heading">
+            <div><div class="eyebrow">WHAT CHANGED?</div><h2>Since the last forecast</h2></div>
+            <span id="forecastChangeBadge" class="agreement-badge">Learning…</span>
+          </div>
+          <p id="forecastChangeSummary" class="model-copy">Saving a baseline so GibWeather can compare the next refresh.</p>
+          <div class="narrative-grid">
+            <div><span>🌡️ Temperature</span><strong id="forecastChangeTemp">—</strong></div>
+            <div><span>🌪️ Peak gust</span><strong id="forecastChangeGust">—</strong></div>
+            <div><span>🌧️ Rain risk</span><strong id="forecastChangeRain">—</strong></div>
+            <div><span>🌬️ Levanter</span><strong id="forecastChangeLevanter">—</strong></div>
+          </div>
+          <p class="fineprint">Compared with the previous successful GibWeather forecast stored on this device. This shows how the forecast changed, not how the forecast compared with actual weather.</p>
         </section>
 
         <section id="observationPanel" class="panel observation-panel" aria-label="Gibraltar Airport observed weather">
@@ -287,7 +302,7 @@
       </section>
 
       <section id="aboutView" class="view" data-view="about">
-        <div class="page-title"><h2>About GibWeather</h2><p>Release v1.7</p></div>
+        <div class="page-title"><h2>About GibWeather</h2><p>Release v1.8</p></div>
         <article class="panel about-copy">
           <h3>Built for Gibraltar</h3>
           <p>GibWeather is designed around local conditions: Levanter and Poniente flow, gusts, low cloud, humidity, visibility and rain.</p>
@@ -299,7 +314,7 @@
           <p>MeteoGib is linked as an independent local forecast source. GibWeather does not scrape or republish MeteoGib forecasts and is not affiliated with MeteoGib.</p>
           <h3>App status</h3>
           <div class="status-grid">
-            <div><span>Version</span><strong id="versionText">v1.7</strong></div>
+            <div><span>Version</span><strong id="versionText">v1.8</strong></div>
             <div><span>Last refresh</span><strong id="lastRefreshText">—</strong></div>
             <div><span>Data age</span><strong id="dataAgeText">—</strong></div>
             <div><span>Connection</span><strong id="connectionText">—</strong></div>
@@ -362,7 +377,7 @@
             </ol>
           </div>
           <h3>Privacy</h3>
-          <p>GibWeather v1.7 has no account, advertising SDK or analytics tracker. The last successful forecast and your app preferences are stored locally on this device.</p>
+          <p>GibWeather v1.8 has no account, advertising SDK or analytics tracker. The last successful forecast and your app preferences are stored locally on this device.</p>
           <p class="fineprint">The Levanter and Rock Cloud indicators are experimental guidance only. For official or safety-critical weather information, use the relevant official authority or a qualified local forecaster.</p>
         </article>
       </section>

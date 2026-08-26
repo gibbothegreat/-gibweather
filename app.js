@@ -1,8 +1,9 @@
-const APP_VERSION = '1.7';
+const APP_VERSION = '1.8';
 const GIBRALTAR = { lat: 36.1408, lon: -5.3536, timezone: 'Europe/Gibraltar' };
-const CACHE_KEY = 'gibweather:last-forecast:v17';
+const CACHE_KEY = 'gibweather:last-forecast:v18';
+const TREND_CACHE_KEY = 'gibweather:forecast-baseline:v1';
 const BACKUP_CACHE_KEY = 'gibweather:last-known-good:v1';
-const LEGACY_CACHE_KEYS = ['gibweather:last-forecast:v16','gibweather:last-forecast:v15','gibweather:last-forecast:v14','gibweather:last-forecast:v13','gibweather:last-forecast:v12','gibweather:last-forecast:v11','gibweather:last-forecast:v10','gibweather:last-forecast:v8','gibweather:last-forecast:v7','gibweather:last-forecast:v6', 'gibweather:last-forecast:v5', 'gibweather:last-forecast:v4', 'gibweather:last-forecast:v3', 'gibweather:last-forecast:v2', 'gibweather:last-forecast:v1'];
+const LEGACY_CACHE_KEYS = ['gibweather:last-forecast:v17','gibweather:last-forecast:v16','gibweather:last-forecast:v15','gibweather:last-forecast:v14','gibweather:last-forecast:v13','gibweather:last-forecast:v12','gibweather:last-forecast:v11','gibweather:last-forecast:v10','gibweather:last-forecast:v8','gibweather:last-forecast:v7','gibweather:last-forecast:v6', 'gibweather:last-forecast:v5', 'gibweather:last-forecast:v4', 'gibweather:last-forecast:v3', 'gibweather:last-forecast:v2', 'gibweather:last-forecast:v1'];
 const INTRO_KEY = 'gibweather:intro-seen';
 const SETTINGS_KEY = 'gibweather:settings:v1';
 const DEFAULT_SETTINGS = {
@@ -98,6 +99,7 @@ let radarData = null;
 let radarFrameIndex = 0;
 let radarPlayTimer = null;
 let autoRefreshTimer = null;
+let previousForecast = null;
 
 function loadSettings() {
   try {
@@ -1576,6 +1578,7 @@ function renderMarine(data) {
 
 function renderAll(data) {
   renderNow(data);
+  renderForecastChanges(data);
   renderAdvisories(data, marineData);
   renderHourly(data);
   renderDaily(data);
@@ -1586,6 +1589,156 @@ function renderAll(data) {
   renderForecastConfidence();
   renderAppStatus();
   renderSettings();
+}
+
+function readTrendBaseline() {
+  try {
+    const raw = localStorage.getItem(TREND_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed?.data ? parsed : null;
+  } catch (_) { return null; }
+}
+
+function preserveForecastBaseline() {
+  const current = readCachedForecast();
+  if (!current?.data || !current.savedAt) return;
+  const stamp = Date.parse(current.savedAt);
+  if (!Number.isFinite(stamp)) return;
+  previousForecast = current;
+  try { localStorage.setItem(TREND_CACHE_KEY, JSON.stringify(current)); } catch (_) {}
+}
+
+function baselineTimeLabel(entry) {
+  if (!entry?.savedAt) return 'the previous refresh';
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      timeZone: GIBRALTAR.timezone, hour: '2-digit', minute: '2-digit'
+    }).format(new Date(entry.savedAt));
+  } catch (_) { return 'the previous refresh'; }
+}
+
+function alignedForecastPairs(data, baselineData, count=12) {
+  if (!data?.hourly?.time?.length || !baselineData?.hourly?.time?.length) return [];
+  const previousIndex = new Map(baselineData.hourly.time.map((time, index) => [time, index]));
+  return snapshots(data, getHourIndex(data), count).map(current => {
+    const index = previousIndex.get(current.time);
+    return index == null ? null : { current, previous: hourSnapshot(baselineData, index) };
+  }).filter(Boolean);
+}
+
+function deltaTemperatureText(deltaC) {
+  if (!Number.isFinite(deltaC)) return '—';
+  const converted = settings.temperatureUnit === 'f' ? deltaC * 9/5 : deltaC;
+  if (Math.abs(converted) < .5) return 'About the same';
+  return `${converted > 0 ? '↑' : '↓'} ${Math.abs(converted).toFixed(Math.abs(converted) < 10 ? 1 : 0)}${tempUnitLabel()} ${converted > 0 ? 'warmer' : 'cooler'}`;
+}
+
+function deltaWindText(deltaKmh) {
+  if (!Number.isFinite(deltaKmh)) return '—';
+  const converted = settings.windUnit === 'mph' ? deltaKmh * .621371 : deltaKmh;
+  if (Math.abs(converted) < 2) return 'About the same';
+  return `${converted > 0 ? '↑' : '↓'} ${Math.abs(converted).toFixed(0)} ${windUnitLabel()} ${converted > 0 ? 'stronger' : 'weaker'}`;
+}
+
+function deltaRainText(delta) {
+  if (!Number.isFinite(delta)) return '—';
+  if (Math.abs(delta) < 5) return 'About the same';
+  return `${delta > 0 ? '↑' : '↓'} ${Math.abs(Math.round(delta))} points ${delta > 0 ? 'higher' : 'lower'}`;
+}
+
+function buildForecastChanges(data, baselineEntry=previousForecast) {
+  const baseline = baselineEntry?.data;
+  const pairs12 = alignedForecastPairs(data, baseline, 12);
+  const pairs24 = alignedForecastPairs(data, baseline, 24);
+  if (!baseline || pairs12.length < 3) return { available: false };
+
+  const first = pairs12[0];
+  const tempDeltaC = Number(first.current.temp) - Number(first.previous.temp);
+  const currentPeakGust = Math.max(...pairs12.map(x => Number(x.current.gust) || 0));
+  const previousPeakGust = Math.max(...pairs12.map(x => Number(x.previous.gust) || 0));
+  const gustDeltaKmh = currentPeakGust - previousPeakGust;
+  const currentPeakRain = Math.max(...pairs12.map(x => Number(x.current.rainChance) || 0));
+  const previousPeakRain = Math.max(...pairs12.map(x => Number(x.previous.rainChance) || 0));
+  const rainDeltaPp = currentPeakRain - previousPeakRain;
+
+  const currentLev = pairs24.find(x => levanterIndex(x.current).rank > 0);
+  const previousLev = pairs24.find(x => levanterIndex(x.previous).rank > 0);
+  let levanterText = 'No timing change';
+  let levanterShiftHours = 0;
+  let levanterChanged = false;
+  if (currentLev && !previousLev) {
+    levanterText = `New signal · ${fmtTime(currentLev.current.time)}`;
+    levanterShiftHours = null;
+    levanterChanged = true;
+  } else if (!currentLev && previousLev) {
+    levanterText = 'Earlier signal has eased';
+    levanterShiftHours = null;
+    levanterChanged = true;
+  } else if (currentLev && previousLev) {
+    const shift = (fakeLocalEpoch(currentLev.current.time) - fakeLocalEpoch(previousLev.previous.time)) / 3600000;
+    levanterShiftHours = Number.isFinite(shift) ? shift : 0;
+    if (Math.abs(levanterShiftHours) >= .75) {
+      levanterText = `${Math.abs(Math.round(levanterShiftHours))}h ${levanterShiftHours < 0 ? 'earlier' : 'later'}`;
+      levanterChanged = true;
+    } else {
+      const currentRank = levanterIndex(currentLev.current).rank;
+      const previousRank = levanterIndex(previousLev.previous).rank;
+      if (currentRank !== previousRank) {
+        levanterText = currentRank > previousRank ? 'Signal stronger' : 'Signal weaker';
+        levanterChanged = true;
+      } else levanterText = `Timing steady · ${fmtTime(currentLev.current.time)}`;
+    }
+  } else levanterText = 'No signal in either update';
+
+  const changed = [];
+  if (Math.abs(tempDeltaC) >= 1) changed.push(`temperature ${tempDeltaC > 0 ? 'warmer' : 'cooler'}`);
+  if (Math.abs(gustDeltaKmh) >= 5) changed.push(`peak gusts ${gustDeltaKmh > 0 ? 'stronger' : 'weaker'}`);
+  if (Math.abs(rainDeltaPp) >= 10) changed.push(`rain risk ${rainDeltaPp > 0 ? 'higher' : 'lower'}`);
+  if (levanterChanged) changed.push('Levanter timing changed');
+  const baselineLabel = baselineTimeLabel(baselineEntry);
+  const significant = changed.length;
+  return {
+    available: true,
+    baselineLabel,
+    badge: significant >= 2 ? 'Changed' : significant === 1 ? 'Small change' : 'Steady',
+    badgeClass: significant >= 2 ? 'agreement-medium' : 'agreement-high',
+    summary: significant ? `Since ${baselineLabel}: ${changed.slice(0, 3).join(' · ')}.` : `Forecast is broadly steady since ${baselineLabel}.`,
+    temperature: deltaTemperatureText(tempDeltaC),
+    gust: deltaWindText(gustDeltaKmh),
+    rain: deltaRainText(rainDeltaPp),
+    levanter: levanterText,
+    metrics: { tempDeltaC, gustDeltaKmh, rainDeltaPp, levanterShiftHours, significant }
+  };
+}
+
+function renderForecastChanges(data) {
+  const badge = $('forecastChangeBadge');
+  const summary = $('forecastChangeSummary');
+  if (!badge || !summary) return;
+  const ids = ['forecastChangeTemp','forecastChangeGust','forecastChangeRain','forecastChangeLevanter'];
+  if (lastLoadWasCached) {
+    badge.textContent = 'Offline';
+    badge.className = 'agreement-badge';
+    summary.textContent = 'Forecast change tracking resumes after the next successful live refresh.';
+    ids.forEach(id => { if ($(id)) $(id).textContent = '—'; });
+    return;
+  }
+  const change = buildForecastChanges(data);
+  if (!change.available) {
+    badge.textContent = 'Learning';
+    badge.className = 'agreement-badge';
+    summary.textContent = 'A baseline is being saved. Changes will appear after the next live refresh with matching forecast hours.';
+    ids.forEach(id => { if ($(id)) $(id).textContent = '—'; });
+    return;
+  }
+  badge.textContent = change.badge;
+  badge.className = `agreement-badge ${change.badgeClass}`;
+  summary.textContent = change.summary;
+  $('forecastChangeTemp').textContent = change.temperature;
+  $('forecastChangeGust').textContent = change.gust;
+  $('forecastChangeRain').textContent = change.rain;
+  $('forecastChangeLevanter').textContent = change.levanter;
 }
 
 function setStatus(text, kind='') {
@@ -1707,6 +1860,7 @@ async function loadWeather(force=false) {
     lastApiHealth = 'ok';
     lastModelHealth = models?.series?.length >= 2 ? 'ok' : models?.series?.length ? 'degraded' : 'unavailable';
     lastMarineHealth = marine ? 'ok' : 'unavailable';
+    preserveForecastBaseline();
     saveForecast(data, models, marine);
     renderAll(data);
     setStatus('Forecast updated.', 'success');
@@ -1829,7 +1983,8 @@ async function shareForecast() {
 }
 
 function clearSavedForecast() {
-  try { [CACHE_KEY, BACKUP_CACHE_KEY, ...LEGACY_CACHE_KEYS].forEach(key => localStorage.removeItem(key)); } catch (_) {}
+  try { [CACHE_KEY, BACKUP_CACHE_KEY, TREND_CACHE_KEY, ...LEGACY_CACHE_KEYS].forEach(key => localStorage.removeItem(key)); } catch (_) {}
+  previousForecast = null;
   savedAt = null;
   renderAppStatus();
   setStatus('Saved offline forecast cleared. Live weather is unchanged.', 'notice');
@@ -1895,6 +2050,7 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   });
 }
 
+previousForecast = readTrendBaseline();
 renderSettings();
 updateInstallUI();
 setOnlineUI();
