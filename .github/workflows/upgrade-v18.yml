@@ -1,0 +1,36 @@
+name: Upgrade GibWeather v1.8
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/upgrade-v18.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Apply v1.8 upgrade
+        run: python3 scripts/upgrade_v18.py
+
+      - name: Validate v1.8 release
+        run: python3 scripts/validate_release.py
+
+      - name: Publish v1.8
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app.js index.html service-worker.js version.json README.md CHANGELOG.md QA.md scripts/update_lxgb_observation.py scripts/validate_release.py scripts/test_forecast_changes.js
+          if git diff --cached --quiet; then
+            echo "GibWeather v1.8 is already applied."
+          else
+            git commit -m "release: GibWeather v1.8 forecast change tracker"
+            git push
+          fi
