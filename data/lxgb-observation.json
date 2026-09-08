@@ -2,24 +2,29 @@
   "available": true,
   "station": "LXGB",
   "station_name": "Gibraltar Airport",
-  "observed_at": "2026-09-08T17:50:00Z",
-  "raw": "METAR LXGB 081750Z 24011KT CAVOK 30/16 Q1015 NOSIG",
-  "wind_direction_deg": 240,
+  "observed_at": "2026-09-08T20:50:00Z",
+  "raw": "METAR LXGB 082050Z AUTO 27013KT 9999 SCT130/// 27/14 Q1016",
+  "wind_direction_deg": 270,
   "variable_wind": false,
-  "wind_speed_kt": 11,
+  "wind_speed_kt": 13,
   "wind_gust_kt": null,
-  "wind_speed_kmh": 20.4,
+  "wind_speed_kmh": 24.1,
   "wind_gust_kmh": null,
   "visibility_m": 10000,
   "visibility_10km_or_more": true,
-  "temperature_c": 30.0,
-  "dew_point_c": 16.0,
-  "relative_humidity_pct": 42.8,
-  "pressure_hpa": 1015,
-  "clouds": [],
+  "temperature_c": 27.0,
+  "dew_point_c": 14.0,
+  "relative_humidity_pct": 44.8,
+  "pressure_hpa": 1016,
+  "clouds": [
+    {
+      "amount": "SCT",
+      "height_ft": 13000
+    }
+  ],
   "ceiling_ft": null,
   "weather_codes": [],
   "source": "AviationWeather.gov / NOAA-NWS Aviation Weather Center",
   "source_url": "https://aviationweather.gov/api/data/metar?ids=LXGB&format=raw&hours=2",
-  "retrieved_at": "2026-09-08T18:08:47.434115Z"
+  "retrieved_at": "2026-09-08T21:16:01.674758Z"
 }
