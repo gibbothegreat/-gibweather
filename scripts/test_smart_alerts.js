@@ -164,7 +164,8 @@ assert(atCustomRain.some(item => item.title === 'Showers possible'), 'Rain alert
 
 setAlertSettings({
   alertWind: false, alertRain: false, alertVisibility: false, alertUv: false,
-  alertLevanter: false, alertRockCloud: false, alertSea: false
+  alertLevanter: false, alertRockCloud: false, alertSea: false,
+  alertAir: false, alertCalima: false, alertPollen: false
 });
 const paused = context.buildAdvisories(weather({ gust: 70, rain: 90, uv: 10 }), 0, marine(3.5));
 assert(paused.length === 1 && paused[0].title === 'Custom alerts paused', 'All categories off should show the paused state');
@@ -191,5 +192,42 @@ assert(element('hourlyList').innerHTML.includes('Visibility'), 'Detailed hourly 
 assert(element('hourlyList').innerHTML.includes('best-hour-tag'), 'Recommended outdoor hours were not highlighted');
 assert(element('daylightTimeline').innerHTML.includes('solar-marker'), 'Sunrise or sunset markers were not rendered');
 assert(element('outdoorWindow').textContent.length > 0, 'Outdoor window summary was not rendered');
+
+// v2.2 air quality, Calima and pollen
+function air({ aqi = 15, dust = 2, grass = 0, olive = 0, pollen = true } = {}) {
+  const length = 30;
+  const times = Array.from({ length }, (_, i) => new Date(Date.UTC(2026, 7, 25, i)).toISOString().slice(0, 16));
+  const fill = v => Array.from({ length }, () => v);
+  const hourly = { time: times, european_aqi: fill(aqi), pm2_5: fill(8), pm10: fill(14), dust: fill(dust), nitrogen_dioxide: fill(12), ozone: fill(60) };
+  ['grass_pollen','olive_pollen','birch_pollen','alder_pollen','mugwort_pollen','ragweed_pollen'].forEach(k => { hourly[k] = fill(pollen ? 0 : null); });
+  if (pollen) { hourly.grass_pollen = fill(grass); hourly.olive_pollen = fill(olive); }
+  return { current: { time: times[0], european_aqi: aqi, dust }, hourly };
+}
+setAlertSettings();
+const dusty = context.buildAdvisories(weather(), 0, null, air({ aqi: 85, dust: 180, grass: 80 }));
+['Very poor air quality', 'Strong Calima', 'Grass pollen high'].forEach(title => assert(dusty.some(item => item.title === title), `Missing air alert: ${title}`));
+assert(dusty.find(item => item.title === 'Strong Calima').level === 'high', 'Strong Calima should be Important');
+const cleanAir = context.buildAdvisories(weather(), 0, null, air());
+assert(cleanAir.length === 1 && cleanAir[0].isClear, 'Clean air should not raise alerts');
+const lightDust = context.buildAdvisories(weather(), 0, null, air({ dust: 60 }));
+assert(lightDust.some(item => item.title === 'Calima / Saharan dust' && item.level === 'medium'), 'Calima watch did not trigger at default threshold');
+setAlertSettings({ alertDustThreshold: 100 });
+assert(!context.buildAdvisories(weather(), 0, null, air({ dust: 60 })).some(item => /Calima/.test(item.title)), 'Calima ignored custom threshold');
+setAlertSettings({ alertCalima: false, alertAir: false });
+assert(!context.buildAdvisories(weather(), 0, null, air({ aqi: 90, dust: 250 })).some(item => /Calima|air quality/i.test(item.title)), 'Disabled air categories still alerted');
+setAlertSettings({ alertPollenThreshold: 1 });
+assert(context.buildAdvisories(weather(), 0, null, air({ olive: 80 })).some(item => item.title === 'Olive pollen moderate'), 'Moderate pollen threshold did not trigger');
+setAlertSettings();
+context.renderAir(air({ aqi: 45, dust: 120, grass: 30 }));
+assert(element('airAqiLabel').textContent === 'Moderate', 'AQI band label incorrect');
+assert(element('airDustLabel').textContent === 'Strong Calima', 'Dust band label incorrect');
+assert(element('calimaSummary').textContent.startsWith('Strong Calima expected'), 'Calima summary missing');
+assert(element('pollenList').innerHTML.includes('Grass') && element('pollenList').innerHTML.includes('Moderate'), 'Pollen list did not render');
+assert(element('airDaily').innerHTML.includes('Today'), 'Daily air outlook missing');
+assert(element('airNowSummary').innerHTML.includes('Calima'), 'Now-screen air summary missing');
+context.renderAir(air({ pollen: false }));
+assert(element('pollenList').innerHTML.includes('out of season'), 'Out-of-season pollen state missing');
+context.renderAir(null);
+assert(element('airAqiNow').textContent === '—', 'Unavailable air feed did not clear values');
 
 process.stdout.write('GibWeather forecast smoke tests passed\n');
