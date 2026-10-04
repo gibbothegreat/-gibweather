@@ -1,4 +1,4 @@
-# GibWeather v2.0
+# GibWeather v2.1
 
 GibWeather is a Gibraltar-first Progressive Web App for iPhone, iPad and modern browsers.
 
@@ -19,6 +19,7 @@ GibWeather is a Gibraltar-first Progressive Web App for iPhone, iPad and modern 
 - iPhone/iPad Home Screen PWA support
 - System-health and installation-readiness checks
 - Recent Gibraltar-centred rain radar history with timeline animation
+- Radar zoom levels 6–10 with +/− controls, pinch and double-tap while keeping Gibraltar centred
 - Direct MeteoGib link for local forecaster commentary
 - Smart Gibraltar alerts with severity, timing, Rock Cloud and rough-sea guidance
 - Forecast change tracker comparing temperature, peak gusts, rain risk and Levanter timing with the previous live refresh
@@ -68,7 +69,7 @@ This checks JavaScript syntax, custom-alert behavior, manifest/version consisten
 GibWeather is a static app. Deployment configurations are included for GitHub Pages, Netlify and Vercel. See `DEPLOY.md`.
 
 ## Release status
-v2.0 adds opt-in local notifications for new Watch and Important forecast flags plus direct access to official AEMET warnings. It preserves the v1.9 Gibraltar Airport verification detail, forecast-change tracker, detailed 24-hour view, natural-colour icon, light and dark appearances, custom alerts, local narrative, radar, marine and model-comparison features.
+v2.1 adds Gibraltar-centred radar zoom levels 6–10 with accessible +/− buttons, pinch and double-tap controls, plus a saved per-device zoom preference. It preserves v2.0 notifications and official-warning access along with the existing forecast, observation, marine and model-comparison features.
 
 
 ## Rain radar (v1.3)

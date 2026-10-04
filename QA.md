@@ -1,4 +1,4 @@
-# GibWeather v2.0 QA
+# GibWeather v2.1 QA
 
 ## Release validation
 Run:
@@ -7,7 +7,14 @@ Run:
 python3 scripts/validate_release.py
 ```
 
-Expected result: `GibWeather v2.0 release validation passed`.
+Expected result: `GibWeather v2.1 release validation passed`.
+
+## v2.1 radar zoom checks
+- Radar zoom remains within levels 6–10 and opens at level 7 on a new device.
+- +/− controls disable at the minimum and maximum levels.
+- Pinch and double-tap zoom keep the Gibraltar marker centred.
+- The selected zoom persists on the current device.
+- Changing radar frames preserves the selected zoom.
 
 ## v2.0 notification and official-warning checks
 - Notifications remain off until the user presses the notification button and grants browser permission.

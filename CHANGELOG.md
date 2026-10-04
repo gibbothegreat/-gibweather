@@ -1,5 +1,12 @@
 # GibWeather changelog
 
+## v2.1 · Radar zoom
+- Adds radar zoom levels 6–10 while keeping Gibraltar fixed at the centre.
+- Adds accessible +/− controls with a visible zoom-level indicator.
+- Adds pinch-to-zoom and double-tap zoom on touch devices.
+- Saves the preferred radar zoom on the current device.
+- Refreshes the offline shell and release validation for v2.1.
+
 ## v2.0 · Notifications and official-warning access
 - Adds opt-in device notifications for newly detected **Watch** and **Important** GibWeather forecast flags.
 - De-duplicates notifications on each device and suppresses them when the app is using cached forecast data.

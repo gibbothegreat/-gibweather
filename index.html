@@ -23,7 +23,7 @@
         <div class="eyebrow">🇬🇮 GIBRALTAR</div>
         <div class="brand-title">
           <h1>GibWeather</h1>
-          <span id="topVersion" class="top-version" aria-label="App version 2.0">v2.0</span>
+          <span id="topVersion" class="top-version" aria-label="App version 2.1">v2.1</span>
           <span id="topAlertCount" class="top-alert-count count-low" aria-label="Custom weather alerts loading">🔔 —</span>
         </div>
       </div>
@@ -288,8 +288,13 @@
             <div><div class="eyebrow">LAST 2 HOURS</div><h3>Radar history</h3><p id="radarFrameTime" class="subheading">—</p></div>
             <span id="radarAgeBadge" class="agreement-badge">Checking…</span>
           </div>
-          <div id="radarMap" class="radar-map" role="img" aria-label="Weather radar centred on Gibraltar">
+          <div id="radarMap" class="radar-map" role="group" aria-label="Weather radar centred on Gibraltar">
             <div id="radarTileGrid" class="radar-tile-grid" aria-hidden="true"></div>
+            <div class="radar-zoom-controls" aria-label="Radar zoom controls">
+              <button id="radarZoomOutBtn" type="button" aria-label="Zoom radar out">−</button>
+              <span id="radarZoomLabel" aria-live="polite">Z7</span>
+              <button id="radarZoomInBtn" type="button" aria-label="Zoom radar in">+</button>
+            </div>
             <div class="radar-center-marker" aria-hidden="true"><span>🇬🇮</span></div>
             <div class="radar-map-label" aria-hidden="true">Gibraltar</div>
           </div>
@@ -298,7 +303,7 @@
             <label class="radar-slider-label"><span>Older</span><input id="radarSlider" type="range" min="0" max="0" value="0" step="1" aria-label="Radar history frame"><span>Latest</span></label>
           </div>
           <div class="radar-attribution">Radar: <a href="https://www.rainviewer.com/" target="_blank" rel="noopener">RainViewer</a> · Map: © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a></div>
-          <p class="fineprint">Radar is observational history, not a forecast. RainViewer's public API provides past radar frames only; future nowcast frames are not available in the 2026 public API.</p>
+          <p class="fineprint">Use +/−, pinch or double-tap to zoom while keeping Gibraltar centred. Radar is observational history, not a forecast. RainViewer's public API provides past radar frames only; future nowcast frames are not available in the 2026 public API.</p>
         </article>
         <article class="panel explainer">
           <h3>Using the radar in Gibraltar</h3>
@@ -308,7 +313,7 @@
       </section>
 
       <section id="aboutView" class="view" data-view="about">
-        <div class="page-title"><h2>About GibWeather</h2><p>Release v2.0</p></div>
+        <div class="page-title"><h2>About GibWeather</h2><p>Release v2.1</p></div>
         <article class="panel about-copy">
           <h3>Built for Gibraltar</h3>
           <p>GibWeather is designed around local conditions: Levanter and Poniente flow, gusts, low cloud, humidity, visibility and rain.</p>
@@ -320,7 +325,7 @@
           <p>MeteoGib is linked as an independent local forecast source. GibWeather does not scrape or republish MeteoGib forecasts and is not affiliated with MeteoGib.</p>
           <h3>App status</h3>
           <div class="status-grid">
-            <div><span>Version</span><strong id="versionText">v2.0</strong></div>
+            <div><span>Version</span><strong id="versionText">v2.1</strong></div>
             <div><span>Last refresh</span><strong id="lastRefreshText">—</strong></div>
             <div><span>Data age</span><strong id="dataAgeText">—</strong></div>
             <div><span>Connection</span><strong id="connectionText">—</strong></div>
@@ -392,7 +397,7 @@
             </ol>
           </div>
           <h3>Privacy</h3>
-          <p>GibWeather v2.0 has no account, advertising SDK or analytics tracker. The last successful forecast, notification state and your app preferences are stored locally on this device.</p>
+          <p>GibWeather v2.1 has no account, advertising SDK or analytics tracker. The last successful forecast, notification state, radar zoom and your app preferences are stored locally on this device.</p>
           <p class="fineprint">The Levanter and Rock Cloud indicators are experimental guidance only. For official or safety-critical weather information, use the relevant official authority or a qualified local forecaster.</p>
         </article>
       </section>

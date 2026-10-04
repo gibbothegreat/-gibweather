@@ -410,7 +410,7 @@ button:focus-visible, a:focus-visible, select:focus-visible, [tabindex]:focus-vi
 .radar-map {
   position:relative; height:380px; overflow:hidden; margin-top:12px;
   border:1px solid var(--line); border-radius:18px; background:#0b1c2a;
-  isolation:isolate;
+  isolation:isolate; touch-action:none;
 }
 .radar-tile-grid { position:absolute; left:0; top:0; will-change:transform; }
 .radar-base-tile,.radar-overlay-tile { position:absolute; width:256px; height:256px; user-select:none; pointer-events:none; }
@@ -419,6 +419,11 @@ button:focus-visible, a:focus-visible, select:focus-visible, [tabindex]:focus-vi
 .radar-center-marker { position:absolute; z-index:5; left:50%; top:50%; transform:translate(-50%,-50%); display:grid; place-items:center; width:34px; height:34px; border-radius:999px; background:rgba(7,19,31,.88); border:2px solid rgba(255,255,255,.92); box-shadow:0 4px 18px rgba(0,0,0,.55); }
 .radar-center-marker span { font-size:19px; line-height:1; }
 .radar-map-label { position:absolute; z-index:5; left:50%; top:calc(50% + 24px); transform:translateX(-50%); padding:3px 7px; border-radius:7px; background:rgba(7,19,31,.82); color:#fff; font-size:10px; font-weight:800; }
+.radar-zoom-controls { position:absolute; z-index:7; top:10px; right:10px; display:grid; grid-template-columns:40px 42px 40px; align-items:center; overflow:hidden; border:1px solid rgba(255,255,255,.35); border-radius:13px; background:rgba(7,19,31,.9); box-shadow:0 6px 20px rgba(0,0,0,.34); }
+.radar-zoom-controls button { min-height:40px; border:0; background:transparent; color:#fff; font-size:24px; font-weight:700; cursor:pointer; }
+.radar-zoom-controls button:hover,.radar-zoom-controls button:focus-visible { background:rgba(115,199,255,.2); outline:none; }
+.radar-zoom-controls button:disabled { opacity:.35; cursor:default; }
+.radar-zoom-controls span { display:grid; place-items:center; min-height:40px; border-inline:1px solid rgba(255,255,255,.2); color:#fff; font-size:12px; font-weight:850; }
 .radar-controls { display:grid; grid-template-columns:auto 1fr; gap:12px; align-items:center; margin-top:12px; }
 .radar-play { margin-top:0; min-width:76px; }
 .radar-slider-label { display:grid; grid-template-columns:auto 1fr auto; gap:8px; align-items:center; color:var(--muted); font-size:10px; }

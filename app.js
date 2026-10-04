@@ -1,9 +1,9 @@
-const APP_VERSION = '2.0';
+const APP_VERSION = '2.1';
 const GIBRALTAR = { lat: 36.1408, lon: -5.3536, timezone: 'Europe/Gibraltar' };
-const CACHE_KEY = 'gibweather:last-forecast:v20';
+const CACHE_KEY = 'gibweather:last-forecast:v21';
 const TREND_CACHE_KEY = 'gibweather:forecast-baseline:v1';
 const BACKUP_CACHE_KEY = 'gibweather:last-known-good:v1';
-const LEGACY_CACHE_KEYS = ['gibweather:last-forecast:v18','gibweather:last-forecast:v17','gibweather:last-forecast:v16','gibweather:last-forecast:v15','gibweather:last-forecast:v14','gibweather:last-forecast:v13','gibweather:last-forecast:v12','gibweather:last-forecast:v11','gibweather:last-forecast:v10','gibweather:last-forecast:v8','gibweather:last-forecast:v7','gibweather:last-forecast:v6', 'gibweather:last-forecast:v5', 'gibweather:last-forecast:v4', 'gibweather:last-forecast:v3', 'gibweather:last-forecast:v2', 'gibweather:last-forecast:v1'];
+const LEGACY_CACHE_KEYS = ['gibweather:last-forecast:v20','gibweather:last-forecast:v19','gibweather:last-forecast:v18','gibweather:last-forecast:v17','gibweather:last-forecast:v16','gibweather:last-forecast:v15','gibweather:last-forecast:v14','gibweather:last-forecast:v13','gibweather:last-forecast:v12','gibweather:last-forecast:v11','gibweather:last-forecast:v10','gibweather:last-forecast:v8','gibweather:last-forecast:v7','gibweather:last-forecast:v6', 'gibweather:last-forecast:v5', 'gibweather:last-forecast:v4', 'gibweather:last-forecast:v3', 'gibweather:last-forecast:v2', 'gibweather:last-forecast:v1'];
 const INTRO_KEY = 'gibweather:intro-seen';
 const SETTINGS_KEY = 'gibweather:settings:v1';
 const NOTIFICATION_SIGNATURE_KEY = 'gibweather:last-notification:v1';
@@ -20,7 +20,10 @@ const ALERT_TOGGLE_KEYS = [
 ];
 const OBSERVATION_URL = './data/lxgb-observation.json';
 const RADAR_API_URL = 'https://api.rainviewer.com/public/weather-maps.json';
-const RADAR_ZOOM = 7;
+const RADAR_ZOOM_MIN = 6;
+const RADAR_ZOOM_MAX = 10;
+const RADAR_ZOOM_DEFAULT = 7;
+const RADAR_ZOOM_KEY = 'gibweather:radar-zoom:v1';
 const RADAR_TILE_SIZE = 256;
 const RADAR_GRID_RADIUS = 2;
 
@@ -99,6 +102,7 @@ let lastObservationHealth = 'waiting';
 let lastRadarHealth = 'waiting';
 let radarData = null;
 let radarFrameIndex = 0;
+let radarZoom = readRadarZoom();
 let radarPlayTimer = null;
 let autoRefreshTimer = null;
 let previousForecast = null;
@@ -1152,6 +1156,34 @@ function radarTileFraction(lat, lon, zoom) {
   return { x, y };
 }
 
+function readRadarZoom() {
+  try {
+    const value = Number(localStorage.getItem(RADAR_ZOOM_KEY));
+    if (Number.isInteger(value)) return Math.max(RADAR_ZOOM_MIN, Math.min(RADAR_ZOOM_MAX, value));
+  } catch (_) {}
+  return RADAR_ZOOM_DEFAULT;
+}
+
+function renderRadarZoomControls() {
+  const label = $('radarZoomLabel');
+  const zoomOut = $('radarZoomOutBtn');
+  const zoomIn = $('radarZoomInBtn');
+  if (label) label.textContent = `Z${radarZoom}`;
+  if (zoomOut) zoomOut.disabled = radarZoom <= RADAR_ZOOM_MIN;
+  if (zoomIn) zoomIn.disabled = radarZoom >= RADAR_ZOOM_MAX;
+  const map = $('radarMap');
+  map?.setAttribute('aria-label', `Weather radar centred on Gibraltar at zoom level ${radarZoom}`);
+}
+
+function setRadarZoom(nextZoom) {
+  const next = Math.max(RADAR_ZOOM_MIN, Math.min(RADAR_ZOOM_MAX, Math.round(Number(nextZoom) || RADAR_ZOOM_DEFAULT)));
+  if (next === radarZoom) return;
+  radarZoom = next;
+  try { localStorage.setItem(RADAR_ZOOM_KEY, String(radarZoom)); } catch (_) {}
+  renderRadarZoomControls();
+  if (radarData?.frames?.length) renderRadarFrame(radarFrameIndex);
+}
+
 function radarFrameLocalTime(frame) {
   if (!frame?.time) return '—';
   return new Intl.DateTimeFormat('en-GB', {
@@ -1173,7 +1205,7 @@ function stopRadarPlayback() {
 function positionRadarGrid() {
   const map = $('radarMap'), grid = $('radarTileGrid');
   if (!map || !grid || !radarData?.frames?.length || map.clientWidth === 0) return;
-  const center = radarTileFraction(GIBRALTAR.lat, GIBRALTAR.lon, RADAR_ZOOM);
+  const center = radarTileFraction(GIBRALTAR.lat, GIBRALTAR.lon, radarZoom);
   const x0 = Math.floor(center.x) - RADAR_GRID_RADIUS;
   const y0 = Math.floor(center.y) - RADAR_GRID_RADIUS;
   const px = (center.x - x0) * RADAR_TILE_SIZE;
@@ -1193,11 +1225,11 @@ function renderRadarFrame(index = radarFrameIndex) {
   }
   radarFrameIndex = Math.max(0, Math.min(Number(index) || 0, frames.length - 1));
   const frame = frames[radarFrameIndex];
-  const center = radarTileFraction(GIBRALTAR.lat, GIBRALTAR.lon, RADAR_ZOOM);
+  const center = radarTileFraction(GIBRALTAR.lat, GIBRALTAR.lon, radarZoom);
   const x0 = Math.floor(center.x) - RADAR_GRID_RADIUS;
   const y0 = Math.floor(center.y) - RADAR_GRID_RADIUS;
   const count = RADAR_GRID_RADIUS * 2 + 1;
-  const maxTile = 2 ** RADAR_ZOOM;
+  const maxTile = 2 ** radarZoom;
   const pieces = [];
   for (let gy = 0; gy < count; gy++) {
     for (let gx = 0; gx < count; gx++) {
@@ -1206,14 +1238,14 @@ function renderRadarFrame(index = radarFrameIndex) {
       const ty = y0 + gy;
       if (ty < 0 || ty >= maxTile) continue;
       const left = gx * RADAR_TILE_SIZE, top = gy * RADAR_TILE_SIZE;
-      const base = `https://tile.openstreetmap.org/${RADAR_ZOOM}/${tx}/${ty}.png`;
+      const base = `https://tile.openstreetmap.org/${radarZoom}/${tx}/${ty}.png`;
       pieces.push(`<img class="radar-base-tile" src="${base}" alt="" style="left:${left}px;top:${top}px" loading="eager" decoding="async">`);
     }
   }
   const overlaySize = 512;
   const centerPx = (center.x - x0) * RADAR_TILE_SIZE;
   const centerPy = (center.y - y0) * RADAR_TILE_SIZE;
-  const radar = `${radarData.host}${frame.path}/${overlaySize}/${RADAR_ZOOM}/${GIBRALTAR.lat}/${GIBRALTAR.lon}/2/1_1.png`;
+  const radar = `${radarData.host}${frame.path}/${overlaySize}/${radarZoom}/${GIBRALTAR.lat}/${GIBRALTAR.lon}/2/1_1.png`;
   pieces.push(`<img class="radar-overlay-tile radar-coordinate-overlay" src="${radar}" alt="" style="left:${centerPx - overlaySize/2}px;top:${centerPy - overlaySize/2}px;width:${overlaySize}px;height:${overlaySize}px" loading="eager" decoding="async">`);
   grid.style.width = `${count * RADAR_TILE_SIZE}px`;
   grid.style.height = `${count * RADAR_TILE_SIZE}px`;
@@ -1223,6 +1255,52 @@ function renderRadarFrame(index = radarFrameIndex) {
   $('radarAgeBadge').textContent = age == null ? '—' : age <= 15 ? `${age} min ago` : `${age} min old`;
   $('radarSlider').value = String(radarFrameIndex);
   requestAnimationFrame(positionRadarGrid);
+}
+
+function setupRadarGestures() {
+  const map = $('radarMap');
+  if (!map) return;
+  const pointers = new Map();
+  let pinchDistance = null;
+  let lastTap = null;
+  let gestureHadMulti = false;
+  const distance = () => {
+    const points = [...pointers.values()];
+    return points.length === 2 ? Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y) : null;
+  };
+  map.addEventListener('pointerdown', event => {
+    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    map.setPointerCapture?.(event.pointerId);
+    if (pointers.size === 2) { pinchDistance = distance(); gestureHadMulti = true; }
+  });
+  map.addEventListener('pointermove', event => {
+    if (!pointers.has(event.pointerId)) return;
+    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (pointers.size !== 2 || !pinchDistance) return;
+    const nextDistance = distance();
+    if (!nextDistance) return;
+    if (nextDistance / pinchDistance >= 1.18) { setRadarZoom(radarZoom + 1); pinchDistance = nextDistance; }
+    else if (nextDistance / pinchDistance <= 0.84) { setRadarZoom(radarZoom - 1); pinchDistance = nextDistance; }
+  });
+  const endPointer = event => {
+    const point = pointers.get(event.pointerId);
+    const wasSingle = pointers.size === 1;
+    pointers.delete(event.pointerId);
+    if (pointers.size < 2) pinchDistance = null;
+    if (gestureHadMulti) {
+      if (!pointers.size) gestureHadMulti = false;
+      return;
+    }
+    if (!wasSingle || event.pointerType === 'mouse' || !point) return;
+    const now = Date.now();
+    if (lastTap && now - lastTap.time < 320 && Math.hypot(point.x - lastTap.x, point.y - lastTap.y) < 32) {
+      setRadarZoom(radarZoom + 1);
+      lastTap = null;
+    } else lastTap = { time: now, x: point.x, y: point.y };
+  };
+  map.addEventListener('pointerup', endPointer);
+  map.addEventListener('pointercancel', endPointer);
+  map.addEventListener('dblclick', event => { event.preventDefault(); setRadarZoom(radarZoom + 1); });
 }
 
 function renderRadarTimeline() {
@@ -2117,6 +2195,8 @@ $('themeSelect')?.addEventListener('change', event => applyTheme(event.target.va
 $('startBtn')?.addEventListener('click', dismissFirstRun);
 $('reloadAppBtn')?.addEventListener('click', () => location.reload());
 $('radarPlayBtn')?.addEventListener('click', playRadar);
+$('radarZoomOutBtn')?.addEventListener('click', () => setRadarZoom(radarZoom - 1));
+$('radarZoomInBtn')?.addEventListener('click', () => setRadarZoom(radarZoom + 1));
 $('radarSlider')?.addEventListener('input', (event) => { stopRadarPlayback(); renderRadarFrame(Number(event.target.value)); });
 window.addEventListener('resize', () => { if (document.querySelector('.view.active')?.dataset.view === 'radar') positionRadarGrid(); });
 $('installHelpBtn').addEventListener('click', () => {
@@ -2166,6 +2246,8 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
 
 previousForecast = readTrendBaseline();
 renderSettings();
+renderRadarZoomControls();
+setupRadarGestures();
 updateInstallUI();
 setOnlineUI();
 showFirstRun();

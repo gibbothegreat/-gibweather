@@ -121,6 +121,14 @@ for control_id in ('obsDeltaTemp','obsDeltaWind','obsDeltaDir','obsDeltaPressure
 need('renderObservationDeltas' in APP,'LXGB delta rendering logic missing')
 need('directionGap' in APP,'LXGB wind-direction comparison logic missing')
 
+# v2.1 radar zoom guardrails.
+for control_id in ('radarZoomOutBtn','radarZoomLabel','radarZoomInBtn'):
+    need(f'id="{control_id}"' in HTML,f'radar zoom element missing: {control_id}')
+need('RADAR_ZOOM_MIN = 6' in APP and 'RADAR_ZOOM_MAX = 10' in APP,'radar zoom range missing')
+need('setRadarZoom' in APP,'radar zoom logic missing')
+need('setupRadarGestures' in APP,'radar touch gesture support missing')
+need('radarZoom' in APP and '${radarZoom}' in APP,'radar tile requests do not use selected zoom')
+
 # v2.0 notification and official-warning guardrails.
 for control_id in ('notificationStatus','notificationBtn'):
     need(f'id="{control_id}"' in HTML,f'notification element missing: {control_id}')
