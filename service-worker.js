@@ -1,4 +1,4 @@
-const CACHE = 'gibweather-shell-v19';
+const CACHE = 'gibweather-shell-v20';
 const OBSERVATION_CACHE_KEY = './data/lxgb-observation.json';
 const APP_SHELL = [
   './', './index.html', './styles.css', './app.js', './manifest.webmanifest', './version.json',
@@ -57,4 +57,12 @@ self.addEventListener('fetch', event => {
       return response;
     }))
   );
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windows => {
+    const existing = windows.find(client => 'focus' in client);
+    return existing ? existing.focus() : clients.openWindow('./');
+  }));
 });

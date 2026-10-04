@@ -1,13 +1,15 @@
-const APP_VERSION = '1.9';
+const APP_VERSION = '2.0';
 const GIBRALTAR = { lat: 36.1408, lon: -5.3536, timezone: 'Europe/Gibraltar' };
-const CACHE_KEY = 'gibweather:last-forecast:v19';
+const CACHE_KEY = 'gibweather:last-forecast:v20';
 const TREND_CACHE_KEY = 'gibweather:forecast-baseline:v1';
 const BACKUP_CACHE_KEY = 'gibweather:last-known-good:v1';
 const LEGACY_CACHE_KEYS = ['gibweather:last-forecast:v18','gibweather:last-forecast:v17','gibweather:last-forecast:v16','gibweather:last-forecast:v15','gibweather:last-forecast:v14','gibweather:last-forecast:v13','gibweather:last-forecast:v12','gibweather:last-forecast:v11','gibweather:last-forecast:v10','gibweather:last-forecast:v8','gibweather:last-forecast:v7','gibweather:last-forecast:v6', 'gibweather:last-forecast:v5', 'gibweather:last-forecast:v4', 'gibweather:last-forecast:v3', 'gibweather:last-forecast:v2', 'gibweather:last-forecast:v1'];
 const INTRO_KEY = 'gibweather:intro-seen';
 const SETTINGS_KEY = 'gibweather:settings:v1';
+const NOTIFICATION_SIGNATURE_KEY = 'gibweather:last-notification:v1';
 const DEFAULT_SETTINGS = {
   temperatureUnit: 'c', windUnit: 'kmh', refreshMinutes: 30, theme: 'dark',
+  notificationsEnabled: false,
   alertWind: true, alertRain: true, alertVisibility: true, alertUv: true,
   alertLevanter: true, alertRockCloud: true, alertSea: true,
   alertGustThreshold: 40, alertRainThreshold: 45, alertVisibilityThreshold: 6000,
@@ -495,6 +497,73 @@ function renderAdvisories(data, marine = marineData) {
     <div><strong>${x.title}</strong><small>${x.detail}</small></div>
     <div class="advisory-time">${x.time}<span>${levelLabel[x.level]}</span></div>
   </div>`).join('');
+  notifyForNewAdvisories(items);
+}
+
+function notificationSupport() {
+  if (!('Notification' in window)) return { supported: false, label: 'Not supported by this browser' };
+  if (Notification.permission === 'denied') return { supported: true, label: 'Blocked in browser settings' };
+  if (settings.notificationsEnabled && Notification.permission === 'granted') return { supported: true, label: 'On · new Watch and Important flags' };
+  return { supported: true, label: 'Off' };
+}
+
+function renderNotificationSettings() {
+  const status = $('notificationStatus');
+  const button = $('notificationBtn');
+  if (!status || !button) return;
+  const support = notificationSupport();
+  status.textContent = support.label;
+  button.disabled = !support.supported || Notification.permission === 'denied';
+  button.textContent = settings.notificationsEnabled && Notification.permission === 'granted'
+    ? 'Turn off notifications' : 'Turn on notifications';
+}
+
+async function showLocalNotification(title, options = {}) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    const registration = await navigator.serviceWorker?.getRegistration();
+    if (registration) await registration.showNotification(title, options);
+    else new Notification(title, options);
+  } catch (err) { console.error(err); }
+}
+
+async function toggleNotifications() {
+  if (!('Notification' in window)) return;
+  if (settings.notificationsEnabled && Notification.permission === 'granted') {
+    settings.notificationsEnabled = false;
+    persistSettings();
+    renderNotificationSettings();
+    setStatus('Weather notifications turned off.', 'notice');
+    return;
+  }
+  const permission = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+  settings.notificationsEnabled = permission === 'granted';
+  persistSettings();
+  renderNotificationSettings();
+  if (permission === 'granted') {
+    await showLocalNotification('GibWeather notifications are on', {
+      body: 'You will be notified when a refresh finds a new Watch or Important forecast flag.',
+      icon: './icons/icon-192-v4.png', badge: './icons/icon-192-v4.png', tag: 'gibweather-enabled'
+    });
+    setStatus('Weather notifications turned on.', 'notice');
+  } else setStatus('Notification permission was not enabled.', 'notice');
+}
+
+function notifyForNewAdvisories(items) {
+  if (!settings.notificationsEnabled || !('Notification' in window) || Notification.permission !== 'granted' || lastLoadWasCached) return;
+  const notable = items.filter(item => !item.isClear && ['high','medium'].includes(item.level));
+  const signature = notable.map(item => `${item.level}:${item.title}:${item.time}`).join('|');
+  let previous = '';
+  try { previous = localStorage.getItem(NOTIFICATION_SIGNATURE_KEY) || ''; } catch (_) {}
+  if (!signature || signature === previous) return;
+  try { localStorage.setItem(NOTIFICATION_SIGNATURE_KEY, signature); } catch (_) {}
+  const lead = notable[0];
+  const extra = notable.length > 1 ? ` Plus ${notable.length - 1} more forecast flag${notable.length === 2 ? '' : 's'}.` : '';
+  showLocalNotification(`${lead.level === 'high' ? 'Important' : 'Watch'}: ${lead.title}`, {
+    body: `${lead.detail}${extra}`,
+    icon: './icons/icon-192-v4.png', badge: './icons/icon-192-v4.png', tag: 'gibweather-alerts', renotify: true,
+    data: { url: './' }
+  });
 }
 
 function dataAgeLabel() {
@@ -572,6 +641,7 @@ function renderSettings() {
   if (summary) summary.textContent = `${tempUnitLabel()} · ${windUnitLabel()} · ${themeLabel} · refresh every ${settings.refreshMinutes} min`;
   const alertSummary = $('alertSettingsSummary');
   if (alertSummary) alertSummary.textContent = `${activeAlertCategoryCount()} of ${ALERT_TOGGLE_KEYS.length} alert types on · saved on this device`;
+  renderNotificationSettings();
 }
 
 function applySettingsFromUI() {
@@ -585,6 +655,7 @@ function applySettingsFromUI() {
     windUnit: w?.value === 'mph' ? 'mph' : 'kmh',
     refreshMinutes: [15,30,60].includes(Number(r?.value)) ? Number(r.value) : 30,
     theme: ['auto','dark','light'].includes(theme?.value) ? theme.value : DEFAULT_SETTINGS.theme,
+    notificationsEnabled: settings.notificationsEnabled === true,
     alertWind: Boolean($('alertWindToggle')?.checked),
     alertRain: Boolean($('alertRainToggle')?.checked),
     alertVisibility: Boolean($('alertVisibilityToggle')?.checked),
@@ -2041,6 +2112,7 @@ $('installCheckBtn')?.addEventListener('click', () => { updateInstallUI(); setSt
 $('healthCheckBtn')?.addEventListener('click', runHealthCheck);
 $('saveSettingsBtn')?.addEventListener('click', applySettingsFromUI);
 $('resetSettingsBtn')?.addEventListener('click', resetSettings);
+$('notificationBtn')?.addEventListener('click', toggleNotifications);
 $('themeSelect')?.addEventListener('change', event => applyTheme(event.target.value));
 $('startBtn')?.addEventListener('click', dismissFirstRun);
 $('reloadAppBtn')?.addEventListener('click', () => location.reload());

@@ -1,4 +1,4 @@
-# GibWeather v1.9 QA
+# GibWeather v2.0 QA
 
 ## Release validation
 Run:
@@ -7,7 +7,15 @@ Run:
 python3 scripts/validate_release.py
 ```
 
-Expected result: `GibWeather v1.9 release validation passed`.
+Expected result: `GibWeather v2.0 release validation passed`.
+
+## v2.0 notification and official-warning checks
+- Notifications remain off until the user presses the notification button and grants browser permission.
+- Only new Watch or Important flags trigger a notification; repeated renders of the same flags do not.
+- Cached forecast fallback never creates a fresh notification.
+- Selecting a service-worker notification focuses or opens GibWeather.
+- The About screen links to AEMET official warnings and states that GibWeather alerts are automated guidance.
+- The app explains that notifications cannot be guaranteed while the static web app is completely closed.
 
 ## 24-hour forecast checks
 - The Hourly screen shows exactly the next 24 forecast hours.

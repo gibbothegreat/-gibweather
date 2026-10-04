@@ -121,6 +121,15 @@ for control_id in ('obsDeltaTemp','obsDeltaWind','obsDeltaDir','obsDeltaPressure
 need('renderObservationDeltas' in APP,'LXGB delta rendering logic missing')
 need('directionGap' in APP,'LXGB wind-direction comparison logic missing')
 
+# v2.0 notification and official-warning guardrails.
+for control_id in ('notificationStatus','notificationBtn'):
+    need(f'id="{control_id}"' in HTML,f'notification element missing: {control_id}')
+need('Notification.requestPermission' in APP,'notification permission flow missing')
+need('notifyForNewAdvisories' in APP,'new-advisory notification logic missing')
+need('notificationclick' in SW,'service-worker notification click handling missing')
+need('aemet.es/en/eltiempo/prediccion/avisos' in HTML,'official AEMET warning link missing')
+need('not official warnings' in HTML,'official-warning distinction missing')
+
 # METAR updater identity/version.
 updater=(ROOT/'scripts/update_lxgb_observation.py').read_text()
 need('LXGB' in updater,'LXGB updater station missing')

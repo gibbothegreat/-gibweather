@@ -23,7 +23,7 @@
         <div class="eyebrow">🇬🇮 GIBRALTAR</div>
         <div class="brand-title">
           <h1>GibWeather</h1>
-          <span id="topVersion" class="top-version" aria-label="App version 1.8">v1.9</span>
+          <span id="topVersion" class="top-version" aria-label="App version 2.0">v2.0</span>
           <span id="topAlertCount" class="top-alert-count count-low" aria-label="Custom weather alerts loading">🔔 —</span>
         </div>
       </div>
@@ -308,7 +308,7 @@
       </section>
 
       <section id="aboutView" class="view" data-view="about">
-        <div class="page-title"><h2>About GibWeather</h2><p>Release v1.9</p></div>
+        <div class="page-title"><h2>About GibWeather</h2><p>Release v2.0</p></div>
         <article class="panel about-copy">
           <h3>Built for Gibraltar</h3>
           <p>GibWeather is designed around local conditions: Levanter and Poniente flow, gusts, low cloud, humidity, visibility and rain.</p>
@@ -320,7 +320,7 @@
           <p>MeteoGib is linked as an independent local forecast source. GibWeather does not scrape or republish MeteoGib forecasts and is not affiliated with MeteoGib.</p>
           <h3>App status</h3>
           <div class="status-grid">
-            <div><span>Version</span><strong id="versionText">v1.9</strong></div>
+            <div><span>Version</span><strong id="versionText">v2.0</strong></div>
             <div><span>Last refresh</span><strong id="lastRefreshText">—</strong></div>
             <div><span>Data age</span><strong id="dataAgeText">—</strong></div>
             <div><span>Connection</span><strong id="connectionText">—</strong></div>
@@ -358,10 +358,19 @@
             <label><span>Wave alert from</span><select id="alertWaveThresholdSelect"><option value="1.5">1.5 m</option><option value="2" selected>2 m</option><option value="2.5">2.5 m</option><option value="3">3 m</option></select></label>
           </div>
           <p class="fineprint">Thresholds control when an alert first appears. Important conditions keep GibWeather's higher safety thresholds.</p>
+          <div class="notification-card">
+            <div><strong>Device notifications</strong><small id="notificationStatus">Checking browser support…</small></div>
+            <button id="notificationBtn" class="secondary-btn" type="button">Turn on notifications</button>
+          </div>
+          <p class="fineprint">Notifications appear when GibWeather refreshes and finds a new Watch or Important flag. A static web app cannot guarantee alerts while it is completely closed.</p>
           <div class="action-row">
             <button id="saveSettingsBtn" class="secondary-btn" type="button">Save preferences</button>
             <button id="resetSettingsBtn" class="secondary-btn" type="button">Reset defaults</button>
           </div>
+
+          <h3>Official warnings</h3>
+          <p>GibWeather alerts are automated guidance, not official warnings. For adverse-weather warnings affecting the neighbouring Campo de Gibraltar and Strait area, check Spain's State Meteorological Agency.</p>
+          <a class="official-warning-link" href="https://www.aemet.es/en/eltiempo/prediccion/avisos?p=6129" target="_blank" rel="noopener noreferrer">Open AEMET official warnings ↗</a>
 
           <h3>System health</h3>
           <p>Checks GibWeather's live forecast feed, airport observation, model comparison, marine feed, offline shell, saved data, secure hosting and installed-app status.</p>
@@ -383,7 +392,7 @@
             </ol>
           </div>
           <h3>Privacy</h3>
-          <p>GibWeather v1.9 has no account, advertising SDK or analytics tracker. The last successful forecast and your app preferences are stored locally on this device.</p>
+          <p>GibWeather v2.0 has no account, advertising SDK or analytics tracker. The last successful forecast, notification state and your app preferences are stored locally on this device.</p>
           <p class="fineprint">The Levanter and Rock Cloud indicators are experimental guidance only. For official or safety-critical weather information, use the relevant official authority or a qualified local forecaster.</p>
         </article>
       </section>

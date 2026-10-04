@@ -2,43 +2,33 @@
   "available": true,
   "station": "LXGB",
   "station_name": "Gibraltar Airport",
-  "observed_at": "2026-10-04T14:20:00Z",
-  "raw": "METAR LXGB 041420Z 06010KT 5000 HZ FEW003 BKN009 BKN160 23/22 Q1017 TEMPO SCT003",
-  "wind_direction_deg": 60,
+  "observed_at": "2026-10-04T08:20:00Z",
+  "raw": "METAR LXGB 040820Z 10009KT 9999 SCT003 BKN006 22/21 Q1019 NOSIG",
+  "wind_direction_deg": 100,
   "variable_wind": false,
-  "wind_speed_kt": 10,
+  "wind_speed_kt": 9,
   "wind_gust_kt": null,
-  "wind_speed_kmh": 18.5,
+  "wind_speed_kmh": 16.7,
   "wind_gust_kmh": null,
-  "visibility_m": 5000,
-  "visibility_10km_or_more": false,
-  "temperature_c": 23.0,
-  "dew_point_c": 22.0,
+  "visibility_m": 10000,
+  "visibility_10km_or_more": true,
+  "temperature_c": 22.0,
+  "dew_point_c": 21.0,
   "relative_humidity_pct": 94.1,
-  "pressure_hpa": 1017,
+  "pressure_hpa": 1019,
   "clouds": [
-    {
-      "amount": "FEW",
-      "height_ft": 300
-    },
-    {
-      "amount": "BKN",
-      "height_ft": 900
-    },
-    {
-      "amount": "BKN",
-      "height_ft": 16000
-    },
     {
       "amount": "SCT",
       "height_ft": 300
+    },
+    {
+      "amount": "BKN",
+      "height_ft": 600
     }
   ],
-  "ceiling_ft": 900,
-  "weather_codes": [
-    "HZ"
-  ],
+  "ceiling_ft": 600,
+  "weather_codes": [],
   "source": "AviationWeather.gov / NOAA-NWS Aviation Weather Center",
   "source_url": "https://aviationweather.gov/api/data/metar?ids=LXGB&format=raw&hours=2",
-  "retrieved_at": "2026-10-04T14:33:58.561387Z"
+  "retrieved_at": "2026-10-04T08:52:05.220647Z"
 }

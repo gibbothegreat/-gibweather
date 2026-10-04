@@ -1,5 +1,13 @@
 # GibWeather changelog
 
+## v2.0 · Notifications and official-warning access
+- Adds opt-in device notifications for newly detected **Watch** and **Important** GibWeather forecast flags.
+- De-duplicates notifications on each device and suppresses them when the app is using cached forecast data.
+- Opens GibWeather when a notification is selected.
+- Adds direct access to the official AEMET adverse-weather warning page for the neighbouring Campo de Gibraltar and Strait area.
+- Clearly distinguishes automated GibWeather guidance from official warnings and explains the limitations of notifications in a static web app.
+- Refreshes the offline shell and release validation for v2.0.
+
 ## v1.9 · Airport verification detail
 - Expands the LXGB actual-conditions panel with immediate observed-vs-forecast differences.
 - Shows temperature, wind-speed and pressure deltas plus wind-direction angular separation.
