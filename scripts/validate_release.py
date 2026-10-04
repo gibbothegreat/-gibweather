@@ -156,6 +156,13 @@ need('Copernicus' in HTML,'CAMS attribution missing')
 for f in ('_headers','vercel.json','netlify.toml'):
     need('https://air-quality-api.open-meteo.com' in (ROOT/f).read_text(),f'{f} CSP does not allow the Air Quality API')
 
+# v2.3 beach guardrails.
+for control_id in ('beachView','beachStatus','beachPickCard','beachPickName','beachPickReason','beachList','beachHours','beachDaily','beachNowSummary','beachSeaTemp'):
+    need(f'id="{control_id}"' in HTML,f'beach element missing: {control_id}')
+need('data-target="beach"' in HTML,'Beach navigation button missing')
+need('beachConditions' in APP and 'renderBeaches(data, marineData)' in APP,'beach rating logic missing')
+need('not safety advice' in HTML,'beach safety disclaimer missing')
+
 # METAR updater identity/version.
 updater=(ROOT/'scripts/update_lxgb_observation.py').read_text()
 need('LXGB' in updater,'LXGB updater station missing')

@@ -23,7 +23,7 @@
         <div class="eyebrow">🇬🇮 GIBRALTAR</div>
         <div class="brand-title">
           <h1>GibWeather</h1>
-          <span id="topVersion" class="top-version" aria-label="App version 2.2">v2.2</span>
+          <span id="topVersion" class="top-version" aria-label="App version 2.3">v2.3</span>
           <span id="topAlertCount" class="top-alert-count count-low" aria-label="Custom weather alerts loading">🔔 —</span>
         </div>
       </div>
@@ -188,6 +188,14 @@
           <div id="airNowSummary" class="today-grid air-now-grid"></div>
         </section>
 
+        <section class="panel" aria-label="Beach conditions summary">
+          <div class="section-heading">
+            <h2>Beaches</h2>
+            <button class="text-btn" data-go="beach">See beaches →</button>
+          </div>
+          <div id="beachNowSummary" class="today-grid air-now-grid"></div>
+        </section>
+
         <section class="panel local-panel">
           <div>
             <div class="eyebrow">LOCAL FORECASTER</div>
@@ -288,6 +296,39 @@
         </article>
       </section>
 
+      <section id="beachView" class="view" data-view="beach">
+        <div class="page-title"><h2>Beaches</h2><p>Which side of the Rock is best for a swim</p></div>
+        <section id="beachStatus" class="status-banner notice" role="status">Loading beach guidance…</section>
+        <article id="beachPickCard" class="panel beach-pick">
+          <div class="eyebrow" id="beachPickEyebrow">BEST BET NOW</div>
+          <h3 id="beachPickName">—</h3>
+          <p id="beachPickReason" class="model-copy">Waiting for forecast data…</p>
+        </article>
+        <section class="metrics-grid" aria-label="Current beach conditions">
+          <article class="metric"><span>🌡️ Water</span><strong id="beachSeaTemp">—</strong><small id="beachSeaFeel">—</small></article>
+          <article class="metric"><span>😎 UV today</span><strong id="beachUv">—</strong><small id="beachUvLabel">—</small></article>
+          <article class="metric"><span>🌬️ Wind</span><strong id="beachWind">—</strong><small id="beachWindNote">—</small></article>
+          <article class="metric"><span>🌇 Sunset</span><strong id="beachSunset">—</strong><small>Today</small></article>
+        </section>
+        <article class="panel">
+          <div class="section-heading"><div><div class="eyebrow">EAST &amp; WEST</div><h3>Beach by beach</h3></div></div>
+          <div id="beachList" class="beach-list"></div>
+        </article>
+        <article class="panel">
+          <div class="section-heading"><div><div class="eyebrow">NEXT DAYLIGHT HOURS</div><h3>East vs west</h3></div></div>
+          <div id="beachHours" class="sea-list"></div>
+        </article>
+        <article class="panel">
+          <div class="section-heading"><div><div class="eyebrow">NEXT 3 DAYS</div><h3>Beach outlook</h3></div></div>
+          <div id="beachDaily" class="sea-list"></div>
+        </article>
+        <article class="panel explainer">
+          <h3>How beach ratings work</h3>
+          <p>GibWeather rates each beach from the wind and waves reaching that shore, plus rain chance and air temperature. East-side beaches face the Mediterranean and take the brunt of the Levanter; west-side beaches face the Bay and are sheltered from it, but catch the Poniente.</p>
+          <p class="fineprint">Beach ratings are automated GibWeather guidance, not safety advice. They do not include water quality, jellyfish or rip currents. Always follow lifeguard flags and local beach notices.</p>
+        </article>
+      </section>
+
       <section id="airView" class="view" data-view="air">
         <div class="page-title"><h2>Air &amp; Pollen</h2><p>Air quality, Saharan dust (Calima) and pollen guidance</p></div>
         <section id="airStatus" class="status-banner notice" role="status">Loading air-quality forecast…</section>
@@ -357,7 +398,7 @@
       </section>
 
       <section id="aboutView" class="view" data-view="about">
-        <div class="page-title"><h2>About GibWeather</h2><p>Release v2.2</p></div>
+        <div class="page-title"><h2>About GibWeather</h2><p>Release v2.3</p></div>
         <article class="panel about-copy">
           <h3>Built for Gibraltar</h3>
           <p>GibWeather is designed around local conditions: Levanter and Poniente flow, gusts, low cloud, humidity, visibility and rain.</p>
@@ -369,7 +410,7 @@
           <p>MeteoGib is linked as an independent local forecast source. GibWeather does not scrape or republish MeteoGib forecasts and is not affiliated with MeteoGib.</p>
           <h3>App status</h3>
           <div class="status-grid">
-            <div><span>Version</span><strong id="versionText">v2.2</strong></div>
+            <div><span>Version</span><strong id="versionText">v2.3</strong></div>
             <div><span>Last refresh</span><strong id="lastRefreshText">—</strong></div>
             <div><span>Data age</span><strong id="dataAgeText">—</strong></div>
             <div><span>Connection</span><strong id="connectionText">—</strong></div>
@@ -447,7 +488,7 @@
             </ol>
           </div>
           <h3>Privacy</h3>
-          <p>GibWeather v2.2 has no account, advertising SDK or analytics tracker. The last successful forecast, notification state, radar zoom and your app preferences are stored locally on this device.</p>
+          <p>GibWeather v2.3 has no account, advertising SDK or analytics tracker. The last successful forecast, notification state, radar zoom and your app preferences are stored locally on this device.</p>
           <p class="fineprint">The Levanter and Rock Cloud indicators are experimental guidance only. For official or safety-critical weather information, use the relevant official authority or a qualified local forecaster.</p>
         </article>
       </section>
@@ -459,6 +500,7 @@
       <button class="nav-btn" type="button" data-target="daily"><span>📅</span><small>7 Days</small></button>
       <button class="nav-btn" type="button" data-target="wind"><span>🌬️</span><small>Wind</small></button>
       <button class="nav-btn" type="button" data-target="sea"><span>🌊</span><small>Sea</small></button>
+      <button class="nav-btn" type="button" data-target="beach"><span>🏖️</span><small>Beach</small></button>
       <button class="nav-btn" type="button" data-target="air"><span>🍃</span><small>Air</small></button>
       <button class="nav-btn" type="button" data-target="radar"><span>🌧️</span><small>Radar</small></button>
       <button class="nav-btn" type="button" data-target="about"><span>ⓘ</span><small>About</small></button>

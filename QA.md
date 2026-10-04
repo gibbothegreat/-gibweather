@@ -1,4 +1,4 @@
-# GibWeather v2.2 QA
+# GibWeather v2.3 QA
 
 ## Release validation
 Run:
@@ -7,7 +7,15 @@ Run:
 python3 scripts/validate_release.py
 ```
 
-Expected result: `GibWeather v2.2 release validation passed`.
+Expected result: `GibWeather v2.3 release validation passed`.
+
+## v2.3 beach checks
+- Bottom navigation shows nine buttons including Beach, with readable labels on a 375 px wide iPhone.
+- In an easterly (Levanter) the west-side beaches rate better than the east side; in a westerly (Poniente) the reverse.
+- At night the best-bet card names the first daylight hour instead of "Now".
+- If the marine feed fails, the Beach screen still rates beaches from wind and weather and says so.
+- The Now screen Beaches summary shows East, West and water temperature and opens the Beach screen.
+- Ratings remain labelled as automated guidance, not safety advice.
 
 ## v2.2 air-quality checks
 - Air screen shows AQI band, PM2.5, PM10, dust, NO₂ and ozone from live data.

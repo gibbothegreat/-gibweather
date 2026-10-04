@@ -683,3 +683,31 @@ html[data-theme="light"] .calima-bar.dust-rank-1 { background:#c99a3e; }
 html[data-theme="light"] .calima-bar.dust-rank-2 { background:#e3913f; }
 html[data-theme="light"] .calima-bar.dust-rank-3 { background:#d4622f; }
 html[data-theme="light"] .calima-bar.dust-rank-4 { background:#b8322a; }
+
+/* v2.3 beaches */
+.bottom-nav { grid-template-columns: repeat(9, 1fr); padding-left: 2px; padding-right: 2px; }
+.beach-pick h3 { margin:6px 0 6px; font-size:22px; }
+.beach-list { display:grid; gap:8px; }
+.beach-row { display:grid; grid-template-columns:118px 1fr; gap:10px; align-items:center; padding:11px 12px; border:1px solid var(--line); border-radius:14px; background:rgba(255,255,255,.035); }
+.beach-row strong, .beach-row small { display:block; }
+.beach-row small { margin-top:3px; color:var(--muted); font-size:10px; }
+.beach-badge { display:inline-block; padding:2px 9px; border-radius:99px; font-size:12px; font-weight:700; background:rgba(255,255,255,.08); }
+.beach-row.state-green .beach-badge, .beach-tone.state-green { color:#53d884; }
+.beach-row.state-blue .beach-badge, .beach-tone.state-blue { color:#63bbff; }
+.beach-row.state-yellow .beach-badge, .beach-tone.state-yellow { color:#ffd24a; }
+.beach-row.state-orange .beach-badge, .beach-tone.state-orange { color:#ff9443; }
+.beach-row.state-red .beach-badge, .beach-tone.state-red { color:#ff5b5b; }
+.beach-tone { box-shadow:none !important; }
+.beach-hour-row small { display:block; margin-top:3px; color:var(--muted); font-size:10px; }
+@media (max-width:430px) {
+  .bottom-nav .nav-btn span { font-size:16px; }
+  .bottom-nav .nav-btn small { font-size:7.5px; }
+  .beach-row { grid-template-columns:96px 1fr; }
+}
+html[data-theme="light"] .beach-row { background:rgba(16,44,63,.035); }
+html[data-theme="light"] .beach-badge { background:rgba(16,44,63,.07); }
+html[data-theme="light"] .beach-row.state-green .beach-badge, html[data-theme="light"] .beach-tone.state-green { color:#13844a; }
+html[data-theme="light"] .beach-row.state-blue .beach-badge, html[data-theme="light"] .beach-tone.state-blue { color:#0068a8; }
+html[data-theme="light"] .beach-row.state-yellow .beach-badge, html[data-theme="light"] .beach-tone.state-yellow { color:#8a6a00; }
+html[data-theme="light"] .beach-row.state-orange .beach-badge, html[data-theme="light"] .beach-tone.state-orange { color:#b85a12; }
+html[data-theme="light"] .beach-row.state-red .beach-badge, html[data-theme="light"] .beach-tone.state-red { color:#b8322a; }
