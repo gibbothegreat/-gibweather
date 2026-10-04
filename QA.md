@@ -1,4 +1,4 @@
-# GibWeather v2.1 QA
+# GibWeather v2.2 QA
 
 ## Release validation
 Run:
@@ -7,7 +7,14 @@ Run:
 python3 scripts/validate_release.py
 ```
 
-Expected result: `GibWeather v2.1 release validation passed`.
+Expected result: `GibWeather v2.2 release validation passed`.
+
+## v2.2 air-quality checks
+- Air screen shows AQI band, PM2.5, PM10, dust, NO₂ and ozone from live data.
+- Calima outlook names the dust window and peak; bars colour by dust band in both appearances.
+- Pollen shows six types, or an out-of-season message when CAMS returns no pollen.
+- Air quality, Calima and Pollen alerts respect their toggles and thresholds.
+- Air feed failure does not block any other screen; System Health reports it.
 
 ## v2.1 radar zoom checks
 - Radar zoom remains within levels 6–10 and opens at level 7 on a new device.

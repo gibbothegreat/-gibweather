@@ -138,6 +138,24 @@ need('notificationclick' in SW,'service-worker notification click handling missi
 need('aemet.es/en/eltiempo/prediccion/avisos' in HTML,'official AEMET warning link missing')
 need('not official warnings' in HTML,'official-warning distinction missing')
 
+# v2.2 air quality, Calima and pollen guardrails.
+air_hourly=re.search(r"AIR_API_URL\.searchParams\.set\('hourly', \[([\s\S]*?)\]\.join\(','\)\);",APP)
+need('https://air-quality-api.open-meteo.com/v1/air-quality' in APP,'Open-Meteo Air Quality endpoint missing')
+need(air_hourly is not None,'air-quality hourly variables are missing')
+if air_hourly:
+    vals=set(re.findall(r"'([^']+)'",air_hourly.group(1)))
+    need({'european_aqi','pm2_5','pm10','dust','grass_pollen','olive_pollen'} <= vals,'air-quality request lacks rendered fields')
+    need(not (vals & {'temperature_2m','wave_height','wind_speed_10m'}),'air-quality request contains non-air variables')
+need(not re.search(r"AIR_API_URL\.searchParams\.set\('daily'",APP),'Air Quality API has no daily aggregations; do not request them')
+for control_id in ('airView','airStatus','airAqiNow','airDustNow','calimaSummary','calimaTimeline','pollenList','airHours','airDaily','airNowSummary',
+                   'alertAirToggle','alertCalimaToggle','alertPollenToggle','alertAqiThresholdSelect','alertDustThresholdSelect','alertPollenThresholdSelect'):
+    need(f'id="{control_id}"' in HTML,f'air-quality element missing: {control_id}')
+need('data-target="air"' in HTML,'Air navigation button missing')
+need('buildAirAdvisories' in APP,'air-quality alert logic missing')
+need('Copernicus' in HTML,'CAMS attribution missing')
+for f in ('_headers','vercel.json','netlify.toml'):
+    need('https://air-quality-api.open-meteo.com' in (ROOT/f).read_text(),f'{f} CSP does not allow the Air Quality API')
+
 # METAR updater identity/version.
 updater=(ROOT/'scripts/update_lxgb_observation.py').read_text()
 need('LXGB' in updater,'LXGB updater station missing')

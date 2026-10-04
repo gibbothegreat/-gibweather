@@ -23,7 +23,7 @@
         <div class="eyebrow">🇬🇮 GIBRALTAR</div>
         <div class="brand-title">
           <h1>GibWeather</h1>
-          <span id="topVersion" class="top-version" aria-label="App version 2.1">v2.1</span>
+          <span id="topVersion" class="top-version" aria-label="App version 2.2">v2.2</span>
           <span id="topAlertCount" class="top-alert-count count-low" aria-label="Custom weather alerts loading">🔔 —</span>
         </div>
       </div>
@@ -180,6 +180,14 @@
           </div>
         </section>
 
+        <section class="panel" aria-label="Air quality, Calima and pollen summary">
+          <div class="section-heading">
+            <h2>Air &amp; pollen</h2>
+            <button class="text-btn" data-go="air">See air →</button>
+          </div>
+          <div id="airNowSummary" class="today-grid air-now-grid"></div>
+        </section>
+
         <section class="panel local-panel">
           <div>
             <div class="eyebrow">LOCAL FORECASTER</div>
@@ -280,6 +288,42 @@
         </article>
       </section>
 
+      <section id="airView" class="view" data-view="air">
+        <div class="page-title"><h2>Air &amp; Pollen</h2><p>Air quality, Saharan dust (Calima) and pollen guidance</p></div>
+        <section id="airStatus" class="status-banner notice" role="status">Loading air-quality forecast…</section>
+        <section class="metrics-grid" aria-label="Current Gibraltar air quality">
+          <article id="airAqiCard" class="metric"><span>💨 European AQI</span><strong id="airAqiNow">—</strong><small id="airAqiLabel">—</small></article>
+          <article class="metric"><span>🏜️ Saharan dust</span><strong id="airDustNow">—</strong><small id="airDustLabel">—</small></article>
+          <article class="metric"><span>🔬 PM2.5</span><strong id="airPm25Now">—</strong><small>Fine particles</small></article>
+          <article class="metric"><span>🌫️ PM10</span><strong id="airPm10Now">—</strong><small>Coarse particles</small></article>
+          <article class="metric"><span>🚢 NO₂</span><strong id="airNo2Now">—</strong><small>Traffic &amp; shipping</small></article>
+          <article class="metric"><span>☀️ Ozone</span><strong id="airOzoneNow">—</strong><small>Ground level</small></article>
+        </section>
+        <article class="panel">
+          <div class="section-heading"><div><div class="eyebrow">NEXT 48 HOURS</div><h3>Calima outlook</h3></div></div>
+          <p id="calimaSummary" class="model-copy">—</p>
+          <div id="calimaTimeline" class="calima-timeline" aria-hidden="true"></div>
+          <div class="calima-axis"><span>Now</span><span>+24 h</span><span>+48 h</span></div>
+        </article>
+        <article class="panel">
+          <div class="section-heading"><div><div class="eyebrow">NEXT 24 HOURS · PEAK</div><h3>Pollen</h3></div></div>
+          <div id="pollenList" class="pollen-list"></div>
+        </article>
+        <article class="panel">
+          <div class="section-heading"><div><div class="eyebrow">NEXT 24 HOURS</div><h3>Air through the day</h3></div></div>
+          <div id="airHours" class="sea-list"></div>
+        </article>
+        <article class="panel">
+          <div class="section-heading"><div><div class="eyebrow">NEXT 5 DAYS</div><h3>Daily air outlook</h3></div></div>
+          <div id="airDaily" class="sea-list"></div>
+        </article>
+        <article class="panel explainer">
+          <h3>About these values</h3>
+          <p>Air quality, dust and pollen come from the Copernicus Atmosphere Monitoring Service (CAMS) via Open-Meteo. The European AQI runs from Good (0–20) to Extremely poor (over 100). Calima levels and pollen bands are GibWeather guidance, not official health advice.</p>
+          <p class="fineprint">Pollen forecasts are seasonal and may be blank outside the main pollen months. If you have asthma or allergies, follow your clinician's advice.</p>
+        </article>
+      </section>
+
       <section id="radarView" class="view" data-view="radar">
         <div class="page-title"><h2>Rain radar</h2><p>Recent precipitation · Gibraltar & Strait</p></div>
         <section id="radarStatus" class="status-banner notice" role="status">Loading recent radar…</section>
@@ -313,19 +357,19 @@
       </section>
 
       <section id="aboutView" class="view" data-view="about">
-        <div class="page-title"><h2>About GibWeather</h2><p>Release v2.1</p></div>
+        <div class="page-title"><h2>About GibWeather</h2><p>Release v2.2</p></div>
         <article class="panel about-copy">
           <h3>Built for Gibraltar</h3>
           <p>GibWeather is designed around local conditions: Levanter and Poniente flow, gusts, low cloud, humidity, visibility and rain.</p>
           <h3>Forecast & observation sources</h3>
-          <p>Weather and marine forecasts are provided by Open-Meteo under CC BY 4.0. GibWeather uses the best-match forecast plus the Marine Weather API and keeps a last-known-good forecast on your device for offline fallback.</p>
+          <p>Weather, marine and air-quality forecasts are provided by Open-Meteo under CC BY 4.0. Air-quality, dust and pollen data originate from the Copernicus Atmosphere Monitoring Service (CAMS). GibWeather uses the best-match forecast plus the Marine Weather and Air Quality APIs and keeps a last-known-good forecast on your device for offline fallback.</p>
           <p>Current airport observations come from Gibraltar Airport METAR reports (LXGB) supplied by the NOAA/NWS Aviation Weather Center. GibWeather retrieves these server-side and publishes a small same-origin observation file for the app.</p>
           <p>Recent rain-radar imagery is loaded on demand from RainViewer's public Weather Maps API and displayed over OpenStreetMap tiles. Radar imagery is not stored as part of the GibWeather offline forecast.</p>
           <h3>MeteoGib</h3>
           <p>MeteoGib is linked as an independent local forecast source. GibWeather does not scrape or republish MeteoGib forecasts and is not affiliated with MeteoGib.</p>
           <h3>App status</h3>
           <div class="status-grid">
-            <div><span>Version</span><strong id="versionText">v2.1</strong></div>
+            <div><span>Version</span><strong id="versionText">v2.2</strong></div>
             <div><span>Last refresh</span><strong id="lastRefreshText">—</strong></div>
             <div><span>Data age</span><strong id="dataAgeText">—</strong></div>
             <div><span>Connection</span><strong id="connectionText">—</strong></div>
@@ -345,7 +389,7 @@
           </div>
 
           <h3>Custom alerts</h3>
-          <p id="alertSettingsSummary">7 of 7 alert types on · saved on this device</p>
+          <p id="alertSettingsSummary">10 of 10 alert types on · saved on this device</p>
           <div class="alert-toggle-grid" aria-label="Choose custom alert types">
             <label class="alert-toggle"><input id="alertWindToggle" type="checkbox" checked /><span>💨 Wind gusts</span></label>
             <label class="alert-toggle"><input id="alertRainToggle" type="checkbox" checked /><span>🌧️ Rain</span></label>
@@ -354,6 +398,9 @@
             <label class="alert-toggle"><input id="alertLevanterToggle" type="checkbox" checked /><span>🌬️ Levanter</span></label>
             <label class="alert-toggle"><input id="alertRockCloudToggle" type="checkbox" checked /><span>🏔️ Rock Cloud</span></label>
             <label class="alert-toggle"><input id="alertSeaToggle" type="checkbox" checked /><span>🌊 Rough seas</span></label>
+            <label class="alert-toggle"><input id="alertAirToggle" type="checkbox" checked /><span>😷 Air quality</span></label>
+            <label class="alert-toggle"><input id="alertCalimaToggle" type="checkbox" checked /><span>🏜️ Calima</span></label>
+            <label class="alert-toggle"><input id="alertPollenToggle" type="checkbox" checked /><span>🌾 Pollen</span></label>
           </div>
           <div class="settings-grid alert-threshold-grid">
             <label><span>Wind alert from</span><select id="alertGustThresholdSelect"><option value="30">30 km/h · 19 mph</option><option value="40" selected>40 km/h · 25 mph</option><option value="50">50 km/h · 31 mph</option><option value="60">60 km/h · 37 mph</option></select></label>
@@ -361,6 +408,9 @@
             <label><span>Visibility alert below</span><select id="alertVisibilityThresholdSelect"><option value="2000">2 km</option><option value="3000">3 km</option><option value="6000" selected>6 km</option><option value="10000">10 km</option></select></label>
             <label><span>UV alert from</span><select id="alertUvThresholdSelect"><option value="3">UV 3</option><option value="6" selected>UV 6</option><option value="8">UV 8</option><option value="11">UV 11</option></select></label>
             <label><span>Wave alert from</span><select id="alertWaveThresholdSelect"><option value="1.5">1.5 m</option><option value="2" selected>2 m</option><option value="2.5">2.5 m</option><option value="3">3 m</option></select></label>
+            <label><span>Air alert from</span><select id="alertAqiThresholdSelect"><option value="40">AQI 40 · Moderate</option><option value="60" selected>AQI 60 · Poor</option><option value="80">AQI 80 · Very poor</option></select></label>
+            <label><span>Calima alert from</span><select id="alertDustThresholdSelect"><option value="25">25 µg/m³ · haze</option><option value="50" selected>50 µg/m³ · Calima</option><option value="100">100 µg/m³ · strong</option><option value="150">150 µg/m³ · very strong</option></select></label>
+            <label><span>Pollen alert from</span><select id="alertPollenThresholdSelect"><option value="1">Moderate</option><option value="2" selected>High</option><option value="3">Very high</option></select></label>
           </div>
           <p class="fineprint">Thresholds control when an alert first appears. Important conditions keep GibWeather's higher safety thresholds.</p>
           <div class="notification-card">
@@ -378,7 +428,7 @@
           <a class="official-warning-link" href="https://www.aemet.es/en/eltiempo/prediccion/avisos?p=6129" target="_blank" rel="noopener noreferrer">Open AEMET official warnings ↗</a>
 
           <h3>System health</h3>
-          <p>Checks GibWeather's live forecast feed, airport observation, model comparison, marine feed, offline shell, saved data, secure hosting and installed-app status.</p>
+          <p>Checks GibWeather's live forecast feed, airport observation, model comparison, marine feed, air-quality feed, offline shell, saved data, secure hosting and installed-app status.</p>
           <div id="healthGrid" class="health-grid" aria-label="GibWeather system health"></div>
           <button id="healthCheckBtn" class="secondary-btn" type="button">Run health check</button>
 
@@ -397,7 +447,7 @@
             </ol>
           </div>
           <h3>Privacy</h3>
-          <p>GibWeather v2.1 has no account, advertising SDK or analytics tracker. The last successful forecast, notification state, radar zoom and your app preferences are stored locally on this device.</p>
+          <p>GibWeather v2.2 has no account, advertising SDK or analytics tracker. The last successful forecast, notification state, radar zoom and your app preferences are stored locally on this device.</p>
           <p class="fineprint">The Levanter and Rock Cloud indicators are experimental guidance only. For official or safety-critical weather information, use the relevant official authority or a qualified local forecaster.</p>
         </article>
       </section>
@@ -409,6 +459,7 @@
       <button class="nav-btn" type="button" data-target="daily"><span>📅</span><small>7 Days</small></button>
       <button class="nav-btn" type="button" data-target="wind"><span>🌬️</span><small>Wind</small></button>
       <button class="nav-btn" type="button" data-target="sea"><span>🌊</span><small>Sea</small></button>
+      <button class="nav-btn" type="button" data-target="air"><span>🍃</span><small>Air</small></button>
       <button class="nav-btn" type="button" data-target="radar"><span>🌧️</span><small>Radar</small></button>
       <button class="nav-btn" type="button" data-target="about"><span>ⓘ</span><small>About</small></button>
     </nav>

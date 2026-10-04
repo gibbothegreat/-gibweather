@@ -1,9 +1,9 @@
-const APP_VERSION = '2.1';
+const APP_VERSION = '2.2';
 const GIBRALTAR = { lat: 36.1408, lon: -5.3536, timezone: 'Europe/Gibraltar' };
-const CACHE_KEY = 'gibweather:last-forecast:v21';
+const CACHE_KEY = 'gibweather:last-forecast:v22';
 const TREND_CACHE_KEY = 'gibweather:forecast-baseline:v1';
 const BACKUP_CACHE_KEY = 'gibweather:last-known-good:v1';
-const LEGACY_CACHE_KEYS = ['gibweather:last-forecast:v20','gibweather:last-forecast:v19','gibweather:last-forecast:v18','gibweather:last-forecast:v17','gibweather:last-forecast:v16','gibweather:last-forecast:v15','gibweather:last-forecast:v14','gibweather:last-forecast:v13','gibweather:last-forecast:v12','gibweather:last-forecast:v11','gibweather:last-forecast:v10','gibweather:last-forecast:v8','gibweather:last-forecast:v7','gibweather:last-forecast:v6', 'gibweather:last-forecast:v5', 'gibweather:last-forecast:v4', 'gibweather:last-forecast:v3', 'gibweather:last-forecast:v2', 'gibweather:last-forecast:v1'];
+const LEGACY_CACHE_KEYS = ['gibweather:last-forecast:v21','gibweather:last-forecast:v20','gibweather:last-forecast:v19','gibweather:last-forecast:v18','gibweather:last-forecast:v17','gibweather:last-forecast:v16','gibweather:last-forecast:v15','gibweather:last-forecast:v14','gibweather:last-forecast:v13','gibweather:last-forecast:v12','gibweather:last-forecast:v11','gibweather:last-forecast:v10','gibweather:last-forecast:v8','gibweather:last-forecast:v7','gibweather:last-forecast:v6', 'gibweather:last-forecast:v5', 'gibweather:last-forecast:v4', 'gibweather:last-forecast:v3', 'gibweather:last-forecast:v2', 'gibweather:last-forecast:v1'];
 const INTRO_KEY = 'gibweather:intro-seen';
 const SETTINGS_KEY = 'gibweather:settings:v1';
 const NOTIFICATION_SIGNATURE_KEY = 'gibweather:last-notification:v1';
@@ -12,11 +12,14 @@ const DEFAULT_SETTINGS = {
   notificationsEnabled: false,
   alertWind: true, alertRain: true, alertVisibility: true, alertUv: true,
   alertLevanter: true, alertRockCloud: true, alertSea: true,
+  alertAir: true, alertCalima: true, alertPollen: true,
   alertGustThreshold: 40, alertRainThreshold: 45, alertVisibilityThreshold: 6000,
-  alertUvThreshold: 6, alertWaveThreshold: 2
+  alertUvThreshold: 6, alertWaveThreshold: 2,
+  alertAqiThreshold: 60, alertDustThreshold: 50, alertPollenThreshold: 2
 };
 const ALERT_TOGGLE_KEYS = [
-  'alertWind','alertRain','alertVisibility','alertUv','alertLevanter','alertRockCloud','alertSea'
+  'alertWind','alertRain','alertVisibility','alertUv','alertLevanter','alertRockCloud','alertSea',
+  'alertAir','alertCalima','alertPollen'
 ];
 const OBSERVATION_URL = './data/lxgb-observation.json';
 const RADAR_API_URL = 'https://api.rainviewer.com/public/weather-maps.json';
@@ -87,10 +90,24 @@ MARINE_API_URL.searchParams.set('daily', [
   'swell_wave_height_max','swell_wave_direction_dominant','swell_wave_period_max'
 ].join(','));
 
+const AIR_API_URL = new URL('https://air-quality-api.open-meteo.com/v1/air-quality');
+AIR_API_URL.searchParams.set('latitude', GIBRALTAR.lat);
+AIR_API_URL.searchParams.set('longitude', GIBRALTAR.lon);
+AIR_API_URL.searchParams.set('timezone', GIBRALTAR.timezone);
+AIR_API_URL.searchParams.set('forecast_days', '5');
+AIR_API_URL.searchParams.set('current', [
+  'european_aqi','pm10','pm2_5','dust','nitrogen_dioxide','ozone'
+].join(','));
+AIR_API_URL.searchParams.set('hourly', [
+  'european_aqi','pm10','pm2_5','dust','nitrogen_dioxide','ozone',
+  'grass_pollen','olive_pollen','birch_pollen','alder_pollen','mugwort_pollen','ragweed_pollen'
+].join(','));
+
 const $ = (id) => document.getElementById(id);
 let weatherData = null;
 let modelData = null;
 let marineData = null;
+let airData = null;
 let observationData = null;
 let savedAt = null;
 let lastLoadWasCached = false;
@@ -98,6 +115,7 @@ let loadInFlight = false;
 let lastApiHealth = 'waiting';
 let lastModelHealth = 'waiting';
 let lastMarineHealth = 'waiting';
+let lastAirHealth = 'waiting';
 let lastObservationHealth = 'waiting';
 let lastRadarHealth = 'waiting';
 let radarData = null;
@@ -365,7 +383,7 @@ function alertThreshold(key) {
   return Number.isFinite(value) ? value : Number(DEFAULT_SETTINGS[key]);
 }
 
-function buildAdvisories(data, start, marine = marineData) {
+function buildAdvisories(data, start, marine = marineData, air = airData) {
   const next24 = snapshots(data, start, 24);
   const next12 = next24.slice(0, 12);
   const advisories = [];
@@ -457,6 +475,8 @@ function buildAdvisories(data, start, marine = marineData) {
     detail: `Modelled waves may reach ${formatWave(peakWave.wave)} in the Strait.`, time: fmtTime(peakWave.time)
   });
 
+  advisories.push(...buildAirAdvisories(air));
+
   if (!advisories.length) {
     const paused = activeAlertCategoryCount() === 0;
     advisories.push({
@@ -465,12 +485,12 @@ function buildAdvisories(data, start, marine = marineData) {
     });
   }
   const priority = { high: 0, medium: 1, low: 2 };
-  return advisories.sort((a, b) => priority[a.level] - priority[b.level]).slice(0, 7);
+  return advisories.sort((a, b) => priority[a.level] - priority[b.level]).slice(0, 9);
 }
 
-function renderAdvisories(data, marine = marineData) {
+function renderAdvisories(data, marine = marineData, air = airData) {
   const start = getHourIndex(data);
-  const items = buildAdvisories(data, start, marine);
+  const items = buildAdvisories(data, start, marine, air);
   const high = items.filter(x => x.level === 'high').length;
   const medium = items.filter(x => x.level === 'medium').length;
   const alertCount = items.filter(x => !x.isClear).length;
@@ -493,7 +513,7 @@ function renderAdvisories(data, marine = marineData) {
   const summaryTitle = !activeCategories ? 'Custom alerts paused' : high ? 'Important conditions expected' : medium ? 'Conditions to watch' : 'No important alerts';
   const summaryDetail = high || medium
     ? `${lead.title} is the highest-priority flag for the next 24 hours.`
-    : !activeCategories ? 'Turn on the categories you want in About → Custom alerts.' : 'None of your enabled Gibraltar weather or marine thresholds are currently triggered.';
+    : !activeCategories ? 'Turn on the categories you want in About → Custom alerts.' : 'None of your enabled Gibraltar weather, marine or air thresholds are currently triggered.';
   $('alertSummary').innerHTML = `<span class="alert-summary-icon">${!activeCategories ? '⏸️' : high ? '🔴' : medium ? '🟠' : '🟢'}</span><div><strong>${summaryTitle}</strong><small>${summaryDetail}</small></div>`;
   const levelLabel = { high: 'Important', medium: 'Watch', low: 'Info' };
   $('advisoryList').innerHTML = items.map(x => `<div class="advisory-item level-${x.level}" role="listitem">
@@ -631,13 +651,15 @@ function renderSettings() {
     alertWindToggle: 'alertWind', alertRainToggle: 'alertRain',
     alertVisibilityToggle: 'alertVisibility', alertUvToggle: 'alertUv',
     alertLevanterToggle: 'alertLevanter', alertRockCloudToggle: 'alertRockCloud',
-    alertSeaToggle: 'alertSea'
+    alertSeaToggle: 'alertSea', alertAirToggle: 'alertAir',
+    alertCalimaToggle: 'alertCalima', alertPollenToggle: 'alertPollen'
   };
   Object.entries(toggles).forEach(([id, key]) => { if ($(id)) $(id).checked = settings[key] !== false; });
   const thresholds = {
     alertGustThresholdSelect: 'alertGustThreshold', alertRainThresholdSelect: 'alertRainThreshold',
     alertVisibilityThresholdSelect: 'alertVisibilityThreshold', alertUvThresholdSelect: 'alertUvThreshold',
-    alertWaveThresholdSelect: 'alertWaveThreshold'
+    alertWaveThresholdSelect: 'alertWaveThreshold', alertAqiThresholdSelect: 'alertAqiThreshold',
+    alertDustThresholdSelect: 'alertDustThreshold', alertPollenThresholdSelect: 'alertPollenThreshold'
   };
   Object.entries(thresholds).forEach(([id, key]) => { if ($(id)) $(id).value = String(alertThreshold(key)); });
   const summary = $('settingsSummary');
@@ -667,11 +689,17 @@ function applySettingsFromUI() {
     alertLevanter: Boolean($('alertLevanterToggle')?.checked),
     alertRockCloud: Boolean($('alertRockCloudToggle')?.checked),
     alertSea: Boolean($('alertSeaToggle')?.checked),
+    alertAir: Boolean($('alertAirToggle')?.checked),
+    alertCalima: Boolean($('alertCalimaToggle')?.checked),
+    alertPollen: Boolean($('alertPollenToggle')?.checked),
     alertGustThreshold: selectNumber('alertGustThresholdSelect', [30,40,50,60], DEFAULT_SETTINGS.alertGustThreshold),
     alertRainThreshold: selectNumber('alertRainThresholdSelect', [30,45,60,70], DEFAULT_SETTINGS.alertRainThreshold),
     alertVisibilityThreshold: selectNumber('alertVisibilityThresholdSelect', [2000,3000,6000,10000], DEFAULT_SETTINGS.alertVisibilityThreshold),
     alertUvThreshold: selectNumber('alertUvThresholdSelect', [3,6,8,11], DEFAULT_SETTINGS.alertUvThreshold),
-    alertWaveThreshold: selectNumber('alertWaveThresholdSelect', [1.5,2,2.5,3], DEFAULT_SETTINGS.alertWaveThreshold)
+    alertWaveThreshold: selectNumber('alertWaveThresholdSelect', [1.5,2,2.5,3], DEFAULT_SETTINGS.alertWaveThreshold),
+    alertAqiThreshold: selectNumber('alertAqiThresholdSelect', [40,60,80], DEFAULT_SETTINGS.alertAqiThreshold),
+    alertDustThreshold: selectNumber('alertDustThresholdSelect', [25,50,100,150], DEFAULT_SETTINGS.alertDustThreshold),
+    alertPollenThreshold: selectNumber('alertPollenThresholdSelect', [1,2,3], DEFAULT_SETTINGS.alertPollenThreshold)
   };
   persistSettings();
   applyTheme();
@@ -729,6 +757,8 @@ function renderHealthStatus() {
   const modelText = lastModelHealth === 'ok' ? `${modelCount || 3} model feeds available` : lastModelHealth === 'cached' ? 'Saved model comparison' : lastModelHealth === 'degraded' ? 'Main forecast OK · models unavailable' : lastModelHealth === 'waiting' ? 'Waiting for first check' : 'Model comparison unavailable';
   const marineTone = lastMarineHealth === 'ok' ? 'ok' : lastMarineHealth === 'cached' ? 'warn' : lastMarineHealth === 'waiting' ? 'neutral' : 'bad';
   const marineText = lastMarineHealth === 'ok' ? 'Live Strait marine forecast' : lastMarineHealth === 'cached' ? 'Saved marine forecast' : lastMarineHealth === 'waiting' ? 'Waiting for first check' : 'Marine forecast unavailable';
+  const airTone = lastAirHealth === 'ok' ? 'ok' : lastAirHealth === 'cached' ? 'warn' : lastAirHealth === 'waiting' ? 'neutral' : 'bad';
+  const airText = lastAirHealth === 'ok' ? 'Live air quality, dust & pollen' : lastAirHealth === 'cached' ? 'Saved air-quality forecast' : lastAirHealth === 'waiting' ? 'Waiting for first check' : 'Air-quality forecast unavailable';
   const observationTone = lastObservationHealth === 'ok' ? 'ok' : lastObservationHealth === 'stale' ? 'warn' : lastObservationHealth === 'waiting' ? 'neutral' : 'bad';
   const observationText = observationData?.available ? `LXGB observation · ${observationAgeLabel(observationData)}` : lastObservationHealth === 'waiting' ? 'Waiting for airport observation' : 'LXGB observation unavailable';
   const radarTone = lastRadarHealth === 'ok' ? 'ok' : lastRadarHealth === 'waiting' ? 'neutral' : lastRadarHealth === 'offline' ? 'warn' : 'bad';
@@ -737,6 +767,7 @@ function renderHealthStatus() {
     healthRow(forecastTone === 'ok' ? '✅' : forecastTone === 'bad' ? '❌' : forecastTone === 'warn' ? '⚠️' : 'ℹ️', 'Forecast API', forecastText, forecastTone),
     healthRow(modelTone === 'ok' ? '✅' : modelTone === 'bad' ? '❌' : modelTone === 'warn' ? '⚠️' : 'ℹ️', 'Forecast models', modelText, modelTone),
     healthRow(marineTone === 'ok' ? '✅' : marineTone === 'bad' ? '❌' : marineTone === 'warn' ? '⚠️' : 'ℹ️', 'Marine forecast', marineText, marineTone),
+    healthRow(airTone === 'ok' ? '✅' : airTone === 'bad' ? '❌' : airTone === 'warn' ? '⚠️' : 'ℹ️', 'Air quality & pollen', airText, airTone),
     healthRow(observationTone === 'ok' ? '✅' : observationTone === 'bad' ? '❌' : observationTone === 'warn' ? '⚠️' : 'ℹ️', 'Airport observation', observationText, observationTone),
     healthRow(radarTone === 'ok' ? '✅' : radarTone === 'bad' ? '❌' : radarTone === 'warn' ? '⚠️' : 'ℹ️', 'Rain radar', radarText, radarTone),
     healthRow(swControlled ? '✅' : swSupported ? 'ℹ️' : '❌', 'Offline app shell', swControlled ? 'Active and controlling' : swSupported ? 'Supported · activates after hosting/reload' : 'Not supported', swControlled ? 'ok' : swSupported ? 'neutral' : 'bad'),
@@ -1767,15 +1798,238 @@ function renderMarine(data) {
   }).join('');
 }
 
+
+// v2.2 · Air quality, Saharan dust (Calima) and pollen
+const AQI_BANDS = [
+  { max: 20, label: 'Good', tone: 'good', className: 'state-green' },
+  { max: 40, label: 'Fair', tone: 'fair', className: 'state-blue' },
+  { max: 60, label: 'Moderate', tone: 'moderate', className: 'state-yellow' },
+  { max: 80, label: 'Poor', tone: 'poor', className: 'state-orange' },
+  { max: 100, label: 'Very poor', tone: 'very-poor', className: 'state-red' },
+  { max: Infinity, label: 'Extremely poor', tone: 'extreme', className: 'state-red' }
+];
+const DUST_BANDS = [
+  { max: 20, label: 'None', detail: 'Clear of Saharan dust', rank: 0 },
+  { max: 50, label: 'Light haze', detail: 'Slight dust haze possible', rank: 1 },
+  { max: 100, label: 'Calima', detail: 'Hazy skies and dusty surfaces likely', rank: 2 },
+  { max: 200, label: 'Strong Calima', detail: 'Thick haze; limit strenuous outdoor exercise', rank: 3 },
+  { max: Infinity, label: 'Severe Calima', detail: 'Very dense dust; sensitive groups should stay indoors', rank: 4 }
+];
+// GibWeather guidance cut-offs in grains/m³: [moderate, high, very high]
+const POLLEN_TYPES = [
+  { key: 'grass_pollen', label: 'Grass', icon: '🌾', cuts: [20, 50, 200] },
+  { key: 'olive_pollen', label: 'Olive', icon: '🫒', cuts: [50, 200, 400] },
+  { key: 'birch_pollen', label: 'Birch', icon: '🌳', cuts: [10, 50, 200] },
+  { key: 'alder_pollen', label: 'Alder', icon: '🌲', cuts: [10, 50, 200] },
+  { key: 'mugwort_pollen', label: 'Mugwort', icon: '🌿', cuts: [10, 50, 100] },
+  { key: 'ragweed_pollen', label: 'Ragweed', icon: '🌼', cuts: [5, 20, 50] }
+];
+const POLLEN_LEVELS = ['Low', 'Moderate', 'High', 'Very high'];
+
+function aqiBand(v) {
+  if (v == null || !Number.isFinite(Number(v))) return null;
+  return AQI_BANDS.find(b => Number(v) <= b.max);
+}
+function dustBand(v) {
+  if (v == null || !Number.isFinite(Number(v))) return null;
+  return DUST_BANDS.find(b => Number(v) <= b.max);
+}
+function pollenLevel(type, v) {
+  if (v == null || !Number.isFinite(Number(v))) return -1;
+  const n = Number(v);
+  if (n < 1) return 0;
+  return type.cuts.filter(c => n >= c).length;
+}
+function airWhen(iso, refIso) {
+  if (!iso) return '—';
+  return refIso && String(iso).slice(0, 10) !== String(refIso).slice(0, 10) ? `${fmtDay(String(iso).slice(0, 10))} ${fmtTime(iso)}` : fmtTime(iso);
+}
+function formatMicrograms(v) { return v == null || !Number.isFinite(Number(v)) ? '—' : `${Math.round(Number(v))} µg/m³`; }
+
+function airSnapshot(data, i) {
+  const h = data?.hourly || {};
+  const safe = (key) => Array.isArray(h[key]) ? h[key][i] : null;
+  const snap = { time: safe('time'), aqi: safe('european_aqi'), pm25: safe('pm2_5'), pm10: safe('pm10'), dust: safe('dust'),
+    no2: safe('nitrogen_dioxide'), ozone: safe('ozone'), pollen: {} };
+  POLLEN_TYPES.forEach(t => { snap.pollen[t.key] = safe(t.key); });
+  return snap;
+}
+function airHours(data, start, count) {
+  if (!data?.hourly?.time?.length) return [];
+  const end = Math.min(start + count, data.hourly.time.length);
+  return Array.from({ length: Math.max(0, end - start) }, (_, n) => airSnapshot(data, start + n));
+}
+function topPollen(snap) {
+  let best = null;
+  POLLEN_TYPES.forEach(t => {
+    const value = snap?.pollen?.[t.key];
+    const level = pollenLevel(t, value);
+    if (level < 0) return;
+    if (!best || level > best.level || (level === best.level && Number(value) > Number(best.value))) best = { type: t, value, level };
+  });
+  return best;
+}
+function hasPollenData(data) {
+  return POLLEN_TYPES.some(t => Array.isArray(data?.hourly?.[t.key]) && data.hourly[t.key].some(v => v != null));
+}
+function peakBy(items, fn) {
+  return items.reduce((best, s) => {
+    const v = Number(fn(s));
+    return Number.isFinite(v) && v > (best ? Number(fn(best)) : -Infinity) ? s : best;
+  }, null);
+}
+
+function buildAirAdvisories(air) {
+  const out = [];
+  if (!air?.hourly?.time?.length) return out;
+  const items = airHours(air, marineHourIndex(air), 24);
+  const aqiThreshold = alertThreshold('alertAqiThreshold');
+  const dustThreshold = alertThreshold('alertDustThreshold');
+  const pollenThreshold = alertThreshold('alertPollenThreshold');
+  const peakAqi = peakBy(items, s => s.aqi);
+  if (settings.alertAir !== false && peakAqi && Number(peakAqi.aqi) >= aqiThreshold) {
+    const band = aqiBand(peakAqi.aqi);
+    out.push({ icon: '😷', title: Number(peakAqi.aqi) >= 80 ? 'Very poor air quality' : 'Reduced air quality',
+      level: Number(peakAqi.aqi) >= 80 ? 'high' : 'medium',
+      detail: `European AQI may reach ${round(peakAqi.aqi)} (${band.label}).`, time: fmtTime(peakAqi.time) });
+  }
+  const peakDust = peakBy(items, s => s.dust);
+  if (settings.alertCalima !== false && peakDust && Number(peakDust.dust) >= dustThreshold) {
+    const band = dustBand(peakDust.dust);
+    out.push({ icon: '🏜️', title: Number(peakDust.dust) >= 150 ? 'Strong Calima' : 'Calima / Saharan dust',
+      level: Number(peakDust.dust) >= 150 ? 'high' : 'medium',
+      detail: `Saharan dust near ${formatMicrograms(peakDust.dust)}. ${band.detail}.`, time: fmtTime(peakDust.time) });
+  }
+  if (settings.alertPollen !== false) {
+    let best = null;
+    items.forEach(s => { const p = topPollen(s); if (p && (!best || p.level > best.level || (p.level === best.level && Number(p.value) > Number(best.value)))) best = { ...p, time: s.time }; });
+    if (best && best.level >= pollenThreshold) out.push({ icon: best.type.icon, title: `${best.type.label} pollen ${POLLEN_LEVELS[best.level].toLowerCase()}`,
+      level: best.level >= 3 ? 'high' : 'medium',
+      detail: `${best.type.label} pollen around ${round(best.value)} grains/m³.`, time: fmtTime(best.time) });
+  }
+  return out;
+}
+
+function renderAirNowPanel(air) {
+  const el = $('airNowSummary');
+  if (!el) return;
+  if (!air?.hourly?.time?.length) { el.innerHTML = '<div><span>💨 Air</span><strong>—</strong><small>Unavailable</small></div>'; return; }
+  const i = marineHourIndex(air);
+  const s = airSnapshot(air, i);
+  const c = air.current || {};
+  const aqi = c.european_aqi ?? s.aqi;
+  const dust = c.dust ?? s.dust;
+  const band = aqiBand(aqi);
+  const items = airHours(air, i, 24);
+  const peakDust = peakBy(items, x => x.dust);
+  const pollen = items.map(topPollen).reduce((b, p) => p && (!b || p.level > b.level) ? p : b, null);
+  const dBand = dustBand(peakDust?.dust ?? dust);
+  el.innerHTML = [
+    `<div><span>💨 Air quality</span><strong>${band ? band.label : '—'}</strong><small>EAQI ${round(aqi)}</small></div>`,
+    `<div><span>🏜️ Calima</span><strong>${dBand ? dBand.label : '—'}</strong><small>Peak ${formatMicrograms(peakDust?.dust ?? dust)}</small></div>`,
+    `<div><span>🌾 Pollen</span><strong>${pollen ? POLLEN_LEVELS[pollen.level] : hasPollenData(air) ? 'Low' : 'Out of season'}</strong><small>${pollen && pollen.level > 0 ? pollen.type.label : 'Next 24 hours'}</small></div>`
+  ].join('');
+}
+
+function renderAir(air) {
+  renderAirNowPanel(air);
+  const status = $('airStatus');
+  if (!status) return;
+  const ids = ['airAqiNow','airAqiLabel','airPm25Now','airPm10Now','airDustNow','airDustLabel','airNo2Now','airOzoneNow'];
+  if (!air?.hourly?.time?.length) {
+    status.textContent = 'Air-quality and pollen forecast is temporarily unavailable. The main Gibraltar weather forecast is still working.';
+    status.className = 'status-banner notice';
+    ids.forEach(id => { if ($(id)) $(id).textContent = '—'; });
+    ['calimaTimeline','pollenList','airHours','airDaily'].forEach(id => { if ($(id)) $(id).innerHTML = ''; });
+    if ($('calimaSummary')) $('calimaSummary').textContent = '—';
+    return;
+  }
+  status.textContent = lastAirHealth === 'cached' ? 'Showing the last saved air-quality forecast.' : 'Air-quality, dust and pollen forecast loaded.';
+  status.className = `status-banner ${lastAirHealth === 'cached' ? 'offline' : 'success'}`;
+  const i = marineHourIndex(air);
+  const s = airSnapshot(air, i);
+  const c = air.current || {};
+  const aqi = c.european_aqi ?? s.aqi;
+  const dust = c.dust ?? s.dust;
+  const band = aqiBand(aqi);
+  const card = $('airAqiCard');
+  if (card && band) applyStateCard(card, band);
+  $('airAqiNow').textContent = round(aqi);
+  $('airAqiLabel').textContent = band ? band.label : '—';
+  $('airPm25Now').textContent = formatMicrograms(c.pm2_5 ?? s.pm25);
+  $('airPm10Now').textContent = formatMicrograms(c.pm10 ?? s.pm10);
+  $('airDustNow').textContent = formatMicrograms(dust);
+  $('airDustLabel').textContent = dustBand(dust)?.label ?? '—';
+  $('airNo2Now').textContent = formatMicrograms(c.nitrogen_dioxide ?? s.no2);
+  $('airOzoneNow').textContent = formatMicrograms(c.ozone ?? s.ozone);
+
+  // Calima 48-hour outlook
+  const next48 = airHours(air, i, 48);
+  const peakDust = peakBy(next48, x => x.dust);
+  const pBand = dustBand(peakDust?.dust);
+  const dustWindow = contiguousWindow(next48, x => Number(x.dust) >= 50);
+  $('calimaSummary').textContent = !peakDust ? '—' : pBand.rank >= 2
+    ? `${pBand.label} expected${dustWindow ? ` from ${airWhen(dustWindow.start.time, s.time)} to ${airWhen(dustWindow.end.time, s.time)}` : ''}, peaking near ${formatMicrograms(peakDust.dust)} at ${airWhen(peakDust.time, s.time)}. ${pBand.detail}.`
+    : pBand.rank === 1 ? `Only a light dust haze is expected, peaking near ${formatMicrograms(peakDust.dust)}.`
+    : 'No Saharan dust episode is expected in the next 48 hours.';
+  const maxDust = Math.max(60, ...next48.map(x => Number(x.dust) || 0));
+  $('calimaTimeline').innerHTML = next48.filter((_, n) => n % 2 === 0).map(x => {
+    const b = dustBand(x.dust);
+    const h = Math.max(4, Math.round((Number(x.dust) || 0) / maxDust * 100));
+    return `<div class="calima-bar dust-rank-${b ? b.rank : 0}" style="height:${h}%" title="${fmtTime(x.time)} · ${formatMicrograms(x.dust)}"></div>`;
+  }).join('');
+
+  // Pollen
+  const next24 = airHours(air, i, 24);
+  if (!hasPollenData(air)) {
+    $('pollenList').innerHTML = '<p class="model-copy">Pollen forecasts are currently not issued for this area — this normally means it is out of season.</p>';
+  } else {
+    $('pollenList').innerHTML = POLLEN_TYPES.map(t => {
+      const peak = peakBy(next24, x => x.pollen[t.key]);
+      const value = peak?.pollen[t.key];
+      const level = pollenLevel(t, value);
+      const label = level < 0 ? 'No data' : POLLEN_LEVELS[level];
+      return `<div class="pollen-row pollen-level-${Math.max(0, level)}"><span>${t.icon} ${t.label}</span><div class="pollen-meter"><i style="width:${level < 0 ? 0 : level === 0 ? (Number(value) >= 1 ? 15 : 5) : (level + 1) * 25}%"></i></div><strong>${label}</strong><small>${value == null ? '—' : `${round(value)} grains/m³`}</small></div>`;
+    }).join('');
+  }
+
+  // Hourly
+  const rows = [];
+  for (let n = 0; n < next24.length; n += 3) {
+    const x = next24[n];
+    const b = aqiBand(x.aqi);
+    const p = topPollen(x);
+    rows.push(`<div class="sea-row air-row"><div><strong>${n === 0 ? 'Now' : fmtTime(x.time)}</strong></div><div><strong>AQI ${round(x.aqi)}</strong><small>${b ? b.label : '—'} · PM2.5 ${round(x.pm25)}</small></div><div><strong>Dust ${round(x.dust)}</strong><small>${p && p.level > 0 ? `${p.type.label} ${POLLEN_LEVELS[p.level].toLowerCase()}` : 'Pollen low'}</small></div></div>`);
+  }
+  $('airHours').innerHTML = rows.join('');
+
+  // Daily outlook from hourly values
+  const byDay = new Map();
+  air.hourly.time.forEach((t, idx) => {
+    const day = t.slice(0, 10);
+    if (!byDay.has(day)) byDay.set(day, []);
+    byDay.get(day).push(airSnapshot(air, idx));
+  });
+  const todayKey = s.time ? s.time.slice(0, 10) : null;
+  $('airDaily').innerHTML = [...byDay.entries()].filter(([day]) => !todayKey || day >= todayKey).slice(0, 5).map(([day, list], idx) => {
+    const label = idx === 0 ? 'Today' : idx === 1 ? 'Tomorrow' : fmtDay(day);
+    const pa = peakBy(list, x => x.aqi), pd = peakBy(list, x => x.dust);
+    const pp = list.map(topPollen).reduce((b, p) => p && (!b || p.level > b.level) ? p : b, null);
+    const ab = aqiBand(pa?.aqi), db = dustBand(pd?.dust);
+    return `<div class="sea-row sea-daily-row air-row"><div><strong>${label}</strong></div><div><strong>${ab ? ab.label : '—'}</strong><small>Max AQI ${round(pa?.aqi)}</small></div><div><strong>${db ? db.label : '—'}</strong><small>${pp && pp.level > 0 ? `${pp.type.label} pollen ${POLLEN_LEVELS[pp.level].toLowerCase()}` : 'Pollen low'}</small></div></div>`;
+  }).join('');
+}
+
 function renderAll(data) {
   renderNow(data);
   renderForecastChanges(data);
-  renderAdvisories(data, marineData);
+  renderAdvisories(data, marineData, airData);
   renderHourly(data);
   renderDaily(data);
   renderWind(data);
   renderModelComparison(modelData);
   renderMarine(marineData);
+  renderAir(airData);
   renderObservation(observationData, data);
   renderForecastConfidence();
   renderAppStatus();
@@ -1965,17 +2219,17 @@ function readCachedForecast() {
       if (!legacy) continue;
       try {
         const parsed = JSON.parse(legacy);
-        if (parsed?.data) return { savedAt: parsed.savedAt || null, data: parsed.data, models: parsed.models || null, marine: parsed.marine || null };
-        return { savedAt: null, data: parsed, models: null, marine: null };
+        if (parsed?.data) return { savedAt: parsed.savedAt || null, data: parsed.data, models: parsed.models || null, marine: parsed.marine || null, air: parsed.air || null };
+        return { savedAt: null, data: parsed, models: null, marine: null, air: null };
       } catch (_) {}
     }
   } catch (_) {}
   return null;
 }
 
-function saveForecast(data, models=null, marine=null) {
+function saveForecast(data, models=null, marine=null, air=null) {
   savedAt = new Date().toISOString();
-  const payload = JSON.stringify({ savedAt, data, models, marine });
+  const payload = JSON.stringify({ savedAt, data, models, marine, air });
   try {
     localStorage.setItem(CACHE_KEY, payload);
     localStorage.setItem(BACKUP_CACHE_KEY, payload);
@@ -2017,9 +2271,11 @@ async function loadWeather(force=false) {
       lastApiHealth = 'cached';
       lastModelHealth = cached.models ? 'cached' : 'unavailable';
       lastMarineHealth = cached.marine ? 'cached' : 'unavailable';
+      lastAirHealth = cached.air ? 'cached' : 'unavailable';
       weatherData = cached.data;
       modelData = cached.models || null;
       marineData = cached.marine || null;
+      airData = cached.air || null;
       renderAll(weatherData);
       setStatus(cachedStatusMessage('Offline — showing the last saved Gibraltar forecast.'), 'offline');
     } else setStatus('You are offline and no saved forecast is available yet.', 'error');
@@ -2030,10 +2286,11 @@ async function loadWeather(force=false) {
 
   try {
     if (force) setStatus('Refreshing Gibraltar forecast…');
-    const [response, models, marineResponse] = await Promise.all([
+    const [response, models, marineResponse, airResponse] = await Promise.all([
       fetchWithRetry(API_URL.toString(), 2),
       fetchModelComparison().catch(() => ({ series: [] })),
-      fetchWithRetry(MARINE_API_URL.toString(), 2).catch(() => null)
+      fetchWithRetry(MARINE_API_URL.toString(), 2).catch(() => null),
+      fetchWithRetry(AIR_API_URL.toString(), 2).catch(() => null)
     ]);
     const data = await response.json();
     if (!data?.current || !data?.hourly || !data?.daily) throw new Error('Incomplete forecast response');
@@ -2044,15 +2301,24 @@ async function loadWeather(force=false) {
         if (!candidate?.error && Array.isArray(candidate?.hourly?.time) && candidate.hourly.time.length) marine = candidate;
       } catch (_) {}
     }
+    let air = null;
+    if (airResponse?.ok) {
+      try {
+        const candidate = await airResponse.json();
+        if (!candidate?.error && Array.isArray(candidate?.hourly?.time) && candidate.hourly.time.length) air = candidate;
+      } catch (_) {}
+    }
     weatherData = data;
     modelData = models;
     marineData = marine;
+    airData = air;
     lastLoadWasCached = false;
     lastApiHealth = 'ok';
     lastModelHealth = models?.series?.length >= 2 ? 'ok' : models?.series?.length ? 'degraded' : 'unavailable';
     lastMarineHealth = marine ? 'ok' : 'unavailable';
+    lastAirHealth = air ? 'ok' : 'unavailable';
     preserveForecastBaseline();
-    saveForecast(data, models, marine);
+    saveForecast(data, models, marine, air);
     renderAll(data);
     setStatus('Forecast updated.', 'success');
   } catch (err) {
@@ -2064,15 +2330,18 @@ async function loadWeather(force=false) {
       lastApiHealth = 'error';
       lastModelHealth = cached.models ? 'cached' : 'unavailable';
       lastMarineHealth = cached.marine ? 'cached' : 'unavailable';
+      lastAirHealth = cached.air ? 'cached' : 'unavailable';
       weatherData = cached.data;
       modelData = cached.models || null;
       marineData = cached.marine || null;
+      airData = cached.air || null;
       renderAll(weatherData);
       setStatus(cachedStatusMessage('Could not refresh — showing the last saved forecast.'), 'offline');
     } else {
       lastApiHealth = 'error';
       lastModelHealth = 'unavailable';
       lastMarineHealth = 'unavailable';
+      lastAirHealth = 'unavailable';
       renderHealthStatus();
       setStatus('Could not load the forecast. Check your connection and try again.', 'error');
     }

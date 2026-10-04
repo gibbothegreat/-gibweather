@@ -1,5 +1,14 @@
 # GibWeather changelog
 
+## v2.2 · Air quality, Calima and pollen
+- Adds an **Air** screen with European AQI, PM2.5, PM10, NO₂, ozone and Saharan dust from the Open-Meteo Air Quality API (CAMS).
+- Adds a 48-hour **Calima outlook** with a dust timeline, episode window and peak timing.
+- Adds a **pollen** panel for grass, olive, birch, alder, mugwort and ragweed, with an out-of-season state.
+- Adds 24-hour and 5-day air outlooks plus an **Air & pollen** summary on the Now screen.
+- Adds Air quality, Calima and Pollen alert categories with personal thresholds; they feed the header count and notifications.
+- Caches air data with the offline forecast and reports the feed in System Health.
+- Allows `air-quality-api.open-meteo.com` in hosting CSP and refreshes the offline shell to `gibweather-shell-v22`.
+
 ## v2.1 · Radar zoom
 - Adds radar zoom levels 6–10 while keeping Gibraltar fixed at the centre.
 - Adds accessible +/− controls with a visible zoom-level indicator.
