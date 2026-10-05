@@ -1,5 +1,11 @@
 # GibWeather changelog
 
+## v2.3.1 · Beach rating fixes
+- Strong or gusty wind now caps a beach at Fair (25 km/h or gusts 40 km/h) or Choppy (40 km/h or gusts 60 km/h), even when it blows offshore and flattens the water.
+- Offshore gales explain that it is blowy on the sand and that inflatables should stay ashore.
+- Sunset and UV peak on the Beach screen now name the day the best bet refers to, instead of always saying Today.
+- Refreshes the offline shell to `gibweather-shell-v231`.
+
 ## v2.3 · Beaches and swimming
 - Adds a **Beach** screen rating Eastern Beach, Catalan Bay, Sandy Bay, Western Beach, Camp Bay and Little Bay as Great, Good, Fair, Choppy or Rough.
 - Ratings combine onshore wind and gusts, wave height and direction reaching each shore, rain chance, thunderstorms and air temperature.

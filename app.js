@@ -1,4 +1,4 @@
-const APP_VERSION = '2.3';
+const APP_VERSION = '2.3.1';
 const GIBRALTAR = { lat: 36.1408, lon: -5.3536, timezone: 'Europe/Gibraltar' };
 const CACHE_KEY = 'gibweather:last-forecast:v23';
 const TREND_CACHE_KEY = 'gibweather:forecast-baseline:v1';
@@ -2082,7 +2082,9 @@ function beachConditions(facing, openness, s, sea) {
   const rain = Number(s.rainChance) || 0;
   const storm = [95, 96, 99].includes(Number(s.code));
   if (rain >= 60) rank += 2; else if (rain >= 35) rank += 1;
-  if (offshore && wind >= 25) rank += 1;
+  // Strong or gusty wind is unpleasant on any shore, even when it flattens the water.
+  const blowy = wind >= 40 || gust >= 60 ? 3 : wind >= 25 || gust >= 40 ? 2 : 0;
+  rank = Math.max(rank, blowy);
   if (Number(s.temp) < 18) rank += 1;
   if (storm) rank = 4;
   rank = Math.min(4, rank);
@@ -2091,6 +2093,8 @@ function beachConditions(facing, openness, s, sea) {
   if (storm) reason = 'Thunderstorms possible — stay out of the water';
   else if (windPts >= wavePts && windPts >= 2) reason = `Onshore ${compass(s.dir)} wind ${formatWind(wind)}, gusts ${formatWind(gust)}`;
   else if (wavePts >= 2) reason = `Waves around ${formatWave(wave)} reaching the shore`;
+  else if (blowy && offshore) reason = `Strong offshore ${compass(s.dir)} wind, gusts ${formatWind(gust)}. Blowy on the sand; keep inflatables ashore`;
+  else if (blowy) reason = `Gusty ${compass(s.dir)} wind, gusts ${formatWind(gust)}`;
   else if (rain >= 35) reason = `${round(rain)}% chance of rain`;
   else if (offshore && wind >= 15) reason = `Offshore ${compass(s.dir)} breeze keeps it flat — watch inflatables`;
   else if (windGap != null && windGap >= 90 && wind >= 15) reason = `Sheltered from the ${compass(s.dir)} wind`;
@@ -2152,7 +2156,7 @@ function renderBeaches(data, marine) {
     status.textContent = 'Beach guidance needs the main forecast, which is not available yet.';
     status.className = 'status-banner notice';
     ['beachList','beachHours','beachDaily'].forEach(id => { $(id).innerHTML = ''; });
-    ['beachPickName','beachPickReason','beachSeaTemp','beachSeaFeel','beachUv','beachUvLabel','beachSunset','beachWind','beachWindNote'].forEach(id => { $(id).textContent = '—'; });
+    ['beachPickName','beachPickReason','beachSeaTemp','beachSeaFeel','beachUv','beachUvLabel','beachSunset','beachSunsetDay','beachWind','beachWindNote'].forEach(id => { $(id).textContent = '—'; });
     return;
   }
   const hasSea = Boolean(marine?.hourly?.time?.length);
@@ -2180,7 +2184,10 @@ function renderBeaches(data, marine) {
   const todayHours = outlook.daylight.filter(h => beachDayKey(h.s.time) === dayKey);
   const uvPeak = findPeak(todayHours.map(h => h.s), 'uv');
   $('beachUv').textContent = uvPeak ? round(uvPeak.uv) : '—';
-  $('beachUvLabel').textContent = uvPeak ? `${uvLabel(uvPeak.uv)} · peak ${fmtTime(uvPeak.time)}` : 'No daylight left today';
+  const nowKey = beachDayKey(outlook.now.s.time);
+  const dayLabel = dayKey === nowKey ? 'Today' : Date.parse(`${dayKey}T12:00:00Z`) - Date.parse(`${nowKey}T12:00:00Z`) === 86400000 ? 'Tomorrow' : fmtDay(dayKey);
+  $('beachUvLabel').textContent = uvPeak ? `${uvLabel(uvPeak.uv)} · ${dayLabel} ${fmtTime(uvPeak.time)}` : 'No daylight left today';
+  $('beachSunsetDay').textContent = dayLabel;
   const dayIdx = Array.isArray(data.daily?.time) ? data.daily.time.indexOf(dayKey) : -1;
   $('beachSunset').textContent = dayIdx >= 0 ? fmtTime(data.daily.sunset?.[dayIdx]) : '—';
   $('beachWind').textContent = regime;

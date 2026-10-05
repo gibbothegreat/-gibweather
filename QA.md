@@ -1,4 +1,4 @@
-# GibWeather v2.3 QA
+# GibWeather v2.3.1 QA
 
 ## Release validation
 Run:
@@ -7,7 +7,11 @@ Run:
 python3 scripts/validate_release.py
 ```
 
-Expected result: `GibWeather v2.3 release validation passed`.
+Expected result: `GibWeather v2.3.1 release validation passed`.
+
+## v2.3.1 beach fixes
+- A 32 km/h Levanter gusting 52 km/h rates the west-side beaches Fair, not Good, with a blowy-sand note.
+- After sunset, the Sunset and UV cards say Tomorrow and show tomorrow's values.
 
 ## v2.3 beach checks
 - Bottom navigation shows nine buttons including Beach, with readable labels on a 375 px wide iPhone.
