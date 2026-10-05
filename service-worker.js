@@ -1,8 +1,8 @@
-const CACHE = 'gibweather-shell-v231';
+const CACHE = 'gibweather-shell-v24';
 const OBSERVATION_CACHE_KEY = './data/lxgb-observation.json';
 const APP_SHELL = [
   './', './index.html', './styles.css', './app.js', './manifest.webmanifest', './version.json',
-  './data/lxgb-observation.json', './icons/icon-192-v4.png', './icons/icon-512-v4.png', './icons/icon-180-v4.png'
+  './data/lxgb-observation.json', './icons/icon-192-v5.png', './icons/icon-512-v5.png', './icons/icon-180-v5.png'
 ];
 
 self.addEventListener('install', event => {

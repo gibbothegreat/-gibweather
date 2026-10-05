@@ -1,4 +1,4 @@
-const APP_VERSION = '2.3.1';
+const APP_VERSION = '2.4';
 const GIBRALTAR = { lat: 36.1408, lon: -5.3536, timezone: 'Europe/Gibraltar' };
 const CACHE_KEY = 'gibweather:last-forecast:v23';
 const TREND_CACHE_KEY = 'gibweather:forecast-baseline:v1';
@@ -13,13 +13,14 @@ const DEFAULT_SETTINGS = {
   alertWind: true, alertRain: true, alertVisibility: true, alertUv: true,
   alertLevanter: true, alertRockCloud: true, alertSea: true,
   alertAir: true, alertCalima: true, alertPollen: true,
+  alertBeach: false, beachAlertSide: 'either', beachAlertRating: 0,
   alertGustThreshold: 40, alertRainThreshold: 45, alertVisibilityThreshold: 6000,
   alertUvThreshold: 6, alertWaveThreshold: 2,
   alertAqiThreshold: 60, alertDustThreshold: 50, alertPollenThreshold: 2
 };
 const ALERT_TOGGLE_KEYS = [
   'alertWind','alertRain','alertVisibility','alertUv','alertLevanter','alertRockCloud','alertSea',
-  'alertAir','alertCalima','alertPollen'
+  'alertAir','alertCalima','alertPollen','alertBeach'
 ];
 const OBSERVATION_URL = './data/lxgb-observation.json';
 const RADAR_API_URL = 'https://api.rainviewer.com/public/weather-maps.json';
@@ -90,6 +91,17 @@ MARINE_API_URL.searchParams.set('daily', [
   'swell_wave_height_max','swell_wave_direction_dominant','swell_wave_period_max'
 ].join(','));
 
+// v2.4 · Nearshore wave points: east of Catalan Bay (Mediterranean) and inside the Bay of Gibraltar.
+const BEACH_SEA_POINTS = { east: { lat: 36.13, lon: -5.33 }, west: { lat: 36.125, lon: -5.37 } };
+const BEACH_SEA_API_URL = new URL('https://marine-api.open-meteo.com/v1/marine');
+BEACH_SEA_API_URL.searchParams.set('latitude', [BEACH_SEA_POINTS.east.lat, BEACH_SEA_POINTS.west.lat].join(','));
+BEACH_SEA_API_URL.searchParams.set('longitude', [BEACH_SEA_POINTS.east.lon, BEACH_SEA_POINTS.west.lon].join(','));
+BEACH_SEA_API_URL.searchParams.set('timezone', GIBRALTAR.timezone);
+BEACH_SEA_API_URL.searchParams.set('forecast_days', '4');
+BEACH_SEA_API_URL.searchParams.set('length_unit', 'metric');
+BEACH_SEA_API_URL.searchParams.set('cell_selection', 'sea');
+BEACH_SEA_API_URL.searchParams.set('hourly', ['wave_height','wave_direction','wave_period','sea_surface_temperature'].join(','));
+
 const AIR_API_URL = new URL('https://air-quality-api.open-meteo.com/v1/air-quality');
 AIR_API_URL.searchParams.set('latitude', GIBRALTAR.lat);
 AIR_API_URL.searchParams.set('longitude', GIBRALTAR.lon);
@@ -108,6 +120,7 @@ let weatherData = null;
 let modelData = null;
 let marineData = null;
 let airData = null;
+let beachSeaData = null;
 let observationData = null;
 let savedAt = null;
 let lastLoadWasCached = false;
@@ -476,6 +489,7 @@ function buildAdvisories(data, start, marine = marineData, air = airData) {
   });
 
   advisories.push(...buildAirAdvisories(air));
+  advisories.push(...buildBeachAdvisories(data, marine));
 
   if (!advisories.length) {
     const paused = activeAlertCategoryCount() === 0;
@@ -484,7 +498,7 @@ function buildAdvisories(data, start, marine = marineData, air = airData) {
       detail: paused ? 'All custom alert categories are switched off.' : 'None of your enabled custom alert thresholds are triggered.', time: '24h'
     });
   }
-  const priority = { high: 0, medium: 1, low: 2 };
+  const priority = { high: 0, medium: 1, good: 2, low: 3 };
   return advisories.sort((a, b) => priority[a.level] - priority[b.level]).slice(0, 9);
 }
 
@@ -515,7 +529,7 @@ function renderAdvisories(data, marine = marineData, air = airData) {
     ? `${lead.title} is the highest-priority flag for the next 24 hours.`
     : !activeCategories ? 'Turn on the categories you want in About → Custom alerts.' : 'None of your enabled Gibraltar weather, marine or air thresholds are currently triggered.';
   $('alertSummary').innerHTML = `<span class="alert-summary-icon">${!activeCategories ? '⏸️' : high ? '🔴' : medium ? '🟠' : '🟢'}</span><div><strong>${summaryTitle}</strong><small>${summaryDetail}</small></div>`;
-  const levelLabel = { high: 'Important', medium: 'Watch', low: 'Info' };
+  const levelLabel = { high: 'Important', medium: 'Watch', good: 'Beach day', low: 'Info' };
   $('advisoryList').innerHTML = items.map(x => `<div class="advisory-item level-${x.level}" role="listitem">
     <div class="advisory-icon">${x.icon}</div>
     <div><strong>${x.title}</strong><small>${x.detail}</small></div>
@@ -567,7 +581,7 @@ async function toggleNotifications() {
   if (permission === 'granted') {
     await showLocalNotification('GibWeather notifications are on', {
       body: 'You will be notified when a refresh finds a new Watch or Important forecast flag.',
-      icon: './icons/icon-192-v4.png', badge: './icons/icon-192-v4.png', tag: 'gibweather-enabled'
+      icon: './icons/icon-192-v5.png', badge: './icons/icon-192-v5.png', tag: 'gibweather-enabled'
     });
     setStatus('Weather notifications turned on.', 'notice');
   } else setStatus('Notification permission was not enabled.', 'notice');
@@ -575,7 +589,7 @@ async function toggleNotifications() {
 
 function notifyForNewAdvisories(items) {
   if (!settings.notificationsEnabled || !('Notification' in window) || Notification.permission !== 'granted' || lastLoadWasCached) return;
-  const notable = items.filter(item => !item.isClear && ['high','medium'].includes(item.level));
+  const notable = items.filter(item => !item.isClear && ['high','medium','good'].includes(item.level));
   const signature = notable.map(item => `${item.level}:${item.title}:${item.time}`).join('|');
   let previous = '';
   try { previous = localStorage.getItem(NOTIFICATION_SIGNATURE_KEY) || ''; } catch (_) {}
@@ -583,9 +597,9 @@ function notifyForNewAdvisories(items) {
   try { localStorage.setItem(NOTIFICATION_SIGNATURE_KEY, signature); } catch (_) {}
   const lead = notable[0];
   const extra = notable.length > 1 ? ` Plus ${notable.length - 1} more forecast flag${notable.length === 2 ? '' : 's'}.` : '';
-  showLocalNotification(`${lead.level === 'high' ? 'Important' : 'Watch'}: ${lead.title}`, {
+  showLocalNotification(`${lead.level === 'high' ? 'Important' : lead.level === 'good' ? 'Beach day' : 'Watch'}: ${lead.title}`, {
     body: `${lead.detail}${extra}`,
-    icon: './icons/icon-192-v4.png', badge: './icons/icon-192-v4.png', tag: 'gibweather-alerts', renotify: true,
+    icon: './icons/icon-192-v5.png', badge: './icons/icon-192-v5.png', tag: 'gibweather-alerts', renotify: true,
     data: { url: './' }
   });
 }
@@ -652,14 +666,16 @@ function renderSettings() {
     alertVisibilityToggle: 'alertVisibility', alertUvToggle: 'alertUv',
     alertLevanterToggle: 'alertLevanter', alertRockCloudToggle: 'alertRockCloud',
     alertSeaToggle: 'alertSea', alertAirToggle: 'alertAir',
-    alertCalimaToggle: 'alertCalima', alertPollenToggle: 'alertPollen'
+    alertCalimaToggle: 'alertCalima', alertPollenToggle: 'alertPollen', alertBeachToggle: 'alertBeach'
   };
-  Object.entries(toggles).forEach(([id, key]) => { if ($(id)) $(id).checked = settings[key] !== false; });
+  Object.entries(toggles).forEach(([id, key]) => { if ($(id)) $(id).checked = key === 'alertBeach' ? settings[key] === true : settings[key] !== false; });
+  if ($('beachAlertSideSelect')) $('beachAlertSideSelect').value = ['east','west'].includes(settings.beachAlertSide) ? settings.beachAlertSide : 'either';
   const thresholds = {
     alertGustThresholdSelect: 'alertGustThreshold', alertRainThresholdSelect: 'alertRainThreshold',
     alertVisibilityThresholdSelect: 'alertVisibilityThreshold', alertUvThresholdSelect: 'alertUvThreshold',
     alertWaveThresholdSelect: 'alertWaveThreshold', alertAqiThresholdSelect: 'alertAqiThreshold',
-    alertDustThresholdSelect: 'alertDustThreshold', alertPollenThresholdSelect: 'alertPollenThreshold'
+    alertDustThresholdSelect: 'alertDustThreshold', alertPollenThresholdSelect: 'alertPollenThreshold',
+    beachAlertRatingSelect: 'beachAlertRating'
   };
   Object.entries(thresholds).forEach(([id, key]) => { if ($(id)) $(id).value = String(alertThreshold(key)); });
   const summary = $('settingsSummary');
@@ -692,6 +708,9 @@ function applySettingsFromUI() {
     alertAir: Boolean($('alertAirToggle')?.checked),
     alertCalima: Boolean($('alertCalimaToggle')?.checked),
     alertPollen: Boolean($('alertPollenToggle')?.checked),
+    alertBeach: Boolean($('alertBeachToggle')?.checked),
+    beachAlertSide: ['east','west'].includes($('beachAlertSideSelect')?.value) ? $('beachAlertSideSelect').value : 'either',
+    beachAlertRating: selectNumber('beachAlertRatingSelect', [0,1], DEFAULT_SETTINGS.beachAlertRating),
     alertGustThreshold: selectNumber('alertGustThresholdSelect', [30,40,50,60], DEFAULT_SETTINGS.alertGustThreshold),
     alertRainThreshold: selectNumber('alertRainThresholdSelect', [30,45,60,70], DEFAULT_SETTINGS.alertRainThreshold),
     alertVisibilityThreshold: selectNumber('alertVisibilityThresholdSelect', [2000,3000,6000,10000], DEFAULT_SETTINGS.alertVisibilityThreshold),
@@ -2102,14 +2121,34 @@ function beachConditions(facing, openness, s, sea) {
   return { rank, rating: BEACH_RATINGS[rank], wave, onshoreWind, offshore, reason };
 }
 
-function beachHours(data, marine, start, count) {
+function parseBeachSea(json) {
+  const list = Array.isArray(json) ? json : [json];
+  const valid = x => x && !x.error && Array.isArray(x.hourly?.time) && x.hourly.time.length ? x : null;
+  const out = { east: valid(list[0]), west: valid(list[1]) };
+  return out.east || out.west ? out : null;
+}
+
+// Nearshore points already sit on each side of the Rock, so they need no extra shelter factor.
+function beachSeaSources(marine, beachSea) {
+  const strait = marineByTime(marine);
+  const out = {};
+  Object.entries(BEACH_SIDES).forEach(([key, side]) => {
+    const local = beachSea?.[key] ? marineByTime(beachSea[key]) : null;
+    out[key] = local ? { map: local, openness: 1, local: true } : { map: strait, openness: side.openness, local: false };
+  });
+  return out;
+}
+
+function beachHours(data, marine, start, count, beachSea = beachSeaData) {
   if (!data?.hourly?.time?.length) return [];
-  const seaMap = marineByTime(marine);
+  const sources = beachSeaSources(marine, beachSea);
   return snapshots(data, start, count).map(s => {
-    const sea = seaMap.get(s.time) || null;
-    const sides = {};
-    Object.entries(BEACH_SIDES).forEach(([key, side]) => { sides[key] = beachConditions(side.facing, side.openness, s, sea); });
-    return { s, sea, sides };
+    const seaBySide = {}, sides = {};
+    Object.entries(BEACH_SIDES).forEach(([key, side]) => {
+      seaBySide[key] = sources[key].map.get(s.time) || null;
+      sides[key] = beachConditions(side.facing, sources[key].openness, s, seaBySide[key]);
+    });
+    return { s, sea: seaBySide.east || seaBySide.west, seaBySide, sides, sources };
   });
 }
 
@@ -2120,18 +2159,55 @@ function bestBeachSide(hour) {
 
 function beachDayKey(iso) { return iso ? String(iso).slice(0, 10) : null; }
 
-function buildBeachOutlook(data, marine) {
+function buildBeachOutlook(data, marine, beachSea = beachSeaData) {
   if (!data?.hourly?.time?.length) return null;
   const start = getHourIndex(data);
-  const hours = beachHours(data, marine, start, 72);
+  const hours = beachHours(data, marine, start, 72, beachSea);
   if (!hours.length) return null;
   const now = hours[0];
   const daylight = hours.filter(h => Number(h.s.isDay) === 1);
   const pickHour = Number(now.s.isDay) === 1 ? now : daylight[0] || now;
   const pickSide = bestBeachSide(pickHour);
-  const beaches = BEACHES.map(b => ({ ...b, ...beachConditions(b.facing, BEACH_SIDES[b.side].openness, pickHour.s, pickHour.sea) }))
+  const beaches = BEACHES.map(b => ({ ...b, ...beachConditions(b.facing, pickHour.sources[b.side].openness, pickHour.s, pickHour.seaBySide[b.side]) }))
     .sort((a, b) => a.rank - b.rank || (a.side === b.side ? 0 : a.side === pickSide ? -1 : 1));
-  return { now, pickHour, pickSide, beaches, daylight, isNight: pickHour !== now };
+  const nearshore = Object.values(now.sources).some(x => x.local);
+  return { hours, now, pickHour, pickSide, beaches, daylight, nearshore, isNight: pickHour !== now };
+}
+
+// Opt-in good-news alert: the preferred side reaches the chosen rating for 2+ daylight hours in the next 24h.
+function buildBeachAdvisories(data, marine = marineData, beachSea = beachSeaData) {
+  if (settings.alertBeach !== true) return [];
+  const outlook = buildBeachOutlook(data, marine, beachSea);
+  if (!outlook) return [];
+  const maxRank = Number(settings.beachAlertRating) === 1 ? 1 : 0;
+  const sideKeys = ['east', 'west'].includes(settings.beachAlertSide) ? [settings.beachAlertSide] : Object.keys(BEACH_SIDES);
+  const next24 = outlook.hours.slice(0, 24);
+  let best = null;
+  sideKeys.forEach(key => {
+    let i = 0;
+    while (i < next24.length) {
+      const win = contiguousWindow(next24.slice(i), h => Number(h.s.isDay) === 1 && h.sides[key].rank <= maxRank);
+      if (!win) break;
+      const start = i + win.startIndex, end = i + win.endIndex;
+      if (end - start >= 1) {
+        if (!best || start < best.start) best = { key, start, end };
+        break;
+      }
+      i = end + 1;
+    }
+  });
+  if (!best) return [];
+  const startHour = next24[best.start], endHour = next24[best.end];
+  const label = BEACH_RATINGS[Math.max(...next24.slice(best.start, best.end + 1).map(h => h.sides[best.key].rank))].label;
+  const pick = BEACHES.filter(b => b.side === best.key)
+    .map(b => ({ ...b, ...beachConditions(b.facing, startHour.sources[best.key].openness, startHour.s, startHour.seaBySide[best.key]) }))
+    .sort((a, b) => a.rank - b.rank)[0];
+  const until = fmtTime(new Date(fakeLocalEpoch(endHour.s.time) + 3600000).toISOString());
+  return [{
+    icon: '🏖️', title: `${label} beach conditions`, level: 'good',
+    detail: `${BEACH_SIDES[best.key].label} looks ${label.toLowerCase()} from ${fmtTime(startHour.s.time)} to ${until}. Best bet: ${pick.name}.`,
+    time: fmtTime(startHour.s.time)
+  }];
 }
 
 function renderBeachNowPanel(outlook, sea) {
@@ -2145,9 +2221,9 @@ function renderBeachNowPanel(outlook, sea) {
   ].join('');
 }
 
-function renderBeaches(data, marine) {
+function renderBeaches(data, marine, beachSea = beachSeaData) {
   const status = $('beachStatus');
-  const outlook = buildBeachOutlook(data, marine);
+  const outlook = buildBeachOutlook(data, marine, beachSea);
   const c = marine?.current || {};
   const seaTemp = c.sea_surface_temperature ?? outlook?.pickHour?.sea?.seaTemp ?? null;
   renderBeachNowPanel(outlook, seaTemp);
@@ -2159,9 +2235,10 @@ function renderBeaches(data, marine) {
     ['beachPickName','beachPickReason','beachSeaTemp','beachSeaFeel','beachUv','beachUvLabel','beachSunset','beachSunsetDay','beachWind','beachWindNote'].forEach(id => { $(id).textContent = '—'; });
     return;
   }
-  const hasSea = Boolean(marine?.hourly?.time?.length);
+  const hasSea = Boolean(marine?.hourly?.time?.length) || outlook.nearshore;
   status.textContent = !hasSea ? 'Marine forecast unavailable, so beach ratings use wind and weather only.'
-    : lastMarineHealth === 'cached' ? 'Showing beach guidance from the last saved marine forecast.' : 'Beach guidance loaded.';
+    : lastMarineHealth === 'cached' ? 'Showing beach guidance from the last saved marine forecast.'
+    : outlook.nearshore ? 'Beach guidance loaded with nearshore waves for each side of the Rock.' : 'Beach guidance loaded using Strait waves.';
   status.className = `status-banner ${!hasSea ? 'notice' : lastMarineHealth === 'cached' ? 'offline' : 'success'}`;
 
   const { pickHour, pickSide, beaches, isNight } = outlook;
@@ -2199,7 +2276,7 @@ function renderBeaches(data, marine) {
 
   const next = outlook.daylight.slice(0, 13);
   $('beachHours').innerHTML = next.length ? next.filter((_, n) => n % 2 === 0).map(h =>
-    `<div class="sea-row beach-hour-row"><div><strong>${h === outlook.now ? 'Now' : beachDayKey(h.s.time) !== beachDayKey(outlook.now.s.time) ? `${fmtDay(beachDayKey(h.s.time))} ${fmtTime(h.s.time)}` : fmtTime(h.s.time)}</strong><small>${formatWave(h.sea?.wave)} · ${compass(h.s.dir)}</small></div>${Object.keys(BEACH_SIDES).map(k => `<div><strong class="beach-tone ${h.sides[k].rating.className}">${BEACH_SIDES[k].short} ${h.sides[k].rating.label}</strong><small>${h.sides[k].offshore ? 'Offshore wind' : h.sides[k].onshoreWind >= 12 ? `Onshore ${formatWind(h.sides[k].onshoreWind)}` : 'Light onshore'}</small></div>`).join('')}</div>`
+    `<div class="sea-row beach-hour-row"><div><strong>${h === outlook.now ? 'Now' : beachDayKey(h.s.time) !== beachDayKey(outlook.now.s.time) ? `${fmtDay(beachDayKey(h.s.time))} ${fmtTime(h.s.time)}` : fmtTime(h.s.time)}</strong><small>${compass(h.s.dir)} ${formatWind(h.s.wind)}</small></div>${Object.keys(BEACH_SIDES).map(k => `<div><strong class="beach-tone ${h.sides[k].rating.className}">${BEACH_SIDES[k].short} ${h.sides[k].rating.label}</strong><small>${h.sides[k].offshore ? 'Offshore' : h.sides[k].onshoreWind >= 12 ? `Onshore ${formatWind(h.sides[k].onshoreWind)}` : 'Light onshore'} · ${formatWave(h.sides[k].wave)}</small></div>`).join('')}</div>`
   ).join('') : '<p class="model-copy">No daylight hours in the forecast window.</p>';
 
   const byDay = new Map();
@@ -2422,7 +2499,7 @@ function readCachedForecast() {
       if (!legacy) continue;
       try {
         const parsed = JSON.parse(legacy);
-        if (parsed?.data) return { savedAt: parsed.savedAt || null, data: parsed.data, models: parsed.models || null, marine: parsed.marine || null, air: parsed.air || null };
+        if (parsed?.data) return { savedAt: parsed.savedAt || null, data: parsed.data, models: parsed.models || null, marine: parsed.marine || null, air: parsed.air || null, beachSea: parsed.beachSea || null };
         return { savedAt: null, data: parsed, models: null, marine: null, air: null };
       } catch (_) {}
     }
@@ -2430,9 +2507,9 @@ function readCachedForecast() {
   return null;
 }
 
-function saveForecast(data, models=null, marine=null, air=null) {
+function saveForecast(data, models=null, marine=null, air=null, beachSea=null) {
   savedAt = new Date().toISOString();
-  const payload = JSON.stringify({ savedAt, data, models, marine, air });
+  const payload = JSON.stringify({ savedAt, data, models, marine, air, beachSea });
   try {
     localStorage.setItem(CACHE_KEY, payload);
     localStorage.setItem(BACKUP_CACHE_KEY, payload);
@@ -2479,6 +2556,7 @@ async function loadWeather(force=false) {
       modelData = cached.models || null;
       marineData = cached.marine || null;
       airData = cached.air || null;
+      beachSeaData = cached.beachSea || null;
       renderAll(weatherData);
       setStatus(cachedStatusMessage('Offline — showing the last saved Gibraltar forecast.'), 'offline');
     } else setStatus('You are offline and no saved forecast is available yet.', 'error');
@@ -2489,11 +2567,12 @@ async function loadWeather(force=false) {
 
   try {
     if (force) setStatus('Refreshing Gibraltar forecast…');
-    const [response, models, marineResponse, airResponse] = await Promise.all([
+    const [response, models, marineResponse, airResponse, beachSeaResponse] = await Promise.all([
       fetchWithRetry(API_URL.toString(), 2),
       fetchModelComparison().catch(() => ({ series: [] })),
       fetchWithRetry(MARINE_API_URL.toString(), 2).catch(() => null),
-      fetchWithRetry(AIR_API_URL.toString(), 2).catch(() => null)
+      fetchWithRetry(AIR_API_URL.toString(), 2).catch(() => null),
+      fetchWithRetry(BEACH_SEA_API_URL.toString(), 1).catch(() => null)
     ]);
     const data = await response.json();
     if (!data?.current || !data?.hourly || !data?.daily) throw new Error('Incomplete forecast response');
@@ -2511,17 +2590,22 @@ async function loadWeather(force=false) {
         if (!candidate?.error && Array.isArray(candidate?.hourly?.time) && candidate.hourly.time.length) air = candidate;
       } catch (_) {}
     }
+    let beachSea = null;
+    if (beachSeaResponse?.ok) {
+      try { beachSea = parseBeachSea(await beachSeaResponse.json()); } catch (_) {}
+    }
     weatherData = data;
     modelData = models;
     marineData = marine;
     airData = air;
+    beachSeaData = beachSea;
     lastLoadWasCached = false;
     lastApiHealth = 'ok';
     lastModelHealth = models?.series?.length >= 2 ? 'ok' : models?.series?.length ? 'degraded' : 'unavailable';
     lastMarineHealth = marine ? 'ok' : 'unavailable';
     lastAirHealth = air ? 'ok' : 'unavailable';
     preserveForecastBaseline();
-    saveForecast(data, models, marine, air);
+    saveForecast(data, models, marine, air, beachSea);
     renderAll(data);
     setStatus('Forecast updated.', 'success');
   } catch (err) {
@@ -2538,6 +2622,7 @@ async function loadWeather(force=false) {
       modelData = cached.models || null;
       marineData = cached.marine || null;
       airData = cached.air || null;
+      beachSeaData = cached.beachSea || null;
       renderAll(weatherData);
       setStatus(cachedStatusMessage('Could not refresh — showing the last saved forecast.'), 'offline');
     } else {

@@ -1,10 +1,13 @@
 # GibWeather changelog
 
-## v2.3.1 · Beach rating fixes
+## v2.4 · Nearshore beach waves, Beach day alerts and new icon
+- The Beach screen now fetches wave forecasts for two nearshore points, one east of Catalan Bay and one inside the Bay of Gibraltar, so each side of the Rock uses its own waves. It falls back to the Strait forecast if that request fails.
+- Adds opt-in **Beach days** alerts in About → Custom alerts, with a preferred side (either, east or west) and a rating (Great, or Good or better). An alert appears when that side holds the rating for at least two daylight hours in the next 24 hours, and can trigger a device notification.
+- Adds a new home screen icon (`icon-*-v5.png`) with a clearer Rock silhouette, sun and sea that stays inside the maskable safe zone.
 - Strong or gusty wind now caps a beach at Fair (25 km/h or gusts 40 km/h) or Choppy (40 km/h or gusts 60 km/h), even when it blows offshore and flattens the water.
 - Offshore gales explain that it is blowy on the sand and that inflatables should stay ashore.
 - Sunset and UV peak on the Beach screen now name the day the best bet refers to, instead of always saying Today.
-- Refreshes the offline shell to `gibweather-shell-v231`.
+- Refreshes the offline shell to `gibweather-shell-v24`.
 
 ## v2.3 · Beaches and swimming
 - Adds a **Beach** screen rating Eastern Beach, Catalan Bay, Sandy Bay, Western Beach, Camp Bay and Little Bay as Great, Good, Fair, Choppy or Rough.

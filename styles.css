@@ -711,3 +711,8 @@ html[data-theme="light"] .beach-row.state-blue .beach-badge, html[data-theme="li
 html[data-theme="light"] .beach-row.state-yellow .beach-badge, html[data-theme="light"] .beach-tone.state-yellow { color:#8a6a00; }
 html[data-theme="light"] .beach-row.state-orange .beach-badge, html[data-theme="light"] .beach-tone.state-orange { color:#b85a12; }
 html[data-theme="light"] .beach-row.state-red .beach-badge, html[data-theme="light"] .beach-tone.state-red { color:#b8322a; }
+
+/* v2.4 beach-day alerts */
+.advisory-item.level-good .advisory-time span { color:#8fd3ff; background:rgba(99,187,255,.12); }
+.advisory-item.level-good { box-shadow: inset 0 0 0 1px rgba(99,187,255,.26); }
+html[data-theme="light"] .advisory-item.level-good .advisory-time span { color:#00598f; }

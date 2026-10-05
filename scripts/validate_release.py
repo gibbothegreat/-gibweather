@@ -53,7 +53,7 @@ missing=sorted(refs-ids)
 need(not missing,'app.js references missing HTML ids: '+', '.join(missing))
 
 # App shell
-required=['index.html','styles.css','app.js','manifest.webmanifest','version.json','data/lxgb-observation.json','icons/icon-192-v4.png','icons/icon-512-v4.png','icons/icon-180-v4.png']
+required=['index.html','styles.css','app.js','manifest.webmanifest','version.json','data/lxgb-observation.json','icons/icon-192-v5.png','icons/icon-512-v5.png','icons/icon-180-v5.png']
 for rel in required: need((ROOT/rel).exists(),f'missing app-shell file: {rel}')
 
 # Open-Meteo contract guardrails. These deliberately check the API families are not mixed up.
@@ -162,6 +162,13 @@ for control_id in ('beachView','beachStatus','beachPickCard','beachPickName','be
 need('data-target="beach"' in HTML,'Beach navigation button missing')
 need('beachConditions' in APP and 'renderBeaches(data, marineData)' in APP,'beach rating logic missing')
 need('not safety advice' in HTML,'beach safety disclaimer missing')
+
+# v2.4 nearshore beach waves and Beach day alerts.
+need('BEACH_SEA_API_URL' in APP and 'parseBeachSea' in APP,'nearshore beach wave request missing')
+need(not re.search(r"BEACH_SEA_API_URL\.searchParams\.set\('daily'",APP),'nearshore beach request should be hourly only')
+for control_id in ('alertBeachToggle','beachAlertSideSelect','beachAlertRatingSelect'):
+    need(f'id="{control_id}"' in HTML,f'beach alert control missing: {control_id}')
+need('buildBeachAdvisories' in APP,'beach-day alert logic missing')
 
 # METAR updater identity/version.
 updater=(ROOT/'scripts/update_lxgb_observation.py').read_text()

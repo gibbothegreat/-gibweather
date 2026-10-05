@@ -1,4 +1,4 @@
-# GibWeather v2.3.1
+# GibWeather v2.4
 
 GibWeather is a Gibraltar-first Progressive Web App for iPhone, iPad and modern browsers.
 
@@ -29,14 +29,14 @@ GibWeather is a Gibraltar-first Progressive Web App for iPhone, iPad and modern 
 - Opt-in device notifications for new Watch and Important forecast flags
 - Direct access to official AEMET adverse-weather warnings for the nearby Campo de Gibraltar and Strait area
 - Automatic, dark and light appearances saved per device
-- Natural-colour Rock, sun, cloud and sea Home Screen icon
+- Crisp Rock, sun and sea Home Screen icon designed to stay legible at small sizes
 
 ## v1.2 reliability release
 v1.2 corrects the live API contracts used by the app. The main Open-Meteo forecast request now explicitly asks for the daily fields needed by the Today and 7-day screens. The Open-Meteo Marine request now uses only supported marine daily aggregations (`wave_height_max`, dominant wave direction, period, and swell equivalents). A release validator is included at `scripts/validate_release.py` to guard against mixing atmospheric and marine API variables in future builds.
 
 ## Data sources
 ### Forecasts
-GibWeather calls Open-Meteo directly from the browser. The main forecast uses Open-Meteo Best Match; wind-model comparison uses Open-Meteo ECMWF, GFS and DWD ICON endpoints; the Sea & Strait screen uses the Open-Meteo Marine Weather API. Open-Meteo attribution is displayed in the app under CC BY 4.0.
+GibWeather calls Open-Meteo directly from the browser. The main forecast uses Open-Meteo Best Match; wind-model comparison uses Open-Meteo ECMWF, GFS and DWD ICON endpoints; the Sea & Strait screen uses the Open-Meteo Marine Weather API, and the Beach screen adds two nearshore Marine API points, one east of Catalan Bay and one inside the Bay of Gibraltar. Open-Meteo attribution is displayed in the app under CC BY 4.0.
 
 ### Actual airport observation
 GibWeather uses the Gibraltar Airport METAR station **LXGB**. The source is the NOAA/NWS Aviation Weather Center (AviationWeather.gov). Its API does not permit browser CORS requests, so `.github/workflows/update-lxgb-observation.yml` fetches and normalizes the latest METAR server-side and publishes `data/lxgb-observation.json` for the app to read from its own origin.
@@ -71,7 +71,7 @@ This checks JavaScript syntax, custom-alert behavior, manifest/version consisten
 GibWeather is a static app. Deployment configurations are included for GitHub Pages, Netlify and Vercel. See `DEPLOY.md`.
 
 ## Release status
-v2.3.1 rates strong or gusty wind more cautiously on the Beach screen, even when it blows offshore, and labels sunset and UV with the day the best bet refers to.
+v2.4 rates beaches with nearshore wave forecasts for each side of the Rock, adds opt-in Beach day alerts, rates strong or gusty wind more cautiously even when it blows offshore, and introduces a new home screen icon.
 
 v2.3 adds the Beach screen: a best-bet beach, per-beach ratings for both sides of the Rock, an east-vs-west hourly comparison, a 3-day beach outlook and a Beaches summary on the Now screen.
 
