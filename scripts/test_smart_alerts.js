@@ -235,11 +235,15 @@ const levanterDay = weather({ wind: 35, direction: 90, gust: 50 });
 const levanterBeach = context.buildBeachOutlook(levanterDay, marine(1.2));
 assert(levanterBeach.pickSide === 'west', 'Levanter should favour the west-side beaches');
 assert(levanterBeach.pickHour.sides.east.rank >= 3, 'East side should be choppy or rough in a strong Levanter');
+assert(levanterBeach.pickHour.sides.west.rating.label === 'Fair', 'A gusty offshore Levanter should cap the west side at Fair');
+assert(levanterBeach.beaches[0].reason.includes('inflatables'), 'Strong offshore wind should warn about inflatables');
 const ponienteBeach = context.buildBeachOutlook(weather({ wind: 30, direction: 260, gust: 42 }), marine(0.4));
 assert(ponienteBeach.pickSide === 'east', 'Poniente should favour the east-side beaches');
 const calmBeach = context.buildBeachOutlook(weather(), marine(0.2));
 assert(calmBeach.beaches[0].rating.label === 'Great', 'Calm sunny weather should rate Great');
 assert(calmBeach.isNight && calmBeach.pickHour.s.time.endsWith('07:00'), 'At night the best bet should use the first daylight hour');
+context.renderBeaches(weather(), marine(0.2));
+assert(element('beachSunsetDay').textContent === 'Today' && element('beachSunset').textContent === '20:56', 'Sunset should follow the best-bet day');
 context.renderBeaches(levanterDay, marine(1.2));
 assert(element('beachList').innerHTML.includes('Catalan Bay') && element('beachList').innerHTML.includes('Camp Bay'), 'Beach list did not render');
 assert(element('beachDaily').innerHTML.includes('Today'), 'Beach outlook missing');
@@ -248,5 +252,34 @@ context.renderBeaches(weather(), null);
 assert(element('beachStatus').textContent.includes('wind and weather only'), 'Beach screen did not explain missing marine data');
 context.renderBeaches(null, null);
 assert(element('beachList').innerHTML === '', 'Unavailable forecast did not clear beach list');
+
+// v2.4 nearshore beach waves and Beach day alerts
+function beachSea(east, west) {
+  const side = (wave, dir) => {
+    const m = marine(wave);
+    m.hourly.wave_direction = m.hourly.wave_direction.map(() => dir);
+    return m;
+  };
+  return { east: east == null ? null : side(east, 90), west: west == null ? null : side(west, 250) };
+}
+assert(context.parseBeachSea([{ hourly: { time: ['2026-08-25T00:00'] } }, { error: true }]).west === null, 'Invalid nearshore point should be dropped');
+assert(context.parseBeachSea([{ error: true }, { error: true }]) === null, 'No valid nearshore points should return null');
+const swellEast = context.buildBeachOutlook(weather(), marine(0.2), beachSea(1.6, 0.1));
+assert(swellEast.nearshore, 'Nearshore waves were not used');
+assert(swellEast.pickHour.sides.east.rank >= 3 && swellEast.pickSide === 'west', 'Nearshore east swell should roughen only the east side');
+const westOnlyLocal = context.buildBeachOutlook(weather(), marine(0.2), beachSea(null, 0.1));
+assert(westOnlyLocal.pickHour.sources.west.local && !westOnlyLocal.pickHour.sources.east.local, 'Missing east point should fall back to Strait waves');
+context.renderBeaches(weather(), marine(0.2), beachSea(0.3, 0.1));
+assert(element('beachStatus').textContent.includes('nearshore'), 'Beach status should mention nearshore waves');
+setAlertSettings();
+assert(!context.buildAdvisories(weather(), 0, marine(0.2)).some(item => item.level === 'good'), 'Beach day alerts should be off by default');
+setAlertSettings({ alertBeach: true });
+const beachDay = context.buildAdvisories(weather(), 0, marine(0.2)).find(item => item.level === 'good');
+assert(beachDay && beachDay.title === 'Great beach conditions' && beachDay.time === '07:00', 'Beach day alert did not trigger for calm sunny weather');
+setAlertSettings({ alertBeach: true, beachAlertSide: 'east' });
+assert(!context.buildAdvisories(weather({ wind: 30, direction: 90, gust: 45 }), 0, marine(1.2)).some(item => item.level === 'good'), 'East-side beach alert fired in a Levanter');
+setAlertSettings({ alertBeach: true, beachAlertSide: 'west', beachAlertRating: 1 });
+assert(context.buildAdvisories(weather({ wind: 14, direction: 90, gust: 22 }), 0, marine(0.4)).some(item => item.level === 'good' && item.detail.startsWith('West side')), 'Good-or-better west-side alert did not fire');
+setAlertSettings();
 
 process.stdout.write('GibWeather forecast smoke tests passed\n');

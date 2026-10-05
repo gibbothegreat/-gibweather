@@ -10,8 +10,8 @@
   <meta name="apple-mobile-web-app-title" content="GibWeather" />
   <meta name="description" content="A Gibraltar-first weather app with custom local alerts, Levanter, Rock Cloud, rain radar and Strait marine guidance." />
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="apple-touch-icon" href="icons/icon-180-v4.png" />
-  <link rel="icon" href="icons/icon-192-v4.png" />
+  <link rel="apple-touch-icon" href="icons/icon-180-v5.png" />
+  <link rel="icon" href="icons/icon-192-v5.png" />
   <link rel="stylesheet" href="styles.css" />
   <title>GibWeather</title>
 </head>
@@ -23,7 +23,7 @@
         <div class="eyebrow">🇬🇮 GIBRALTAR</div>
         <div class="brand-title">
           <h1>GibWeather</h1>
-          <span id="topVersion" class="top-version" aria-label="App version 2.3">v2.3</span>
+          <span id="topVersion" class="top-version" aria-label="App version 2.4">v2.4</span>
           <span id="topAlertCount" class="top-alert-count count-low" aria-label="Custom weather alerts loading">🔔 —</span>
         </div>
       </div>
@@ -306,9 +306,9 @@
         </article>
         <section class="metrics-grid" aria-label="Current beach conditions">
           <article class="metric"><span>🌡️ Water</span><strong id="beachSeaTemp">—</strong><small id="beachSeaFeel">—</small></article>
-          <article class="metric"><span>😎 UV today</span><strong id="beachUv">—</strong><small id="beachUvLabel">—</small></article>
+          <article class="metric"><span>😎 UV peak</span><strong id="beachUv">—</strong><small id="beachUvLabel">—</small></article>
           <article class="metric"><span>🌬️ Wind</span><strong id="beachWind">—</strong><small id="beachWindNote">—</small></article>
-          <article class="metric"><span>🌇 Sunset</span><strong id="beachSunset">—</strong><small>Today</small></article>
+          <article class="metric"><span>🌇 Sunset</span><strong id="beachSunset">—</strong><small id="beachSunsetDay">Today</small></article>
         </section>
         <article class="panel">
           <div class="section-heading"><div><div class="eyebrow">EAST &amp; WEST</div><h3>Beach by beach</h3></div></div>
@@ -398,7 +398,7 @@
       </section>
 
       <section id="aboutView" class="view" data-view="about">
-        <div class="page-title"><h2>About GibWeather</h2><p>Release v2.3</p></div>
+        <div class="page-title"><h2>About GibWeather</h2><p>Release v2.4</p></div>
         <article class="panel about-copy">
           <h3>Built for Gibraltar</h3>
           <p>GibWeather is designed around local conditions: Levanter and Poniente flow, gusts, low cloud, humidity, visibility and rain.</p>
@@ -410,7 +410,7 @@
           <p>MeteoGib is linked as an independent local forecast source. GibWeather does not scrape or republish MeteoGib forecasts and is not affiliated with MeteoGib.</p>
           <h3>App status</h3>
           <div class="status-grid">
-            <div><span>Version</span><strong id="versionText">v2.3</strong></div>
+            <div><span>Version</span><strong id="versionText">v2.4</strong></div>
             <div><span>Last refresh</span><strong id="lastRefreshText">—</strong></div>
             <div><span>Data age</span><strong id="dataAgeText">—</strong></div>
             <div><span>Connection</span><strong id="connectionText">—</strong></div>
@@ -442,6 +442,7 @@
             <label class="alert-toggle"><input id="alertAirToggle" type="checkbox" checked /><span>😷 Air quality</span></label>
             <label class="alert-toggle"><input id="alertCalimaToggle" type="checkbox" checked /><span>🏜️ Calima</span></label>
             <label class="alert-toggle"><input id="alertPollenToggle" type="checkbox" checked /><span>🌾 Pollen</span></label>
+            <label class="alert-toggle"><input id="alertBeachToggle" type="checkbox" /><span>🏖️ Beach days</span></label>
           </div>
           <div class="settings-grid alert-threshold-grid">
             <label><span>Wind alert from</span><select id="alertGustThresholdSelect"><option value="30">30 km/h · 19 mph</option><option value="40" selected>40 km/h · 25 mph</option><option value="50">50 km/h · 31 mph</option><option value="60">60 km/h · 37 mph</option></select></label>
@@ -452,13 +453,15 @@
             <label><span>Air alert from</span><select id="alertAqiThresholdSelect"><option value="40">AQI 40 · Moderate</option><option value="60" selected>AQI 60 · Poor</option><option value="80">AQI 80 · Very poor</option></select></label>
             <label><span>Calima alert from</span><select id="alertDustThresholdSelect"><option value="25">25 µg/m³ · haze</option><option value="50" selected>50 µg/m³ · Calima</option><option value="100">100 µg/m³ · strong</option><option value="150">150 µg/m³ · very strong</option></select></label>
             <label><span>Pollen alert from</span><select id="alertPollenThresholdSelect"><option value="1">Moderate</option><option value="2" selected>High</option><option value="3">Very high</option></select></label>
+            <label><span>Beach alert side</span><select id="beachAlertSideSelect"><option value="either" selected>Either side</option><option value="east">East side</option><option value="west">West side</option></select></label>
+            <label><span>Beach alert when</span><select id="beachAlertRatingSelect"><option value="0" selected>Great</option><option value="1">Good or better</option></select></label>
           </div>
           <p class="fineprint">Thresholds control when an alert first appears. Important conditions keep GibWeather's higher safety thresholds.</p>
           <div class="notification-card">
             <div><strong>Device notifications</strong><small id="notificationStatus">Checking browser support…</small></div>
             <button id="notificationBtn" class="secondary-btn" type="button">Turn on notifications</button>
           </div>
-          <p class="fineprint">Notifications appear when GibWeather refreshes and finds a new Watch or Important flag. A static web app cannot guarantee alerts while it is completely closed.</p>
+          <p class="fineprint">Notifications appear when GibWeather refreshes and finds a new Watch or Important flag, or a beach day if you switched Beach days on. A static web app cannot guarantee alerts while it is completely closed.</p>
           <div class="action-row">
             <button id="saveSettingsBtn" class="secondary-btn" type="button">Save preferences</button>
             <button id="resetSettingsBtn" class="secondary-btn" type="button">Reset defaults</button>
@@ -488,7 +491,7 @@
             </ol>
           </div>
           <h3>Privacy</h3>
-          <p>GibWeather v2.3 has no account, advertising SDK or analytics tracker. The last successful forecast, notification state, radar zoom and your app preferences are stored locally on this device.</p>
+          <p>GibWeather v2.4 has no account, advertising SDK or analytics tracker. The last successful forecast, notification state, radar zoom and your app preferences are stored locally on this device.</p>
           <p class="fineprint">The Levanter and Rock Cloud indicators are experimental guidance only. For official or safety-critical weather information, use the relevant official authority or a qualified local forecaster.</p>
         </article>
       </section>

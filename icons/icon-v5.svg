@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b3f6e"/>
+      <stop offset="0.55" stop-color="#2a86c2"/>
+      <stop offset="1" stop-color="#9fd6ef"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffe7a0" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#ffe7a0" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe06b"/>
+      <stop offset="1" stop-color="#ffaa2b"/>
+    </linearGradient>
+    <linearGradient id="rockLit" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbf1dc"/>
+      <stop offset="1" stop-color="#e2c99a"/>
+    </linearGradient>
+    <linearGradient id="rockShade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#b79a6c"/>
+      <stop offset="1" stop-color="#8d7452"/>
+    </linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1679b3"/>
+      <stop offset="1" stop-color="#063a63"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#sky)"/>
+  <circle cx="344" cy="166" r="118" fill="url(#glow)"/>
+  <circle cx="344" cy="166" r="56" fill="url(#sun)"/>
+  <!-- Rock of Gibraltar seen from the Bay: sheer north face on the left, long ridge falling south to Europa Point -->
+  <path d="M92 372 L134 252 L146 228 L156 186 L176 140 L198 154 L220 148 L248 172 L284 182 L318 212 L356 244 L392 284 L424 326 L444 372 Z" fill="url(#rockShade)"/>
+  <path d="M92 372 L134 252 L146 228 L156 186 L176 140 L198 154 L220 148 L206 196 L222 236 L200 270 L214 312 L196 372 Z" fill="url(#rockLit)"/>
+  <path d="M176 140 L198 154 L220 148 L248 172 L284 182 L318 212 L356 244 L392 284 L424 326 L444 372" fill="none" stroke="#fff6e3" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity="0.7"/>
+  <!-- Sea -->
+  <rect y="366" width="512" height="146" fill="url(#sea)"/>
+  <path d="M88 410 q 26 -12 52 0 t 52 0 t 52 0 t 52 0 t 52 0 t 52 0" fill="none" stroke="#bfe6fb" stroke-width="8" stroke-linecap="round" opacity="0.8"/>
+  <path d="M140 448 q 26 -12 52 0 t 52 0 t 52 0 t 52 0" fill="none" stroke="#bfe6fb" stroke-width="6" stroke-linecap="round" opacity="0.45"/>
+</svg>
