@@ -1,5 +1,14 @@
 # GibWeather changelog
 
+## v2.3 · Beaches and swimming
+- Adds a **Beach** screen rating Eastern Beach, Catalan Bay, Sandy Bay, Western Beach, Camp Bay and Little Bay as Great, Good, Fair, Choppy or Rough.
+- Ratings combine onshore wind and gusts, wave height and direction reaching each shore, rain chance, thunderstorms and air temperature.
+- Picks a best-bet beach and explains which side of the Rock the Levanter or Poniente favours, including when the Levanter cloud may keep the west side grey.
+- Adds water temperature with a comfort label, today's UV peak and sunset time.
+- Adds an east-vs-west comparison for the next daylight hours and a 3-day beach outlook (10:00–19:00).
+- Adds a **Beaches** summary on the Now screen.
+- Refreshes the offline shell to `gibweather-shell-v23`.
+
 ## v2.2 · Air quality, Calima and pollen
 - Adds an **Air** screen with European AQI, PM2.5, PM10, NO₂, ozone and Saharan dust from the Open-Meteo Air Quality API (CAMS).
 - Adds a 48-hour **Calima outlook** with a dust timeline, episode window and peak timing.

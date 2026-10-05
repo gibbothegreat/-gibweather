@@ -230,4 +230,23 @@ assert(element('pollenList').innerHTML.includes('out of season'), 'Out-of-season
 context.renderAir(null);
 assert(element('airAqiNow').textContent === '—', 'Unavailable air feed did not clear values');
 
+// v2.3 beaches
+const levanterDay = weather({ wind: 35, direction: 90, gust: 50 });
+const levanterBeach = context.buildBeachOutlook(levanterDay, marine(1.2));
+assert(levanterBeach.pickSide === 'west', 'Levanter should favour the west-side beaches');
+assert(levanterBeach.pickHour.sides.east.rank >= 3, 'East side should be choppy or rough in a strong Levanter');
+const ponienteBeach = context.buildBeachOutlook(weather({ wind: 30, direction: 260, gust: 42 }), marine(0.4));
+assert(ponienteBeach.pickSide === 'east', 'Poniente should favour the east-side beaches');
+const calmBeach = context.buildBeachOutlook(weather(), marine(0.2));
+assert(calmBeach.beaches[0].rating.label === 'Great', 'Calm sunny weather should rate Great');
+assert(calmBeach.isNight && calmBeach.pickHour.s.time.endsWith('07:00'), 'At night the best bet should use the first daylight hour');
+context.renderBeaches(levanterDay, marine(1.2));
+assert(element('beachList').innerHTML.includes('Catalan Bay') && element('beachList').innerHTML.includes('Camp Bay'), 'Beach list did not render');
+assert(element('beachDaily').innerHTML.includes('Today'), 'Beach outlook missing');
+assert(element('beachNowSummary').innerHTML.includes('West side'), 'Now-screen beach summary missing');
+context.renderBeaches(weather(), null);
+assert(element('beachStatus').textContent.includes('wind and weather only'), 'Beach screen did not explain missing marine data');
+context.renderBeaches(null, null);
+assert(element('beachList').innerHTML === '', 'Unavailable forecast did not clear beach list');
+
 process.stdout.write('GibWeather forecast smoke tests passed\n');

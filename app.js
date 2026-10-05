@@ -1,9 +1,9 @@
-const APP_VERSION = '2.2';
+const APP_VERSION = '2.3';
 const GIBRALTAR = { lat: 36.1408, lon: -5.3536, timezone: 'Europe/Gibraltar' };
-const CACHE_KEY = 'gibweather:last-forecast:v22';
+const CACHE_KEY = 'gibweather:last-forecast:v23';
 const TREND_CACHE_KEY = 'gibweather:forecast-baseline:v1';
 const BACKUP_CACHE_KEY = 'gibweather:last-known-good:v1';
-const LEGACY_CACHE_KEYS = ['gibweather:last-forecast:v21','gibweather:last-forecast:v20','gibweather:last-forecast:v19','gibweather:last-forecast:v18','gibweather:last-forecast:v17','gibweather:last-forecast:v16','gibweather:last-forecast:v15','gibweather:last-forecast:v14','gibweather:last-forecast:v13','gibweather:last-forecast:v12','gibweather:last-forecast:v11','gibweather:last-forecast:v10','gibweather:last-forecast:v8','gibweather:last-forecast:v7','gibweather:last-forecast:v6', 'gibweather:last-forecast:v5', 'gibweather:last-forecast:v4', 'gibweather:last-forecast:v3', 'gibweather:last-forecast:v2', 'gibweather:last-forecast:v1'];
+const LEGACY_CACHE_KEYS = ['gibweather:last-forecast:v22','gibweather:last-forecast:v21','gibweather:last-forecast:v20','gibweather:last-forecast:v19','gibweather:last-forecast:v18','gibweather:last-forecast:v17','gibweather:last-forecast:v16','gibweather:last-forecast:v15','gibweather:last-forecast:v14','gibweather:last-forecast:v13','gibweather:last-forecast:v12','gibweather:last-forecast:v11','gibweather:last-forecast:v10','gibweather:last-forecast:v8','gibweather:last-forecast:v7','gibweather:last-forecast:v6', 'gibweather:last-forecast:v5', 'gibweather:last-forecast:v4', 'gibweather:last-forecast:v3', 'gibweather:last-forecast:v2', 'gibweather:last-forecast:v1'];
 const INTRO_KEY = 'gibweather:intro-seen';
 const SETTINGS_KEY = 'gibweather:settings:v1';
 const NOTIFICATION_SIGNATURE_KEY = 'gibweather:last-notification:v1';
@@ -2020,6 +2020,201 @@ function renderAir(air) {
   }).join('');
 }
 
+// v2.3 · Beaches and swimming
+// Facing is the compass bearing the shore looks out to; wind and waves arriving from near it are onshore.
+const BEACHES = [
+  { id: 'eastern', name: 'Eastern Beach', side: 'east', facing: 80 },
+  { id: 'catalan', name: 'Catalan Bay', side: 'east', facing: 95 },
+  { id: 'sandy', name: 'Sandy Bay', side: 'east', facing: 105 },
+  { id: 'western', name: 'Western Beach', side: 'west', facing: 260 },
+  { id: 'camp', name: 'Camp Bay', side: 'west', facing: 255 },
+  { id: 'little', name: 'Little Bay', side: 'west', facing: 245 }
+];
+const BEACH_SIDES = {
+  east: { label: 'East side', short: 'East', facing: 95, openness: 1 },
+  west: { label: 'West side', short: 'West', facing: 255, openness: 0.7 }
+};
+const BEACH_RATINGS = [
+  { label: 'Great', className: 'state-green' },
+  { label: 'Good', className: 'state-blue' },
+  { label: 'Fair', className: 'state-yellow' },
+  { label: 'Choppy', className: 'state-orange' },
+  { label: 'Rough', className: 'state-red' }
+];
+
+function angleGap(a, b) {
+  const d = Math.abs((((Number(a) - Number(b)) % 360) + 540) % 360 - 180);
+  return Number.isFinite(d) ? d : null;
+}
+
+function waterFeel(c) {
+  if (c == null || !Number.isFinite(Number(c))) return '—';
+  const v = Number(c);
+  if (v < 16) return 'Cold';
+  if (v < 19) return 'Cool';
+  if (v < 22) return 'Refreshing';
+  if (v < 25) return 'Pleasant';
+  return 'Warm';
+}
+
+function marineByTime(marine) {
+  const map = new Map();
+  (marine?.hourly?.time || []).forEach((t, i) => map.set(t, marineSnapshot(marine, i)));
+  return map;
+}
+
+function beachConditions(facing, openness, s, sea) {
+  const windGap = angleGap(s.dir, facing);
+  const wind = Number(s.wind) || 0, gust = Number(s.gust) || 0;
+  const onshore = windGap != null && windGap < 90 ? Math.cos(windGap * Math.PI / 180) : 0;
+  const offshore = windGap != null && windGap > 110;
+  const onshoreWind = wind * onshore, onshoreGust = gust * onshore;
+  let wave = null;
+  if (sea && sea.wave != null && Number.isFinite(Number(sea.wave))) {
+    const waveGap = angleGap(sea.waveDir, facing);
+    const exposure = waveGap != null && waveGap < 90 ? 0.3 + 0.7 * Math.cos(waveGap * Math.PI / 180) : 0.25;
+    wave = Number(sea.wave) * exposure * openness;
+  }
+  const wavePts = wave == null ? 0 : wave < 0.3 ? 0 : wave < 0.6 ? 1 : wave < 1 ? 2 : wave < 1.5 ? 3 : 4;
+  let windPts = onshoreWind < 12 ? 0 : onshoreWind < 20 ? 1 : onshoreWind < 30 ? 2 : onshoreWind < 40 ? 3 : 4;
+  if (onshoreGust >= 50) windPts = 4;
+  let rank = Math.max(wavePts, windPts);
+  const rain = Number(s.rainChance) || 0;
+  const storm = [95, 96, 99].includes(Number(s.code));
+  if (rain >= 60) rank += 2; else if (rain >= 35) rank += 1;
+  if (offshore && wind >= 25) rank += 1;
+  if (Number(s.temp) < 18) rank += 1;
+  if (storm) rank = 4;
+  rank = Math.min(4, rank);
+
+  let reason;
+  if (storm) reason = 'Thunderstorms possible — stay out of the water';
+  else if (windPts >= wavePts && windPts >= 2) reason = `Onshore ${compass(s.dir)} wind ${formatWind(wind)}, gusts ${formatWind(gust)}`;
+  else if (wavePts >= 2) reason = `Waves around ${formatWave(wave)} reaching the shore`;
+  else if (rain >= 35) reason = `${round(rain)}% chance of rain`;
+  else if (offshore && wind >= 15) reason = `Offshore ${compass(s.dir)} breeze keeps it flat — watch inflatables`;
+  else if (windGap != null && windGap >= 90 && wind >= 15) reason = `Sheltered from the ${compass(s.dir)} wind`;
+  else reason = wave == null ? `Light ${compass(s.dir)} wind` : `Light ${compass(s.dir)} wind and small waves`;
+  return { rank, rating: BEACH_RATINGS[rank], wave, onshoreWind, offshore, reason };
+}
+
+function beachHours(data, marine, start, count) {
+  if (!data?.hourly?.time?.length) return [];
+  const seaMap = marineByTime(marine);
+  return snapshots(data, start, count).map(s => {
+    const sea = seaMap.get(s.time) || null;
+    const sides = {};
+    Object.entries(BEACH_SIDES).forEach(([key, side]) => { sides[key] = beachConditions(side.facing, side.openness, s, sea); });
+    return { s, sea, sides };
+  });
+}
+
+function bestBeachSide(hour) {
+  if (!hour) return null;
+  return Object.keys(BEACH_SIDES).reduce((best, key) => !best || hour.sides[key].rank < hour.sides[best].rank ? key : best, null);
+}
+
+function beachDayKey(iso) { return iso ? String(iso).slice(0, 10) : null; }
+
+function buildBeachOutlook(data, marine) {
+  if (!data?.hourly?.time?.length) return null;
+  const start = getHourIndex(data);
+  const hours = beachHours(data, marine, start, 72);
+  if (!hours.length) return null;
+  const now = hours[0];
+  const daylight = hours.filter(h => Number(h.s.isDay) === 1);
+  const pickHour = Number(now.s.isDay) === 1 ? now : daylight[0] || now;
+  const pickSide = bestBeachSide(pickHour);
+  const beaches = BEACHES.map(b => ({ ...b, ...beachConditions(b.facing, BEACH_SIDES[b.side].openness, pickHour.s, pickHour.sea) }))
+    .sort((a, b) => a.rank - b.rank || (a.side === b.side ? 0 : a.side === pickSide ? -1 : 1));
+  return { now, pickHour, pickSide, beaches, daylight, isNight: pickHour !== now };
+}
+
+function renderBeachNowPanel(outlook, sea) {
+  const el = $('beachNowSummary');
+  if (!el) return;
+  if (!outlook) { el.innerHTML = '<div><span>🏖️ Beaches</span><strong>—</strong><small>Unavailable</small></div>'; return; }
+  const h = outlook.pickHour;
+  el.innerHTML = [
+    ...Object.entries(BEACH_SIDES).map(([key, side]) => `<div class="beach-chip ${h.sides[key].rating.className}"><span>${key === 'east' ? '🌅' : '🌇'} ${side.label}</span><strong>${h.sides[key].rating.label}</strong><small>${outlook.isNight ? `From ${fmtTime(h.s.time)}` : key === outlook.pickSide ? 'Best bet now' : 'Right now'}</small></div>`),
+    `<div><span>🌡️ Water</span><strong>${formatSeaTemp(sea)}</strong><small>${waterFeel(sea)}</small></div>`
+  ].join('');
+}
+
+function renderBeaches(data, marine) {
+  const status = $('beachStatus');
+  const outlook = buildBeachOutlook(data, marine);
+  const c = marine?.current || {};
+  const seaTemp = c.sea_surface_temperature ?? outlook?.pickHour?.sea?.seaTemp ?? null;
+  renderBeachNowPanel(outlook, seaTemp);
+  if (!status) return;
+  if (!outlook) {
+    status.textContent = 'Beach guidance needs the main forecast, which is not available yet.';
+    status.className = 'status-banner notice';
+    ['beachList','beachHours','beachDaily'].forEach(id => { $(id).innerHTML = ''; });
+    ['beachPickName','beachPickReason','beachSeaTemp','beachSeaFeel','beachUv','beachUvLabel','beachSunset','beachWind','beachWindNote'].forEach(id => { $(id).textContent = '—'; });
+    return;
+  }
+  const hasSea = Boolean(marine?.hourly?.time?.length);
+  status.textContent = !hasSea ? 'Marine forecast unavailable, so beach ratings use wind and weather only.'
+    : lastMarineHealth === 'cached' ? 'Showing beach guidance from the last saved marine forecast.' : 'Beach guidance loaded.';
+  status.className = `status-banner ${!hasSea ? 'notice' : lastMarineHealth === 'cached' ? 'offline' : 'success'}`;
+
+  const { pickHour, pickSide, beaches, isNight } = outlook;
+  const best = beaches[0];
+  const s = pickHour.s;
+  $('beachPickEyebrow').textContent = isNight ? `BEST BET FROM ${fmtTime(s.time)}` : 'BEST BET NOW';
+  $('beachPickName').textContent = `${best.name} · ${best.rating.label}`;
+  const other = pickSide === 'east' ? 'west' : 'east';
+  const regime = windRegime(s);
+  const sideNote = pickHour.sides[pickSide].rank < pickHour.sides[other].rank
+    ? `The ${BEACH_SIDES[pickSide].label.toLowerCase()} is the better choice${regime === 'Levanter' || regime === 'Poniente' ? ` in this ${regime}` : ''}.`
+    : 'Both sides of the Rock look similar.';
+  const cloudNote = pickSide === 'west' && rockCloudIndex(s).rank >= 1 ? ' The Levanter cloud may keep the west side grey.' : '';
+  $('beachPickReason').textContent = `${sideNote} ${best.reason}.${cloudNote}`;
+  applyStateCard($('beachPickCard'), best.rating);
+
+  $('beachSeaTemp').textContent = formatSeaTemp(seaTemp);
+  $('beachSeaFeel').textContent = waterFeel(seaTemp);
+  const dayKey = beachDayKey(s.time);
+  const todayHours = outlook.daylight.filter(h => beachDayKey(h.s.time) === dayKey);
+  const uvPeak = findPeak(todayHours.map(h => h.s), 'uv');
+  $('beachUv').textContent = uvPeak ? round(uvPeak.uv) : '—';
+  $('beachUvLabel').textContent = uvPeak ? `${uvLabel(uvPeak.uv)} · peak ${fmtTime(uvPeak.time)}` : 'No daylight left today';
+  const dayIdx = Array.isArray(data.daily?.time) ? data.daily.time.indexOf(dayKey) : -1;
+  $('beachSunset').textContent = dayIdx >= 0 ? fmtTime(data.daily.sunset?.[dayIdx]) : '—';
+  $('beachWind').textContent = regime;
+  $('beachWindNote').textContent = regime === 'Levanter' ? 'West side sheltered' : regime === 'Poniente' ? 'East side sheltered' : `${formatWind(s.wind)} ${compass(s.dir)}`;
+
+  $('beachList').innerHTML = BEACHES.map(b => beaches.find(x => x.id === b.id)).map(b =>
+    `<div class="beach-row ${b.rating.className}"><div><strong>${b.name}</strong><small>${BEACH_SIDES[b.side].label}</small></div><div><span class="beach-badge">${b.rating.label}</span><small>${b.reason}</small></div></div>`
+  ).join('');
+
+  const next = outlook.daylight.slice(0, 13);
+  $('beachHours').innerHTML = next.length ? next.filter((_, n) => n % 2 === 0).map(h =>
+    `<div class="sea-row beach-hour-row"><div><strong>${h === outlook.now ? 'Now' : beachDayKey(h.s.time) !== beachDayKey(outlook.now.s.time) ? `${fmtDay(beachDayKey(h.s.time))} ${fmtTime(h.s.time)}` : fmtTime(h.s.time)}</strong><small>${formatWave(h.sea?.wave)} · ${compass(h.s.dir)}</small></div>${Object.keys(BEACH_SIDES).map(k => `<div><strong class="beach-tone ${h.sides[k].rating.className}">${BEACH_SIDES[k].short} ${h.sides[k].rating.label}</strong><small>${h.sides[k].offshore ? 'Offshore wind' : h.sides[k].onshoreWind >= 12 ? `Onshore ${formatWind(h.sides[k].onshoreWind)}` : 'Light onshore'}</small></div>`).join('')}</div>`
+  ).join('') : '<p class="model-copy">No daylight hours in the forecast window.</p>';
+
+  const byDay = new Map();
+  outlook.daylight.forEach(h => {
+    const hour = Number(String(h.s.time).slice(11, 13));
+    if (hour < 10 || hour > 19) return;
+    const key = beachDayKey(h.s.time);
+    if (!byDay.has(key)) byDay.set(key, []);
+    byDay.get(key).push(h);
+  });
+  $('beachDaily').innerHTML = [...byDay.entries()].slice(0, 3).map(([day, list], idx) => {
+    const todayKey = beachDayKey(outlook.now.s.time);
+    const label = day === todayKey ? 'Today' : idx <= 1 && Date.parse(`${day}T12:00:00Z`) - Date.parse(`${todayKey}T12:00:00Z`) === 86400000 ? 'Tomorrow' : fmtDay(day);
+    return `<div class="sea-row sea-daily-row beach-hour-row"><div><strong>${label}</strong><small>10:00–19:00</small></div>${Object.keys(BEACH_SIDES).map(k => {
+      const ranks = list.map(h => h.sides[k].rank).sort((a, b) => a - b);
+      const typical = BEACH_RATINGS[ranks[Math.floor((ranks.length - 1) / 2)]];
+      const bestHour = list.reduce((b, h) => !b || h.sides[k].rank < b.sides[k].rank ? h : b, null);
+      return `<div><strong class="beach-tone ${typical.className}">${BEACH_SIDES[k].short} ${typical.label}</strong><small>Best ${fmtTime(bestHour.s.time)}</small></div>`;
+    }).join('')}</div>`;
+  }).join('');
+}
+
 function renderAll(data) {
   renderNow(data);
   renderForecastChanges(data);
@@ -2030,6 +2225,7 @@ function renderAll(data) {
   renderModelComparison(modelData);
   renderMarine(marineData);
   renderAir(airData);
+  renderBeaches(data, marineData);
   renderObservation(observationData, data);
   renderForecastConfidence();
   renderAppStatus();
