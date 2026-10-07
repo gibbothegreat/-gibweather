@@ -45,6 +45,11 @@ vm=re.search(r"const APP_VERSION = '([^']+)'",APP)
 cachem=re.search(r"const CACHE = '([^']+)'",SW)
 need(vm and vm.group(1)==version.get('version'),'APP_VERSION and version.json disagree')
 need(cachem and cachem.group(1)==version.get('cache'),'service-worker cache and version.json disagree')
+shellm=re.search(r"const SHELL_VERSION = '([^']+)'",SW)
+need(shellm and shellm.group(1)==version.get('version'),'service-worker SHELL_VERSION and version.json disagree')
+for asset in ('styles.css','app.js'):
+    need(f"{asset}?v={version.get('version')}" in HTML,f'index.html must load {asset}?v=<version> so updates bypass stale caches')
+need("cache: 'reload'" in SW,'service worker must precache with cache: reload')
 
 # DOM references
 ids=set(re.findall(r'\bid="([^"]+)"',HTML))
