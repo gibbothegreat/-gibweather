@@ -77,6 +77,24 @@ async function main() {
     ecdh.setPrivateKey(Buffer.from(privateKey.trim(), 'base64url'));
     publicKey = ecdh.getPublicKey().toString('base64url');
   } catch (_) { throw new Error('VAPID_PRIVATE_KEY is not a valid key. Create new keys in About → Background alerts.'); }
+  const webpush = require('web-push');
+  webpush.setVapidDetails('https://gibbothegreat.github.io/-gibweather/', publicKey, privateKey.trim());
+  const pushHost = new URL(subscription.endpoint).hostname;
+  const sendPush = async (payload, urgency) => {
+    try {
+      const res = await webpush.sendNotification(subscription, JSON.stringify(payload), { TTL: 3600, urgency });
+      // Annotations show on the run page and through the API, unlike the job log.
+      console.log(`::notice title=Push sent::${pushHost} answered ${res.statusCode}.`);
+    } catch (err) {
+      console.log(`::error title=Push failed::${pushHost} answered ${err.statusCode || 'no response'}: ${String(err.body || err.message).slice(0, 200)}`);
+      if (err.statusCode === 404 || err.statusCode === 410) throw new Error('The device subscription has expired. Open GibWeather → About → Background alerts → Set up, and paste the new code into PUSH_SUBSCRIPTION.');
+      throw err;
+    }
+  };
+  if (process.env.PUSH_TEST === 'true') {
+    await sendPush({ title: 'GibWeather test', body: 'Background alerts are working on this device.' }, 'high');
+    return;
+  }
   if (!data?.current || !data?.hourly) throw new Error('Main Open-Meteo forecast unavailable.');
 
   app.__prefs = code.settings || {};
@@ -101,14 +119,7 @@ async function main() {
   const lead = items[0];
   const prefix = lead.level === 'high' ? 'Important' : lead.level === 'good' ? 'Beach day' : 'Watch';
   const extra = items.length > 1 ? ` Plus ${items.length - 1} more forecast flag${items.length === 2 ? '' : 's'}.` : '';
-  const webpush = require('web-push');
-  webpush.setVapidDetails('https://gibbothegreat.github.io/-gibweather/', publicKey, privateKey.trim());
-  try {
-    await webpush.sendNotification(subscription, JSON.stringify({ title: `${prefix}: ${lead.title}`, body: `${lead.detail}${extra}` }), { TTL: 3600, urgency: lead.level === 'high' ? 'high' : 'normal' });
-  } catch (err) {
-    if (err.statusCode === 404 || err.statusCode === 410) throw new Error('The device subscription has expired. Open GibWeather → About → Background alerts → Set up, and paste the new code into PUSH_SUBSCRIPTION.');
-    throw err;
-  }
+  await sendPush({ title: `${prefix}: ${lead.title}`, body: `${lead.detail}${extra}` }, lead.level === 'high' ? 'high' : 'normal');
   write(signature);
   console.log(`Sent: ${prefix}: ${lead.title} (${items.length} alert${items.length === 1 ? '' : 's'}).`);
 }
