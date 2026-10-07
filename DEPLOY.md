@@ -41,11 +41,11 @@ Production security headers must allow `https://api.rainviewer.com` in `connect-
 GibWeather can send Watch, Important and Beach day alerts while the app is closed. `.github/workflows/background-alerts.yml` checks the forecast every 30 minutes with `scripts/send_push_alerts.js`, using the same alert logic as the app, and sends a Web Push message when the set of alerts changes. On iPhone this needs iOS 16.4 or later and GibWeather opened from the Home Screen icon.
 
 One-time setup:
-1. Generate a VAPID key pair, for example with `npx web-push generate-vapid-keys` on a computer with Node installed. Put the **public** key in `PUSH_PUBLIC_KEY` in `app.js`. In GitHub, open **Settings → Secrets and variables → Actions → New repository secret**, name it `VAPID_PRIVATE_KEY` and paste the **private** key. Never commit the private key or share it.
-2. On your phone, open GibWeather from the Home Screen, go to **About → Background alerts → Set up**, allow notifications, then tap **Copy code**.
+1. On your phone, open GibWeather from the Home Screen and go to **About → Background alerts → Create keys**. The key pair is created on the phone; tap **Copy private key**. In GitHub, open **Settings → Secrets and variables → Actions → New repository secret**, name it `VAPID_PRIVATE_KEY` and paste it. The private key is shown only once and is never stored by the app; never commit or share it.
+2. Back in GibWeather, tap **Set up**, allow notifications, then tap **Copy code**.
 3. Add a second repository secret named `PUSH_SUBSCRIPTION` and paste the code.
 4. Open **Actions → Background alerts → Run workflow** once to test it.
 
 The code includes your alert settings at the moment you copied it. After changing alert categories or thresholds, copy the code again and update `PUSH_SUBSCRIPTION`. If the job fails with "subscription has expired", repeat steps 2–3. The job stores only a hash of the last alert set in `data/push-state.json`.
 
-Until `PUSH_PUBLIC_KEY` is set, the Set up button explains that background alerts are not configured and the job exits cleanly. To replace the key pair later, repeat step 1, then set up the device again.
+The alert job derives the public key from `VAPID_PRIVATE_KEY`, so no code change is needed. To replace the key pair later, tap Create keys again and repeat steps 1–3. (`PUSH_PUBLIC_KEY` in `app.js` can optionally pin a key for every device; leave it empty to use keys created in the app.)

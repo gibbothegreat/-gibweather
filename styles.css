@@ -751,3 +751,4 @@ html[data-theme="light"] .storm-bar.storm-rank-3 { background:#c03a32; }
 /* v2.5 background alerts */
 .push-code { width:100%; margin:8px 0; padding:10px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.04); color:var(--text); font:11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; resize:vertical; }
 html[data-theme="light"] .push-code { background:#fff; }
+.push-actions { display:flex; gap:8px; flex-wrap:wrap; }

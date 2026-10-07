@@ -68,9 +68,15 @@ async function main() {
   if (!subscription?.endpoint) throw new Error('PUSH_SUBSCRIPTION has no endpoint. Copy the code from About → Background alerts again.');
 
   const app = loadApp();
-  const urls = vm.runInContext('({ api: API_URL.toString(), marine: MARINE_API_URL.toString(), air: AIR_API_URL.toString(), beach: BEACH_SEA_API_URL.toString(), publicKey: PUSH_PUBLIC_KEY })', app);
+  const urls = vm.runInContext('({ api: API_URL.toString(), marine: MARINE_API_URL.toString(), air: AIR_API_URL.toString(), beach: BEACH_SEA_API_URL.toString() })', app);
   const [data, marine, air, beachRaw] = await Promise.all([getJson(urls.api), getJson(urls.marine), getJson(urls.air), getJson(urls.beach)]);
-  if (!urls.publicKey) { console.log('Background alerts are not set up: PUSH_PUBLIC_KEY in app.js is empty.'); return; }
+  // The public key is derived from the private key, so keys created in the app need no code change.
+  let publicKey;
+  try {
+    const ecdh = crypto.createECDH('prime256v1');
+    ecdh.setPrivateKey(Buffer.from(privateKey.trim(), 'base64url'));
+    publicKey = ecdh.getPublicKey().toString('base64url');
+  } catch (_) { throw new Error('VAPID_PRIVATE_KEY is not a valid key. Create new keys in About → Background alerts.'); }
   if (!data?.current || !data?.hourly) throw new Error('Main Open-Meteo forecast unavailable.');
 
   app.__prefs = code.settings || {};
@@ -96,7 +102,7 @@ async function main() {
   const prefix = lead.level === 'high' ? 'Important' : lead.level === 'good' ? 'Beach day' : 'Watch';
   const extra = items.length > 1 ? ` Plus ${items.length - 1} more forecast flag${items.length === 2 ? '' : 's'}.` : '';
   const webpush = require('web-push');
-  webpush.setVapidDetails('https://gibbothegreat.github.io/-gibweather/', urls.publicKey, privateKey);
+  webpush.setVapidDetails('https://gibbothegreat.github.io/-gibweather/', publicKey, privateKey.trim());
   try {
     await webpush.sendNotification(subscription, JSON.stringify({ title: `${prefix}: ${lead.title}`, body: `${lead.detail}${extra}` }), { TTL: 3600, urgency: lead.level === 'high' ? 'high' : 'normal' });
   } catch (err) {

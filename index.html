@@ -23,7 +23,7 @@
         <div class="eyebrow">🇬🇮 GIBRALTAR</div>
         <div class="brand-title">
           <h1>GibWeather</h1>
-          <span id="topVersion" class="top-version" aria-label="App version 2.5">v2.5</span>
+          <span id="topVersion" class="top-version" aria-label="App version 2.5.1">v2.5.1</span>
           <span id="topAlertCount" class="top-alert-count count-low" aria-label="Custom weather alerts loading">🔔 —</span>
         </div>
       </div>
@@ -417,7 +417,7 @@
       </section>
 
       <section id="aboutView" class="view" data-view="about">
-        <div class="page-title"><h2>About GibWeather</h2><p>Release v2.5</p></div>
+        <div class="page-title"><h2>About GibWeather</h2><p>Release v2.5.1</p></div>
         <article class="panel about-copy">
           <h3>Built for Gibraltar</h3>
           <p>GibWeather is designed around local conditions: Levanter and Poniente flow, gusts, low cloud, humidity, visibility and rain.</p>
@@ -429,7 +429,7 @@
           <p>MeteoGib is linked as an independent local forecast source. GibWeather does not scrape or republish MeteoGib forecasts and is not affiliated with MeteoGib.</p>
           <h3>App status</h3>
           <div class="status-grid">
-            <div><span>Version</span><strong id="versionText">v2.5</strong></div>
+            <div><span>Version</span><strong id="versionText">v2.5.1</strong></div>
             <div><span>Last refresh</span><strong id="lastRefreshText">—</strong></div>
             <div><span>Data age</span><strong id="dataAgeText">—</strong></div>
             <div><span>Connection</span><strong id="connectionText">—</strong></div>
@@ -483,11 +483,13 @@
           </div>
           <div class="notification-card">
             <div><strong>Background alerts</strong><small id="pushStatus">Get Watch, Important and Beach day alerts even when GibWeather is closed.</small></div>
-            <button id="pushSetupBtn" class="secondary-btn" type="button">Set up</button>
+            <div class="push-actions"><button id="pushKeysBtn" class="secondary-btn" type="button">Create keys</button><button id="pushSetupBtn" class="secondary-btn" type="button">Set up</button></div>
           </div>
+          <textarea id="pushPrivateKey" class="push-code" rows="2" readonly hidden aria-label="Private key for the VAPID_PRIVATE_KEY secret"></textarea>
+          <button id="pushKeyCopyBtn" class="secondary-btn" type="button" hidden>Copy private key</button>
           <textarea id="pushCode" class="push-code" rows="4" readonly hidden aria-label="Background alert code"></textarea>
           <button id="pushCopyBtn" class="secondary-btn" type="button" hidden>Copy code</button>
-          <p class="fineprint">Background alerts are checked every 30 minutes by a GitHub Actions job using your alert settings at the time you copied the code. See DEPLOY.md for the one-time GitHub setup.</p>
+          <p class="fineprint">Background alerts are checked every 30 minutes by a GitHub Actions job using your alert settings at the time you copied the code. First time: tap Create keys and save the private key as the VAPID_PRIVATE_KEY secret, then tap Set up and save the code as PUSH_SUBSCRIPTION (GitHub → Settings → Secrets and variables → Actions). See DEPLOY.md.</p>
           <p class="fineprint">Notifications appear when GibWeather refreshes and finds a new Watch or Important flag, or a beach day if you switched Beach days on. A static web app cannot guarantee alerts while it is completely closed.</p>
           <div class="action-row">
             <button id="saveSettingsBtn" class="secondary-btn" type="button">Save preferences</button>
@@ -518,7 +520,7 @@
             </ol>
           </div>
           <h3>Privacy</h3>
-          <p>GibWeather v2.5 has no account, advertising SDK or analytics tracker. The last successful forecast, notification state, radar zoom and your app preferences are stored locally on this device.</p>
+          <p>GibWeather v2.5.1 has no account, advertising SDK or analytics tracker. The last successful forecast, notification state, radar zoom and your app preferences are stored locally on this device.</p>
           <p class="fineprint">The Levanter and Rock Cloud indicators are experimental guidance only. For official or safety-critical weather information, use the relevant official authority or a qualified local forecaster.</p>
         </article>
       </section>
