@@ -558,7 +558,8 @@ function renderNotificationSettings() {
 
 // v2.5 · Background alerts. A GitHub Actions job checks the forecast every 30 minutes and sends
 // Web Push to the subscription the user pastes into the PUSH_SUBSCRIPTION repository secret.
-const PUSH_PUBLIC_KEY = 'BHheX9BAPYP_Ttxb7yahtU3JxRcaG1pdEzYjVStX_cpNYBh6plur6afP8QApih3iwueW-9mC4dAKf0VIekYagSw';
+// Set to the VAPID public key whose private half is stored in the VAPID_PRIVATE_KEY repository secret.
+const PUSH_PUBLIC_KEY = '';
 const PUSH_SETTING_KEYS = [...ALERT_TOGGLE_KEYS, 'alertGustThreshold','alertRainThreshold','alertVisibilityThreshold',
   'alertUvThreshold','alertWaveThreshold','alertAqiThreshold','alertDustThreshold','alertPollenThreshold','beachAlertSide','beachAlertRating'];
 
@@ -576,6 +577,10 @@ function backgroundAlertCode(subscription) {
 async function setupBackgroundAlerts() {
   const status = $('pushStatus'), box = $('pushCode');
   if (!status || !box) return;
+  if (!PUSH_PUBLIC_KEY) {
+    status.textContent = 'Background alerts are not configured for this copy of GibWeather yet. See DEPLOY.md.';
+    return;
+  }
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     status.textContent = 'This browser cannot receive background alerts. On iPhone, open GibWeather from the Home Screen icon (iOS 16.4 or later).';
     return;

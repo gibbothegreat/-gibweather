@@ -70,6 +70,7 @@ async function main() {
   const app = loadApp();
   const urls = vm.runInContext('({ api: API_URL.toString(), marine: MARINE_API_URL.toString(), air: AIR_API_URL.toString(), beach: BEACH_SEA_API_URL.toString(), publicKey: PUSH_PUBLIC_KEY })', app);
   const [data, marine, air, beachRaw] = await Promise.all([getJson(urls.api), getJson(urls.marine), getJson(urls.air), getJson(urls.beach)]);
+  if (!urls.publicKey) { console.log('Background alerts are not set up: PUSH_PUBLIC_KEY in app.js is empty.'); return; }
   if (!data?.current || !data?.hourly) throw new Error('Main Open-Meteo forecast unavailable.');
 
   app.__prefs = code.settings || {};
