@@ -77,6 +77,11 @@ async function main() {
     ecdh.setPrivateKey(Buffer.from(privateKey.trim(), 'base64url'));
     publicKey = ecdh.getPublicKey().toString('base64url');
   } catch (_) { throw new Error('VAPID_PRIVATE_KEY is not a valid key. Create new keys in About → Background alerts.'); }
+  if (code.publicKey && code.publicKey !== publicKey) {
+    const msg = 'VAPID_PRIVATE_KEY does not match the keys this device used for Set up. In About → Background alerts tap Create keys once, save that key as VAPID_PRIVATE_KEY, then tap Set up and save the new code as PUSH_SUBSCRIPTION.';
+    console.log(`::error title=Keys do not match::${msg}`);
+    throw new Error(msg);
+  }
   const webpush = require('web-push');
   webpush.setVapidDetails('https://gibbothegreat.github.io/-gibweather/', publicKey, privateKey.trim());
   const pushHost = new URL(subscription.endpoint).hostname;

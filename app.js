@@ -1,4 +1,4 @@
-const APP_VERSION = '2.5.2';
+const APP_VERSION = '2.5.3';
 const GIBRALTAR = { lat: 36.1408, lon: -5.3536, timezone: 'Europe/Gibraltar' };
 const CACHE_KEY = 'gibweather:last-forecast:v23';
 const TREND_CACHE_KEY = 'gibweather:forecast-baseline:v1';
@@ -571,7 +571,7 @@ function pushKeyBytes(b64url) {
 function backgroundAlertCode(subscription) {
   const prefs = {};
   PUSH_SETTING_KEYS.forEach(key => { prefs[key] = settings[key]; });
-  return JSON.stringify({ subscription, settings: prefs });
+  return JSON.stringify({ subscription, settings: prefs, publicKey: activePushPublicKey() });
 }
 
 // The key pair is created on this device with WebCrypto. Only the public half is kept here;
@@ -634,8 +634,14 @@ async function setupBackgroundAlerts() {
   if (permission !== 'granted') { status.textContent = 'Notifications are blocked, so background alerts cannot be set up.'; return; }
   try {
     const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.getSubscription()
-      || await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: pushKeyBytes(publicKey) });
+    let subscription = await registration.pushManager.getSubscription();
+    // A subscription made with older keys would be rejected by the push service, so replace it.
+    const subKey = subscription?.options?.applicationServerKey;
+    if (subscription && subKey && btoa(String.fromCharCode(...new Uint8Array(subKey))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') !== publicKey) {
+      await subscription.unsubscribe();
+      subscription = null;
+    }
+    subscription = subscription || await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: pushKeyBytes(publicKey) });
     box.value = backgroundAlertCode(subscription.toJSON());
     if ($('pushPrivateKey')) { $('pushPrivateKey').value = ''; $('pushPrivateKey').hidden = true; $('pushKeyCopyBtn').hidden = true; }
     box.hidden = false;
