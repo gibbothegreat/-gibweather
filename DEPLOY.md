@@ -44,7 +44,7 @@ One-time setup:
 1. On your phone, open GibWeather from the Home Screen and go to **About → Background alerts → Create keys**. The key pair is created on the phone; tap **Copy private key**. In GitHub, open **Settings → Secrets and variables → Actions → New repository secret**, name it `VAPID_PRIVATE_KEY` and paste it. The private key is shown only once and is never stored by the app; never commit or share it.
 2. Back in GibWeather, tap **Set up**, allow notifications, then tap **Copy code**.
 3. Add a second repository secret named `PUSH_SUBSCRIPTION` and paste the code.
-4. Open **Actions → Background alerts → Run workflow** once to test it.
+4. Open **Actions → Background alerts → Run workflow**, tick **Send a test notification now**, and run it. The run page shows what the push service answered (201 means it was accepted).
 
 The code includes your alert settings at the moment you copied it. After changing alert categories or thresholds, copy the code again and update `PUSH_SUBSCRIPTION`. If the job fails with "subscription has expired", repeat steps 2–3. The job stores only a hash of the last alert set in `data/push-state.json`.
 
