@@ -1,4 +1,4 @@
-const APP_VERSION = '2.4';
+const APP_VERSION = '2.5';
 const GIBRALTAR = { lat: 36.1408, lon: -5.3536, timezone: 'Europe/Gibraltar' };
 const CACHE_KEY = 'gibweather:last-forecast:v23';
 const TREND_CACHE_KEY = 'gibweather:forecast-baseline:v1';
@@ -13,14 +13,14 @@ const DEFAULT_SETTINGS = {
   alertWind: true, alertRain: true, alertVisibility: true, alertUv: true,
   alertLevanter: true, alertRockCloud: true, alertSea: true,
   alertAir: true, alertCalima: true, alertPollen: true,
-  alertBeach: false, beachAlertSide: 'either', beachAlertRating: 0,
+  alertStorm: true, alertBeach: false, beachAlertSide: 'either', beachAlertRating: 0,
   alertGustThreshold: 40, alertRainThreshold: 45, alertVisibilityThreshold: 6000,
   alertUvThreshold: 6, alertWaveThreshold: 2,
   alertAqiThreshold: 60, alertDustThreshold: 50, alertPollenThreshold: 2
 };
 const ALERT_TOGGLE_KEYS = [
   'alertWind','alertRain','alertVisibility','alertUv','alertLevanter','alertRockCloud','alertSea',
-  'alertAir','alertCalima','alertPollen','alertBeach'
+  'alertAir','alertCalima','alertPollen','alertStorm','alertBeach'
 ];
 const OBSERVATION_URL = './data/lxgb-observation.json';
 const RADAR_API_URL = 'https://api.rainviewer.com/public/weather-maps.json';
@@ -46,7 +46,7 @@ API_URL.searchParams.set('current', [
 API_URL.searchParams.set('hourly', [
   'temperature_2m','apparent_temperature','relative_humidity_2m','dew_point_2m',
   'precipitation_probability','precipitation','weather_code','cloud_cover','cloud_cover_low',
-  'visibility','pressure_msl','wind_speed_10m','wind_direction_10m','wind_gusts_10m','uv_index','is_day'
+  'visibility','pressure_msl','wind_speed_10m','wind_direction_10m','wind_gusts_10m','uv_index','is_day','cape'
 ].join(','));
 API_URL.searchParams.set('daily', [
   'weather_code','temperature_2m_max','temperature_2m_min','apparent_temperature_max','apparent_temperature_min',
@@ -100,7 +100,7 @@ BEACH_SEA_API_URL.searchParams.set('timezone', GIBRALTAR.timezone);
 BEACH_SEA_API_URL.searchParams.set('forecast_days', '4');
 BEACH_SEA_API_URL.searchParams.set('length_unit', 'metric');
 BEACH_SEA_API_URL.searchParams.set('cell_selection', 'sea');
-BEACH_SEA_API_URL.searchParams.set('hourly', ['wave_height','wave_direction','wave_period','sea_surface_temperature'].join(','));
+BEACH_SEA_API_URL.searchParams.set('hourly', ['wave_height','wave_direction','wave_period','sea_surface_temperature','sea_level_height_msl'].join(','));
 
 const AIR_API_URL = new URL('https://air-quality-api.open-meteo.com/v1/air-quality');
 AIR_API_URL.searchParams.set('latitude', GIBRALTAR.lat);
@@ -286,7 +286,7 @@ function hourSnapshot(data, i) {
     precipitation: safe('precipitation'), code: safe('weather_code'), cloud: safe('cloud_cover'),
     lowCloud: safe('cloud_cover_low'), visibility: safe('visibility'), pressure: safe('pressure_msl'),
     wind: safe('wind_speed_10m'), dir: safe('wind_direction_10m'), gust: safe('wind_gusts_10m'),
-    uv: safe('uv_index'), isDay: safe('is_day')
+    uv: safe('uv_index'), isDay: safe('is_day'), cape: safe('cape')
   };
 }
 
@@ -399,7 +399,7 @@ function alertThreshold(key) {
 function buildAdvisories(data, start, marine = marineData, air = airData) {
   const next24 = snapshots(data, start, 24);
   const next12 = next24.slice(0, 12);
-  const advisories = [];
+  const advisories = [...buildStormAdvisories(data, start)];
   const peakGust = findPeak(next24, 'gust');
   const peakRain = findPeak(next24, 'rainChance');
   const lowestVisibility = next24.reduce((best, x) => Number(x.visibility) < Number(best?.visibility ?? Infinity) ? x : best, null);
@@ -556,6 +556,58 @@ function renderNotificationSettings() {
     ? 'Turn off notifications' : 'Turn on notifications';
 }
 
+// v2.5 · Background alerts. A GitHub Actions job checks the forecast every 30 minutes and sends
+// Web Push to the subscription the user pastes into the PUSH_SUBSCRIPTION repository secret.
+// Set to the VAPID public key whose private half is stored in the VAPID_PRIVATE_KEY repository secret.
+const PUSH_PUBLIC_KEY = '';
+const PUSH_SETTING_KEYS = [...ALERT_TOGGLE_KEYS, 'alertGustThreshold','alertRainThreshold','alertVisibilityThreshold',
+  'alertUvThreshold','alertWaveThreshold','alertAqiThreshold','alertDustThreshold','alertPollenThreshold','beachAlertSide','beachAlertRating'];
+
+function pushKeyBytes(b64url) {
+  const b64 = b64url.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - b64url.length % 4) % 4);
+  return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+}
+
+function backgroundAlertCode(subscription) {
+  const prefs = {};
+  PUSH_SETTING_KEYS.forEach(key => { prefs[key] = settings[key]; });
+  return JSON.stringify({ subscription, settings: prefs });
+}
+
+async function setupBackgroundAlerts() {
+  const status = $('pushStatus'), box = $('pushCode');
+  if (!status || !box) return;
+  if (!PUSH_PUBLIC_KEY) {
+    status.textContent = 'Background alerts are not configured for this copy of GibWeather yet. See DEPLOY.md.';
+    return;
+  }
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    status.textContent = 'This browser cannot receive background alerts. On iPhone, open GibWeather from the Home Screen icon (iOS 16.4 or later).';
+    return;
+  }
+  const permission = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+  if (permission !== 'granted') { status.textContent = 'Notifications are blocked, so background alerts cannot be set up.'; return; }
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription()
+      || await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: pushKeyBytes(PUSH_PUBLIC_KEY) });
+    box.value = backgroundAlertCode(subscription.toJSON());
+    box.hidden = false;
+    $('pushCopyBtn').hidden = false;
+    status.textContent = 'Copy this code into the PUSH_SUBSCRIPTION secret on GitHub. Copy it again after changing your alert settings.';
+  } catch (err) {
+    console.error(err);
+    status.textContent = 'Could not set up background alerts on this device.';
+  }
+}
+
+async function copyBackgroundAlertCode() {
+  const box = $('pushCode');
+  if (!box?.value) return;
+  try { await navigator.clipboard.writeText(box.value); $('pushStatus').textContent = 'Copied. Paste it into the PUSH_SUBSCRIPTION secret on GitHub.'; }
+  catch (_) { box.select(); }
+}
+
 async function showLocalNotification(title, options = {}) {
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
   try {
@@ -666,7 +718,7 @@ function renderSettings() {
     alertVisibilityToggle: 'alertVisibility', alertUvToggle: 'alertUv',
     alertLevanterToggle: 'alertLevanter', alertRockCloudToggle: 'alertRockCloud',
     alertSeaToggle: 'alertSea', alertAirToggle: 'alertAir',
-    alertCalimaToggle: 'alertCalima', alertPollenToggle: 'alertPollen', alertBeachToggle: 'alertBeach'
+    alertCalimaToggle: 'alertCalima', alertPollenToggle: 'alertPollen', alertStormToggle: 'alertStorm', alertBeachToggle: 'alertBeach'
   };
   Object.entries(toggles).forEach(([id, key]) => { if ($(id)) $(id).checked = key === 'alertBeach' ? settings[key] === true : settings[key] !== false; });
   if ($('beachAlertSideSelect')) $('beachAlertSideSelect').value = ['east','west'].includes(settings.beachAlertSide) ? settings.beachAlertSide : 'either';
@@ -708,6 +760,7 @@ function applySettingsFromUI() {
     alertAir: Boolean($('alertAirToggle')?.checked),
     alertCalima: Boolean($('alertCalimaToggle')?.checked),
     alertPollen: Boolean($('alertPollenToggle')?.checked),
+    alertStorm: Boolean($('alertStormToggle')?.checked),
     alertBeach: Boolean($('alertBeachToggle')?.checked),
     beachAlertSide: ['east','west'].includes($('beachAlertSideSelect')?.value) ? $('beachAlertSideSelect').value : 'either',
     beachAlertRating: selectNumber('beachAlertRatingSelect', [0,1], DEFAULT_SETTINGS.beachAlertRating),
@@ -2210,6 +2263,110 @@ function buildBeachAdvisories(data, marine = marineData, beachSea = beachSeaData
   }];
 }
 
+// v2.5 · Thunderstorm risk from the forecast weather code, CAPE (atmospheric instability) and rain chance.
+const STORM_LEVELS = [
+  { label: 'Very low', className: 'state-green' },
+  { label: 'Low', className: 'state-blue' },
+  { label: 'Possible', className: 'state-orange' },
+  { label: 'Thunderstorms forecast', className: 'state-red' }
+];
+function stormRisk(s) {
+  const cape = Number(s?.cape) || 0, rain = Number(s?.rainChance) || 0;
+  let rank = 0;
+  if ([95, 96, 99].includes(Number(s?.code))) rank = 3;
+  else if (cape >= 1200 && rain >= 40) rank = 2;
+  else if (cape >= 500 && rain >= 25) rank = 1;
+  return { rank, ...STORM_LEVELS[rank] };
+}
+
+function buildStormAdvisories(data, start) {
+  if (settings.alertStorm === false || !data?.hourly?.time?.length) return [];
+  const peak = snapshots(data, start, 24).map(s => ({ s, risk: stormRisk(s) }))
+    .reduce((best, x) => x.risk.rank > (best?.risk.rank ?? 0) ? x : best, null);
+  if (!peak || peak.risk.rank < 2) return [];
+  return [{
+    icon: '⛈️', title: peak.risk.rank === 3 ? 'Thunderstorms forecast' : 'Thunderstorm risk',
+    level: peak.risk.rank === 3 ? 'high' : 'medium',
+    detail: peak.risk.rank === 3 ? `Thunderstorms are in the forecast around ${fmtTime(peak.s.time)}. Avoid exposed ground and leave the water.`
+      : `Unstable air (CAPE ${round(peak.s.cape)} J/kg) with a ${round(peak.s.rainChance)}% rain chance could set off storms.`,
+    time: fmtTime(peak.s.time)
+  }];
+}
+
+function renderStorm(data) {
+  const summary = $('stormSummary'), timeline = $('stormTimeline'), badge = $('stormBadge');
+  if (!summary || !timeline || !badge) return;
+  if (!data?.hourly?.time?.length) { summary.textContent = 'Waiting for forecast data…'; timeline.innerHTML = ''; badge.textContent = '—'; return; }
+  const hours = snapshots(data, getHourIndex(data), 24).map(s => ({ s, risk: stormRisk(s) }));
+  const peak = hours.reduce((best, x) => x.risk.rank > (best?.risk.rank ?? -1) ? x : best, null);
+  badge.textContent = peak.risk.label;
+  badge.className = `agreement-badge ${peak.risk.className}`;
+  const win = contiguousWindow(hours, x => x.risk.rank >= 2);
+  summary.textContent = peak.risk.rank >= 2
+    ? `${peak.risk.rank === 3 ? 'Thunderstorms are forecast' : 'Thunderstorms are possible'}${win ? ` from ${fmtTime(win.start.s.time)} to ${fmtTime(win.end.s.time)}` : ''}, most likely around ${fmtTime(peak.s.time)}.`
+    : peak.risk.rank === 1 ? `A low thunderstorm risk around ${fmtTime(peak.s.time)}. Showers are more likely than storms.`
+    : 'No thunderstorm signal in the next 24 hours.';
+  timeline.innerHTML = hours.map(x => `<div class="storm-bar storm-rank-${x.risk.rank}" style="height:${12 + x.risk.rank * 28}%" title="${fmtTime(x.s.time)} · ${x.risk.label}"></div>`).join('');
+}
+
+// v2.5 · Tide turns from modelled hourly sea level, refined with a parabola through each turning hour.
+function tideSource(marine = marineData, beachSea = beachSeaData) {
+  const ok = d => Array.isArray(d?.hourly?.sea_level_height_msl) && d.hourly.sea_level_height_msl.some(v => v != null);
+  if (ok(beachSea?.west)) return { data: beachSea.west, label: 'Bay of Gibraltar' };
+  if (ok(marine)) return { data: marine, label: 'Strait of Gibraltar' };
+  return null;
+}
+
+function tideTurns(data, hours = 48) {
+  const h = data?.hourly;
+  if (!Array.isArray(h?.time) || !Array.isArray(h?.sea_level_height_msl)) return [];
+  const start = marineHourIndex(data);
+  const end = Math.min(h.time.length - 1, start + hours);
+  const lv = h.sea_level_height_msl.map(v => v == null ? NaN : Number(v));
+  const out = [];
+  for (let i = Math.max(1, start); i < end; i++) {
+    const a = lv[i - 1], b = lv[i], c = lv[i + 1];
+    if (![a, b, c].every(Number.isFinite)) continue;
+    const high = b > a && b >= c, low = b < a && b <= c;
+    if (!high && !low) continue;
+    const denom = a - 2 * b + c;
+    const offset = denom ? Math.max(-0.5, Math.min(0.5, 0.5 * (a - c) / denom)) : 0;
+    const epoch = fakeLocalEpoch(h.time[i]) + offset * 3600000;
+    if (!Number.isFinite(epoch)) continue;
+    out.push({ type: high ? 'High' : 'Low', time: new Date(epoch).toISOString().slice(0, 16), level: b - 0.25 * (a - c) * offset });
+  }
+  return out;
+}
+
+function tideTrend(data) {
+  const h = data?.hourly;
+  const i = marineHourIndex(data);
+  const now = Number(h?.sea_level_height_msl?.[i]), next = Number(h?.sea_level_height_msl?.[i + 1]);
+  if (!Number.isFinite(now) || !Number.isFinite(next)) return null;
+  return next > now ? 'Rising' : next < now ? 'Falling' : 'Turning';
+}
+
+function renderTides(marine = marineData, beachSea = beachSeaData) {
+  const el = $('tideList'), summary = $('tideSummary');
+  if (!el || !summary) return;
+  const src = tideSource(marine, beachSea);
+  const turns = src ? tideTurns(src.data).slice(0, 5) : [];
+  if (!turns.length) {
+    summary.textContent = 'Tide times are unavailable until the marine forecast loads.';
+    el.innerHTML = '';
+    return;
+  }
+  const nowKey = String(src.data.hourly.time[marineHourIndex(src.data)]).slice(0, 10);
+  const trend = tideTrend(src.data);
+  const next = turns[0];
+  const nextDay = next.time.slice(0, 10) === nowKey ? '' : `${fmtDay(next.time.slice(0, 10))} `;
+  summary.textContent = `${trend ? `${trend} now. ` : ''}Next ${next.type.toLowerCase()} water around ${nextDay}${fmtTime(next.time)}. Modelled for the ${src.label}.`;
+  el.innerHTML = turns.map(t => {
+    const day = t.time.slice(0, 10);
+    return `<div class="tide-row tide-${t.type.toLowerCase()}"><span>${t.type === 'High' ? '⬆️' : '⬇️'} ${t.type}</span><strong>${day === nowKey ? '' : `${fmtDay(day)} `}${fmtTime(t.time)}</strong><small>${t.level >= 0 ? '+' : ''}${t.level.toFixed(2)} m</small></div>`;
+  }).join('');
+}
+
 function renderBeachNowPanel(outlook, sea) {
   const el = $('beachNowSummary');
   if (!el) return;
@@ -2227,6 +2384,7 @@ function renderBeaches(data, marine, beachSea = beachSeaData) {
   const c = marine?.current || {};
   const seaTemp = c.sea_surface_temperature ?? outlook?.pickHour?.sea?.seaTemp ?? null;
   renderBeachNowPanel(outlook, seaTemp);
+  renderTides(marine, beachSea);
   if (!status) return;
   if (!outlook) {
     status.textContent = 'Beach guidance needs the main forecast, which is not available yet.';
@@ -2310,6 +2468,7 @@ function renderAll(data) {
   renderMarine(marineData);
   renderAir(airData);
   renderBeaches(data, marineData);
+  renderStorm(data);
   renderObservation(observationData, data);
   renderForecastConfidence();
   renderAppStatus();
@@ -2640,10 +2799,24 @@ async function loadWeather(force=false) {
   }
 }
 
+// v2.5 · Sea, Beach and Air share one Outdoors tab; it reopens the last section used.
+const OUTDOOR_VIEWS = ['beach', 'sea', 'air'];
+const OUTDOOR_VIEW_KEY = 'gibweather:outdoor-view:v1';
+function lastOutdoorView() {
+  try { const v = localStorage.getItem(OUTDOOR_VIEW_KEY); return OUTDOOR_VIEWS.includes(v) ? v : 'beach'; } catch (_) { return 'beach'; }
+}
+
 function changeView(target) {
+  if (target === 'outdoors') target = lastOutdoorView();
+  if (OUTDOOR_VIEWS.includes(target)) { try { localStorage.setItem(OUTDOOR_VIEW_KEY, target); } catch (_) {} }
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.dataset.view === target));
-  document.querySelectorAll('.nav-btn').forEach(b => {
+  document.querySelectorAll('.sub-nav-btn').forEach(b => {
     const active = b.dataset.target === target;
+    b.classList.toggle('active', active);
+    b.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    const active = b.dataset.target === target || (b.dataset.target === 'outdoors' && OUTDOOR_VIEWS.includes(target));
     b.classList.toggle('active', active);
     if (active) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   });
@@ -2738,7 +2911,7 @@ function clearSavedForecast() {
   setStatus('Saved offline forecast cleared. Live weather is unchanged.', 'notice');
 }
 
-document.querySelectorAll('.nav-btn').forEach(btn => btn.addEventListener('click', () => changeView(btn.dataset.target)));
+document.querySelectorAll('.nav-btn, .sub-nav-btn').forEach(btn => btn.addEventListener('click', () => changeView(btn.dataset.target)));
 document.querySelectorAll('[data-go]').forEach(btn => btn.addEventListener('click', () => changeView(btn.dataset.go)));
 $('refreshBtn').addEventListener('click', () => refreshAll(true));
 $('shareBtn')?.addEventListener('click', shareForecast);
@@ -2748,6 +2921,8 @@ $('healthCheckBtn')?.addEventListener('click', runHealthCheck);
 $('saveSettingsBtn')?.addEventListener('click', applySettingsFromUI);
 $('resetSettingsBtn')?.addEventListener('click', resetSettings);
 $('notificationBtn')?.addEventListener('click', toggleNotifications);
+$('pushSetupBtn')?.addEventListener('click', setupBackgroundAlerts);
+$('pushCopyBtn')?.addEventListener('click', copyBackgroundAlertCode);
 $('themeSelect')?.addEventListener('change', event => applyTheme(event.target.value));
 $('startBtn')?.addEventListener('click', dismissFirstRun);
 $('reloadAppBtn')?.addEventListener('click', () => location.reload());

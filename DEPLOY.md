@@ -36,3 +36,16 @@ For GitHub-based observation updates also keep:
 
 ## External radar hosts
 Production security headers must allow `https://api.rainviewer.com` in `connect-src`, and `https://*.rainviewer.com` plus `https://tile.openstreetmap.org` in `img-src`. The included Netlify/Vercel/header files are already configured.
+
+## Background alerts (v2.5)
+GibWeather can send Watch, Important and Beach day alerts while the app is closed. `.github/workflows/background-alerts.yml` checks the forecast every 30 minutes with `scripts/send_push_alerts.js`, using the same alert logic as the app, and sends a Web Push message when the set of alerts changes. On iPhone this needs iOS 16.4 or later and GibWeather opened from the Home Screen icon.
+
+One-time setup:
+1. Generate a VAPID key pair, for example with `npx web-push generate-vapid-keys` on a computer with Node installed. Put the **public** key in `PUSH_PUBLIC_KEY` in `app.js`. In GitHub, open **Settings → Secrets and variables → Actions → New repository secret**, name it `VAPID_PRIVATE_KEY` and paste the **private** key. Never commit the private key or share it.
+2. On your phone, open GibWeather from the Home Screen, go to **About → Background alerts → Set up**, allow notifications, then tap **Copy code**.
+3. Add a second repository secret named `PUSH_SUBSCRIPTION` and paste the code.
+4. Open **Actions → Background alerts → Run workflow** once to test it.
+
+The code includes your alert settings at the moment you copied it. After changing alert categories or thresholds, copy the code again and update `PUSH_SUBSCRIPTION`. If the job fails with "subscription has expired", repeat steps 2–3. The job stores only a hash of the last alert set in `data/push-state.json`.
+
+Until `PUSH_PUBLIC_KEY` is set, the Set up button explains that background alerts are not configured and the job exits cleanly. To replace the key pair later, repeat step 1, then set up the device again.

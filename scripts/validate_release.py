@@ -170,6 +170,18 @@ for control_id in ('alertBeachToggle','beachAlertSideSelect','beachAlertRatingSe
     need(f'id="{control_id}"' in HTML,f'beach alert control missing: {control_id}')
 need('buildBeachAdvisories' in APP,'beach-day alert logic missing')
 
+# v2.5 Outdoors tab, tides, thunderstorms and background alerts.
+need('data-target="outdoors"' in HTML and HTML.count('class="nav-btn') <= 7,'bottom bar should have at most seven tabs including Outdoors')
+need('sub-nav-btn' in HTML and 'OUTDOOR_VIEWS' in APP,'Outdoors section switcher missing')
+for control_id in ('tideList','tideSummary','stormSummary','stormTimeline','stormBadge','alertStormToggle','pushSetupBtn','pushCode','pushCopyBtn','pushStatus'):
+    need(f'id="{control_id}"' in HTML,f'v2.5 element missing: {control_id}')
+need("'cape'" in APP and 'stormRisk' in APP,'thunderstorm risk logic missing')
+need('tideTurns' in APP and 'sea_level_height_msl' in APP,'tide logic missing')
+need(re.search(r"const PUSH_PUBLIC_KEY = '(?:[A-Za-z0-9_-]{87})?';",APP) is not None,'push public key must be empty or an 87-character VAPID public key')
+need("addEventListener('push'" in SW,'service-worker push handler missing')
+for f in ('.github/workflows/background-alerts.yml','.github/workflows/release-checks.yml','scripts/send_push_alerts.js','data/push-state.json'):
+    need((ROOT/f).exists(),f'missing v2.5 file: {f}')
+
 # METAR updater identity/version.
 updater=(ROOT/'scripts/update_lxgb_observation.py').read_text()
 need('LXGB' in updater,'LXGB updater station missing')

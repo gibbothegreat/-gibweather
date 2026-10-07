@@ -716,3 +716,38 @@ html[data-theme="light"] .beach-row.state-red .beach-badge, html[data-theme="lig
 .advisory-item.level-good .advisory-time span { color:#8fd3ff; background:rgba(99,187,255,.12); }
 .advisory-item.level-good { box-shadow: inset 0 0 0 1px rgba(99,187,255,.26); }
 html[data-theme="light"] .advisory-item.level-good .advisory-time span { color:#00598f; }
+
+/* v2.5 Outdoors tab */
+.bottom-nav { grid-template-columns: repeat(7, 1fr); padding-left: 4px; padding-right: 4px; }
+.sub-nav { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin:0 0 14px; padding:4px; border-radius:14px; background:rgba(255,255,255,.05); border:1px solid var(--line); }
+.sub-nav-btn { border:0; padding:9px 6px; border-radius:10px; background:transparent; color:var(--muted); font:inherit; font-size:13px; font-weight:600; cursor:pointer; }
+.sub-nav-btn.active { background:rgba(115,199,255,.16); color:var(--accent2); }
+@media (max-width:430px) {
+  .bottom-nav .nav-btn span { font-size:18px; }
+  .bottom-nav .nav-btn small { font-size:9px; }
+}
+html[data-theme="light"] .sub-nav { background:rgba(16,44,63,.04); }
+html[data-theme="light"] .sub-nav-btn.active { background:rgba(0,119,179,.12); color:#005b88; }
+
+/* v2.5 tides */
+.tide-list { display:grid; gap:8px; margin-top:10px; }
+.tide-row { display:grid; grid-template-columns:90px 1fr auto; align-items:center; gap:10px; padding:10px 12px; border:1px solid var(--line); border-radius:14px; background:rgba(255,255,255,.035); }
+.tide-row span { font-size:13px; font-weight:700; }
+.tide-row small { color:var(--muted); font-size:11px; }
+html[data-theme="light"] .tide-row { background:rgba(16,44,63,.035); }
+
+/* v2.5 thunderstorm risk */
+.storm-timeline { display:flex; align-items:flex-end; gap:3px; height:64px; margin-top:12px; padding:6px; border-radius:12px; background:rgba(255,255,255,.035); border:1px solid var(--line); }
+.storm-bar { flex:1 1 0; min-width:3px; border-radius:4px 4px 1px 1px; background:#53d884; }
+.storm-bar.storm-rank-1 { background:#63bbff; }
+.storm-bar.storm-rank-2 { background:#ff9443; }
+.storm-bar.storm-rank-3 { background:#ff5b5b; }
+html[data-theme="light"] .storm-timeline { background:rgba(16,44,63,.035); }
+html[data-theme="light"] .storm-bar { background:#2f9e63; }
+html[data-theme="light"] .storm-bar.storm-rank-1 { background:#0077b3; }
+html[data-theme="light"] .storm-bar.storm-rank-2 { background:#d4721f; }
+html[data-theme="light"] .storm-bar.storm-rank-3 { background:#c03a32; }
+
+/* v2.5 background alerts */
+.push-code { width:100%; margin:8px 0; padding:10px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.04); color:var(--text); font:11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; resize:vertical; }
+html[data-theme="light"] .push-code { background:#fff; }

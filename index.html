@@ -23,7 +23,7 @@
         <div class="eyebrow">🇬🇮 GIBRALTAR</div>
         <div class="brand-title">
           <h1>GibWeather</h1>
-          <span id="topVersion" class="top-version" aria-label="App version 2.4">v2.4</span>
+          <span id="topVersion" class="top-version" aria-label="App version 2.5">v2.5</span>
           <span id="topAlertCount" class="top-alert-count count-low" aria-label="Custom weather alerts loading">🔔 —</span>
         </div>
       </div>
@@ -273,6 +273,7 @@
 
       <section id="seaView" class="view" data-view="sea">
         <div class="page-title"><h2>Sea & Strait</h2><p>Wave, swell, sea temperature and current guidance</p></div>
+        <div class="sub-nav" role="tablist" aria-label="Outdoors sections"><button class="sub-nav-btn" type="button" role="tab" data-target="beach">🏖️ Beach</button><button class="sub-nav-btn" type="button" role="tab" data-target="sea">🌊 Sea</button><button class="sub-nav-btn" type="button" role="tab" data-target="air">🍃 Air</button></div>
         <section id="seaStatus" class="status-banner notice" role="status">Loading marine forecast…</section>
         <section class="metrics-grid" aria-label="Current Strait marine forecast">
           <article class="metric"><span>🌊 Wave height</span><strong id="seaWaveNow">—</strong><small id="seaWaveDirNow">—</small></article>
@@ -298,6 +299,7 @@
 
       <section id="beachView" class="view" data-view="beach">
         <div class="page-title"><h2>Beaches</h2><p>Which side of the Rock is best for a swim</p></div>
+        <div class="sub-nav" role="tablist" aria-label="Outdoors sections"><button class="sub-nav-btn" type="button" role="tab" data-target="beach">🏖️ Beach</button><button class="sub-nav-btn" type="button" role="tab" data-target="sea">🌊 Sea</button><button class="sub-nav-btn" type="button" role="tab" data-target="air">🍃 Air</button></div>
         <section id="beachStatus" class="status-banner notice" role="status">Loading beach guidance…</section>
         <article id="beachPickCard" class="panel beach-pick">
           <div class="eyebrow" id="beachPickEyebrow">BEST BET NOW</div>
@@ -310,6 +312,12 @@
           <article class="metric"><span>🌬️ Wind</span><strong id="beachWind">—</strong><small id="beachWindNote">—</small></article>
           <article class="metric"><span>🌇 Sunset</span><strong id="beachSunset">—</strong><small id="beachSunsetDay">Today</small></article>
         </section>
+        <article class="panel">
+          <div class="section-heading"><div><div class="eyebrow">NEXT 48 HOURS</div><h3>Tides</h3></div></div>
+          <p id="tideSummary" class="model-copy">Waiting for the marine forecast…</p>
+          <div id="tideList" class="tide-list"></div>
+          <p class="fineprint">Tide times come from modelled sea level, not official tide tables. Allow 15–30 minutes either way, and do not use them for navigation.</p>
+        </article>
         <article class="panel">
           <div class="section-heading"><div><div class="eyebrow">EAST &amp; WEST</div><h3>Beach by beach</h3></div></div>
           <div id="beachList" class="beach-list"></div>
@@ -331,6 +339,7 @@
 
       <section id="airView" class="view" data-view="air">
         <div class="page-title"><h2>Air &amp; Pollen</h2><p>Air quality, Saharan dust (Calima) and pollen guidance</p></div>
+        <div class="sub-nav" role="tablist" aria-label="Outdoors sections"><button class="sub-nav-btn" type="button" role="tab" data-target="beach">🏖️ Beach</button><button class="sub-nav-btn" type="button" role="tab" data-target="sea">🌊 Sea</button><button class="sub-nav-btn" type="button" role="tab" data-target="air">🍃 Air</button></div>
         <section id="airStatus" class="status-banner notice" role="status">Loading air-quality forecast…</section>
         <section class="metrics-grid" aria-label="Current Gibraltar air quality">
           <article id="airAqiCard" class="metric"><span>💨 European AQI</span><strong id="airAqiNow">—</strong><small id="airAqiLabel">—</small></article>
@@ -368,6 +377,16 @@
       <section id="radarView" class="view" data-view="radar">
         <div class="page-title"><h2>Rain radar</h2><p>Recent precipitation · Gibraltar & Strait</p></div>
         <section id="radarStatus" class="status-banner notice" role="status">Loading recent radar…</section>
+        <article class="panel">
+          <div class="section-heading">
+            <div><div class="eyebrow">NEXT 24 HOURS</div><h3>Thunderstorm risk</h3></div>
+            <span id="stormBadge" class="agreement-badge">—</span>
+          </div>
+          <p id="stormSummary" class="model-copy">Waiting for forecast data…</p>
+          <div id="stormTimeline" class="storm-timeline" aria-label="Hourly thunderstorm risk"></div>
+          <div class="calima-axis"><span>Now</span><span>+12h</span><span>+24h</span></div>
+          <p class="fineprint">GibWeather estimates storm risk from forecast thunder, atmospheric instability (CAPE) and rain chance. It is not an official warning.</p>
+        </article>
         <article class="panel radar-panel">
           <div class="section-heading">
             <div><div class="eyebrow">LAST 2 HOURS</div><h3>Radar history</h3><p id="radarFrameTime" class="subheading">—</p></div>
@@ -398,7 +417,7 @@
       </section>
 
       <section id="aboutView" class="view" data-view="about">
-        <div class="page-title"><h2>About GibWeather</h2><p>Release v2.4</p></div>
+        <div class="page-title"><h2>About GibWeather</h2><p>Release v2.5</p></div>
         <article class="panel about-copy">
           <h3>Built for Gibraltar</h3>
           <p>GibWeather is designed around local conditions: Levanter and Poniente flow, gusts, low cloud, humidity, visibility and rain.</p>
@@ -410,7 +429,7 @@
           <p>MeteoGib is linked as an independent local forecast source. GibWeather does not scrape or republish MeteoGib forecasts and is not affiliated with MeteoGib.</p>
           <h3>App status</h3>
           <div class="status-grid">
-            <div><span>Version</span><strong id="versionText">v2.4</strong></div>
+            <div><span>Version</span><strong id="versionText">v2.5</strong></div>
             <div><span>Last refresh</span><strong id="lastRefreshText">—</strong></div>
             <div><span>Data age</span><strong id="dataAgeText">—</strong></div>
             <div><span>Connection</span><strong id="connectionText">—</strong></div>
@@ -442,6 +461,7 @@
             <label class="alert-toggle"><input id="alertAirToggle" type="checkbox" checked /><span>😷 Air quality</span></label>
             <label class="alert-toggle"><input id="alertCalimaToggle" type="checkbox" checked /><span>🏜️ Calima</span></label>
             <label class="alert-toggle"><input id="alertPollenToggle" type="checkbox" checked /><span>🌾 Pollen</span></label>
+            <label class="alert-toggle"><input id="alertStormToggle" type="checkbox" checked /><span>⛈️ Thunderstorms</span></label>
             <label class="alert-toggle"><input id="alertBeachToggle" type="checkbox" /><span>🏖️ Beach days</span></label>
           </div>
           <div class="settings-grid alert-threshold-grid">
@@ -461,6 +481,13 @@
             <div><strong>Device notifications</strong><small id="notificationStatus">Checking browser support…</small></div>
             <button id="notificationBtn" class="secondary-btn" type="button">Turn on notifications</button>
           </div>
+          <div class="notification-card">
+            <div><strong>Background alerts</strong><small id="pushStatus">Get Watch, Important and Beach day alerts even when GibWeather is closed.</small></div>
+            <button id="pushSetupBtn" class="secondary-btn" type="button">Set up</button>
+          </div>
+          <textarea id="pushCode" class="push-code" rows="4" readonly hidden aria-label="Background alert code"></textarea>
+          <button id="pushCopyBtn" class="secondary-btn" type="button" hidden>Copy code</button>
+          <p class="fineprint">Background alerts are checked every 30 minutes by a GitHub Actions job using your alert settings at the time you copied the code. See DEPLOY.md for the one-time GitHub setup.</p>
           <p class="fineprint">Notifications appear when GibWeather refreshes and finds a new Watch or Important flag, or a beach day if you switched Beach days on. A static web app cannot guarantee alerts while it is completely closed.</p>
           <div class="action-row">
             <button id="saveSettingsBtn" class="secondary-btn" type="button">Save preferences</button>
@@ -491,7 +518,7 @@
             </ol>
           </div>
           <h3>Privacy</h3>
-          <p>GibWeather v2.4 has no account, advertising SDK or analytics tracker. The last successful forecast, notification state, radar zoom and your app preferences are stored locally on this device.</p>
+          <p>GibWeather v2.5 has no account, advertising SDK or analytics tracker. The last successful forecast, notification state, radar zoom and your app preferences are stored locally on this device.</p>
           <p class="fineprint">The Levanter and Rock Cloud indicators are experimental guidance only. For official or safety-critical weather information, use the relevant official authority or a qualified local forecaster.</p>
         </article>
       </section>
@@ -502,9 +529,7 @@
       <button class="nav-btn" type="button" data-target="hourly"><span>🕐</span><small>Hourly</small></button>
       <button class="nav-btn" type="button" data-target="daily"><span>📅</span><small>7 Days</small></button>
       <button class="nav-btn" type="button" data-target="wind"><span>🌬️</span><small>Wind</small></button>
-      <button class="nav-btn" type="button" data-target="sea"><span>🌊</span><small>Sea</small></button>
-      <button class="nav-btn" type="button" data-target="beach"><span>🏖️</span><small>Beach</small></button>
-      <button class="nav-btn" type="button" data-target="air"><span>🍃</span><small>Air</small></button>
+      <button class="nav-btn" type="button" data-target="outdoors"><span>🏖️</span><small>Outdoors</small></button>
       <button class="nav-btn" type="button" data-target="radar"><span>🌧️</span><small>Radar</small></button>
       <button class="nav-btn" type="button" data-target="about"><span>ⓘ</span><small>About</small></button>
     </nav>

@@ -1,5 +1,13 @@
 # GibWeather changelog
 
+## v2.5 · Outdoors tab, tides, thunderstorms and background alerts
+- The bottom bar drops from nine tabs to seven: Sea, Beach and Air now share an **Outdoors** tab with Beach / Sea / Air buttons at the top, and it reopens the section you used last.
+- Adds **Tides** to the Beach screen: the next high and low water times and heights over 48 hours, from modelled sea level in the Bay of Gibraltar (falling back to the Strait).
+- Adds **Thunderstorm risk** to the Radar screen with a 24-hour timeline, based on forecast thunder, CAPE and rain chance, plus a Thunderstorms alert category (on by default).
+- Adds optional **Background alerts**: a GitHub Actions job (`background-alerts.yml`) checks the forecast every 30 minutes with your alert settings and sends a Web Push notification when the alerts change, even when GibWeather is closed. One-time setup is in DEPLOY.md.
+- Adds a **Release checks** workflow that runs the smoke tests and release validation on every pull request and push to main.
+- Refreshes the offline shell to `gibweather-shell-v25`.
+
 ## v2.4 · Nearshore beach waves, Beach day alerts and new icon
 - The Beach screen now fetches wave forecasts for two nearshore points, one east of Catalan Bay and one inside the Bay of Gibraltar, so each side of the Rock uses its own waves. It falls back to the Strait forecast if that request fails.
 - Adds opt-in **Beach days** alerts in About → Custom alerts, with a preferred side (either, east or west) and a rating (Great, or Good or better). An alert appears when that side holds the rating for at least two daylight hours in the next 24 hours, and can trigger a device notification.

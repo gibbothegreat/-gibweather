@@ -1,4 +1,4 @@
-# GibWeather v2.4 QA
+# GibWeather v2.5 QA
 
 ## Release validation
 Run:
@@ -7,7 +7,15 @@ Run:
 python3 scripts/validate_release.py
 ```
 
-Expected result: `GibWeather v2.4 release validation passed`.
+Expected result: `GibWeather v2.5 release validation passed`.
+
+## v2.5 checks
+- The bottom bar shows seven tabs. Outdoors opens the last-used of Beach, Sea or Air, and the Now-screen "See beaches" and "See air" links still work.
+- Tides list alternating High and Low times with heights; the summary says Rising or Falling.
+- The Radar screen shows Thunderstorm risk with a badge and timeline; a forecast thunderstorm raises an Important alert unless Thunderstorms is switched off.
+- About → Background alerts → Set up asks for notification permission and shows a code; Copy code copies it.
+- With the GitHub secrets set, running Background alerts from the Actions tab sends a notification only when the alerts change.
+- The Release checks workflow passes on the pull request.
 
 ## v2.4 checks
 - The Beach status line says it is using nearshore waves; blocking the second marine request falls back to Strait waves without errors.

@@ -1,0 +1,33 @@
+name: Release checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'data/lxgb-observation.json'
+      - 'data/push-state.json'
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Forecast smoke tests
+        run: node scripts/test_smart_alerts.js
+      - name: Forecast change tests
+        run: node scripts/test_forecast_changes.js
+      - name: Release validation
+        run: python3 scripts/validate_release.py
