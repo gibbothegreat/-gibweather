@@ -1,5 +1,10 @@
 # GibWeather changelog
 
+## v2.5.1 · Background alert keys made in the app
+- Adds **Create keys** to About → Background alerts. The key pair is created on the device, the private key is shown once for the `VAPID_PRIVATE_KEY` secret and never stored, and no code change or outside key generator is needed.
+- The background alert job now derives the public key from `VAPID_PRIVATE_KEY`.
+- Refreshes the offline shell to `gibweather-shell-v251`.
+
 ## v2.5 · Outdoors tab, tides, thunderstorms and background alerts
 - The bottom bar drops from nine tabs to seven: Sea, Beach and Air now share an **Outdoors** tab with Beach / Sea / Air buttons at the top, and it reopens the section you used last.
 - Adds **Tides** to the Beach screen: the next high and low water times and heights over 48 hours, from modelled sea level in the Bay of Gibraltar (falling back to the Strait).

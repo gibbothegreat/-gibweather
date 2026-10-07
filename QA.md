@@ -7,7 +7,7 @@ Run:
 python3 scripts/validate_release.py
 ```
 
-Expected result: `GibWeather v2.5 release validation passed`.
+Expected result: `GibWeather v2.5.1 release validation passed`.
 
 ## v2.5 checks
 - The bottom bar shows seven tabs. Outdoors opens the last-used of Beach, Sea or Air, and the Now-screen "See beaches" and "See air" links still work.

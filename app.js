@@ -1,4 +1,4 @@
-const APP_VERSION = '2.5';
+const APP_VERSION = '2.5.1';
 const GIBRALTAR = { lat: 36.1408, lon: -5.3536, timezone: 'Europe/Gibraltar' };
 const CACHE_KEY = 'gibweather:last-forecast:v23';
 const TREND_CACHE_KEY = 'gibweather:forecast-baseline:v1';
@@ -574,11 +574,56 @@ function backgroundAlertCode(subscription) {
   return JSON.stringify({ subscription, settings: prefs });
 }
 
+// The key pair is created on this device with WebCrypto. Only the public half is kept here;
+// the private half is shown once for the VAPID_PRIVATE_KEY secret and never stored or sent.
+const PUSH_KEY_STORAGE = 'gibweather:push-public-key:v1';
+function storedPushPublicKey() {
+  try { return localStorage.getItem(PUSH_KEY_STORAGE) || ''; } catch (_) { return ''; }
+}
+function activePushPublicKey() { return PUSH_PUBLIC_KEY || storedPushPublicKey(); }
+
+async function createBackgroundAlertKeys() {
+  const status = $('pushStatus'), box = $('pushPrivateKey');
+  if (!status || !box) return;
+  if (!window.crypto?.subtle) { status.textContent = 'This browser cannot create keys. Try Safari or Chrome over HTTPS.'; return; }
+  try {
+    const pair = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
+    const jwk = await crypto.subtle.exportKey('jwk', pair.privateKey);
+    const bytes = b64url => pushKeyBytes(b64url);
+    const pub = new Uint8Array(65);
+    pub[0] = 4; pub.set(bytes(jwk.x), 1); pub.set(bytes(jwk.y), 33);
+    const publicKey = btoa(String.fromCharCode(...pub)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    try { localStorage.setItem(PUSH_KEY_STORAGE, publicKey); } catch (_) {}
+    try {
+      const registration = await navigator.serviceWorker?.ready;
+      const old = await registration?.pushManager?.getSubscription();
+      if (old) await old.unsubscribe();
+    } catch (_) {}
+    box.value = jwk.d;
+    box.hidden = false;
+    $('pushKeyCopyBtn').hidden = false;
+    $('pushCode').hidden = true;
+    $('pushCopyBtn').hidden = true;
+    status.textContent = 'Step 1 of 2: copy this private key into a GitHub secret named VAPID_PRIVATE_KEY. It is shown only once. Then tap Set up.';
+  } catch (err) {
+    console.error(err);
+    status.textContent = 'Could not create keys on this device.';
+  }
+}
+
+async function copyBackgroundAlertKey() {
+  const box = $('pushPrivateKey');
+  if (!box?.value) return;
+  try { await navigator.clipboard.writeText(box.value); $('pushStatus').textContent = 'Private key copied. Save it as the VAPID_PRIVATE_KEY secret on GitHub, then tap Set up.'; }
+  catch (_) { box.select(); }
+}
+
 async function setupBackgroundAlerts() {
   const status = $('pushStatus'), box = $('pushCode');
   if (!status || !box) return;
-  if (!PUSH_PUBLIC_KEY) {
-    status.textContent = 'Background alerts are not configured for this copy of GibWeather yet. See DEPLOY.md.';
+  const publicKey = activePushPublicKey();
+  if (!publicKey) {
+    status.textContent = 'Tap Create keys first, and save the private key on GitHub.';
     return;
   }
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -590,11 +635,12 @@ async function setupBackgroundAlerts() {
   try {
     const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.getSubscription()
-      || await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: pushKeyBytes(PUSH_PUBLIC_KEY) });
+      || await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: pushKeyBytes(publicKey) });
     box.value = backgroundAlertCode(subscription.toJSON());
+    if ($('pushPrivateKey')) { $('pushPrivateKey').value = ''; $('pushPrivateKey').hidden = true; $('pushKeyCopyBtn').hidden = true; }
     box.hidden = false;
     $('pushCopyBtn').hidden = false;
-    status.textContent = 'Copy this code into the PUSH_SUBSCRIPTION secret on GitHub. Copy it again after changing your alert settings.';
+    status.textContent = 'Step 2 of 2: copy this code into a GitHub secret named PUSH_SUBSCRIPTION. Copy it again after changing your alert settings.';
   } catch (err) {
     console.error(err);
     status.textContent = 'Could not set up background alerts on this device.';
@@ -2923,6 +2969,8 @@ $('resetSettingsBtn')?.addEventListener('click', resetSettings);
 $('notificationBtn')?.addEventListener('click', toggleNotifications);
 $('pushSetupBtn')?.addEventListener('click', setupBackgroundAlerts);
 $('pushCopyBtn')?.addEventListener('click', copyBackgroundAlertCode);
+$('pushKeysBtn')?.addEventListener('click', createBackgroundAlertKeys);
+$('pushKeyCopyBtn')?.addEventListener('click', copyBackgroundAlertKey);
 $('themeSelect')?.addEventListener('change', event => applyTheme(event.target.value));
 $('startBtn')?.addEventListener('click', dismissFirstRun);
 $('reloadAppBtn')?.addEventListener('click', () => location.reload());
