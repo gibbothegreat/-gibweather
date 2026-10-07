@@ -1,12 +1,15 @@
-const CACHE = 'gibweather-shell-v251';
+const CACHE = 'gibweather-shell-v252';
 const OBSERVATION_CACHE_KEY = './data/lxgb-observation.json';
+const SHELL_VERSION = '2.5.2';
 const APP_SHELL = [
-  './', './index.html', './styles.css', './app.js', './manifest.webmanifest', './version.json',
+  './', './index.html', `./styles.css?v=${SHELL_VERSION}`, `./app.js?v=${SHELL_VERSION}`, './manifest.webmanifest', './version.json',
   './data/lxgb-observation.json', './icons/icon-192-v5.png', './icons/icon-512-v5.png', './icons/icon-180-v5.png'
 ];
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(APP_SHELL)));
+  // cache: 'reload' skips the browser's HTTP cache, so a new shell never stores
+  // the previous release's files while GitHub Pages' cache is still warm.
+  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(APP_SHELL.map(url => new Request(url, { cache: 'reload' })))));
   self.skipWaiting();
 });
 

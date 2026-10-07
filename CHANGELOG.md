@@ -1,5 +1,9 @@
 # GibWeather changelog
 
+## v2.5.2 · Updates load reliably
+- Fixes phones that showed the new version number but kept running the previous release's code (for example the old "Background alerts are not configured" message). `app.js` and `styles.css` now carry the version in their URL, and the offline shell is downloaded fresh instead of from the browser cache.
+- Refreshes the offline shell to `gibweather-shell-v252`.
+
 ## v2.5.1 · Background alert keys made in the app
 - Adds **Create keys** to About → Background alerts. The key pair is created on the device, the private key is shown once for the `VAPID_PRIVATE_KEY` secret and never stored, and no code change or outside key generator is needed.
 - The background alert job now derives the public key from `VAPID_PRIVATE_KEY`.

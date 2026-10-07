@@ -1,4 +1,4 @@
-# GibWeather v2.5.1
+# GibWeather v2.5.2
 
 GibWeather is a Gibraltar-first Progressive Web App for iPhone, iPad and modern browsers.
 
