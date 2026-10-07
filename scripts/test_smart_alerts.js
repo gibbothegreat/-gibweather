@@ -165,7 +165,7 @@ assert(atCustomRain.some(item => item.title === 'Showers possible'), 'Rain alert
 setAlertSettings({
   alertWind: false, alertRain: false, alertVisibility: false, alertUv: false,
   alertLevanter: false, alertRockCloud: false, alertSea: false,
-  alertAir: false, alertCalima: false, alertPollen: false
+  alertAir: false, alertCalima: false, alertPollen: false, alertStorm: false
 });
 const paused = context.buildAdvisories(weather({ gust: 70, rain: 90, uv: 10 }), 0, marine(3.5));
 assert(paused.length === 1 && paused[0].title === 'Custom alerts paused', 'All categories off should show the paused state');
@@ -281,5 +281,30 @@ assert(!context.buildAdvisories(weather({ wind: 30, direction: 90, gust: 45 }), 
 setAlertSettings({ alertBeach: true, beachAlertSide: 'west', beachAlertRating: 1 });
 assert(context.buildAdvisories(weather({ wind: 14, direction: 90, gust: 22 }), 0, marine(0.4)).some(item => item.level === 'good' && item.detail.startsWith('West side')), 'Good-or-better west-side alert did not fire');
 setAlertSettings();
+
+// v2.5 tides and thunderstorms
+const tideData = marine(0.5);
+tideData.hourly.sea_level_height_msl = tideData.hourly.time.map((_, i) => 0.5 * Math.cos((i - 3) * 2 * Math.PI / 12.42));
+const turns = context.tideTurns(tideData, 28);
+assert(turns.length >= 3 && turns[0].type === 'High' && turns[1].type === 'Low' && turns[2].type === 'High', 'Tide turns should alternate high and low');
+assert(Math.abs(turns[2].level - 0.5) < 0.05 && turns[2].time.startsWith('2026-08-25T15'), 'High water time or height is off');
+assert(turns[1].time.startsWith('2026-08-25T09') && Math.abs(turns[1].level + 0.5) < 0.05, 'Low water time or height is off');
+context.renderTides(tideData, null);
+assert(element('tideList').innerHTML.includes('High') && element('tideSummary').textContent.includes('Strait'), 'Tides did not render');
+context.renderTides(null, null);
+assert(element('tideList').innerHTML === '', 'Missing tide data should clear the list');
+assert(context.stormRisk({ code: 95 }).rank === 3, 'Forecast thunder should be the top storm level');
+assert(context.stormRisk({ code: 3, cape: 1500, rainChance: 50 }).rank === 2, 'Unstable showery air should be a possible storm');
+assert(context.stormRisk({ code: 3, cape: 200, rainChance: 80 }).rank === 0, 'Rain without instability is not a storm risk');
+const stormy = weather({ rain: 60 });
+stormy.hourly.weather_code = stormy.hourly.weather_code.map((c, i) => i === 4 ? 95 : c);
+setAlertSettings();
+const stormAlerts = context.buildAdvisories(stormy, 0, null);
+assert(stormAlerts[0].title === 'Thunderstorms forecast' && stormAlerts[0].level === 'high', 'Thunderstorm alert should lead the list');
+setAlertSettings({ alertStorm: false });
+assert(!context.buildAdvisories(stormy, 0, null).some(item => /Thunderstorm/.test(item.title)), 'Disabled storm alerts still fired');
+setAlertSettings();
+context.renderStorm(stormy);
+assert(element('stormBadge').textContent === 'Thunderstorms forecast' && element('stormTimeline').innerHTML.includes('storm-rank-3'), 'Storm panel did not render');
 
 process.stdout.write('GibWeather forecast smoke tests passed\n');

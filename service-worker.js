@@ -1,4 +1,4 @@
-const CACHE = 'gibweather-shell-v24';
+const CACHE = 'gibweather-shell-v25';
 const OBSERVATION_CACHE_KEY = './data/lxgb-observation.json';
 const APP_SHELL = [
   './', './index.html', './styles.css', './app.js', './manifest.webmanifest', './version.json',
@@ -57,6 +57,16 @@ self.addEventListener('fetch', event => {
       return response;
     }))
   );
+});
+
+self.addEventListener('push', event => {
+  let payload = {};
+  try { payload = event.data ? event.data.json() : {}; } catch (_) { payload = { body: event.data?.text() }; }
+  event.waitUntil(self.registration.showNotification(payload.title || 'GibWeather', {
+    body: payload.body || 'New Gibraltar forecast flag.',
+    icon: './icons/icon-192-v5.png', badge: './icons/icon-192-v5.png',
+    tag: 'gibweather-alerts', renotify: true, data: { url: './' }
+  }));
 });
 
 self.addEventListener('notificationclick', event => {

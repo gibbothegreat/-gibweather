@@ -1,4 +1,4 @@
-# GibWeather v2.4
+# GibWeather v2.5
 
 GibWeather is a Gibraltar-first Progressive Web App for iPhone, iPad and modern browsers.
 
@@ -71,6 +71,8 @@ This checks JavaScript syntax, custom-alert behavior, manifest/version consisten
 GibWeather is a static app. Deployment configurations are included for GitHub Pages, Netlify and Vercel. See `DEPLOY.md`.
 
 ## Release status
+v2.5 groups Sea, Beach and Air under one Outdoors tab, adds tide times and thunderstorm risk, adds optional background alerts sent by a GitHub Actions job, and runs the release checks automatically on every pull request.
+
 v2.4 rates beaches with nearshore wave forecasts for each side of the Rock, adds opt-in Beach day alerts, rates strong or gusty wind more cautiously even when it blows offshore, and introduces a new home screen icon.
 
 v2.3 adds the Beach screen: a best-bet beach, per-beach ratings for both sides of the Rock, an east-vs-west hourly comparison, a 3-day beach outlook and a Beaches summary on the Now screen.
